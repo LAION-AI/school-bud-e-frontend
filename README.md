@@ -8,7 +8,7 @@ Welcome to School Bud-E, your AI-powered educational assistant! 🚀
 
 ## 🌟 Overview
 
-School Bud-E is an intelligent and empathetic learning assistant designed to revolutionize the educational experience. Developed by [LAION](https://laion.ai) in collaboration with the ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the DFKI, School Bud-E focuses on empathy, natural interaction, and personalized learning.
+School Bud-E is an intelligent and empathetic learning assistant designed to revolutionize the educational experience. Developed by [LAION](https://laion.ai) in collaboration with the ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the German Research Center for Artificial Intelligence (DFKI), and Intel, School Bud-E focuses on empathy, natural interaction, and personalized learning.
 
 ## 🚀 Features (WIP)
 
@@ -76,7 +76,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## 🙏 Acknowledgements
 
-Special thanks to LAION, ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the German Research Center for Artificial Intelligence (DFKI) for their contributions and support to this project.
+Special thanks to LAION, ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the German Research Center for Artificial Intelligence (DFKI), and Intel for their contributions and support to this project.
 
 ---
 
