@@ -6,7 +6,6 @@
 .env.local
 .DS_Store
 .vscode
-.github/workflows/deploy.yml
 
 # Fresh build directory
 _fresh/
