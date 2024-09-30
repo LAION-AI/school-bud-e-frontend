@@ -36,7 +36,7 @@ School Bud-E is an intelligent and empathetic learning assistant designed to rev
 - `internalization/`: Language-specific content
 - `static/`: Static assets
 
-## 🚀 Getting Started
+## 🚀 Getting Started: Development
 
 1. Clone the repository:
 
@@ -61,6 +61,27 @@ School Bud-E is an intelligent and empathetic learning assistant designed to rev
    ```
 
 5. Open `http://localhost:8000` in your browser
+
+## 🚀 Getting Started: Production
+
+1. Without docker
+
+   ```bash
+   deno task build
+   deno task preview
+   ```
+
+2. With docker
+
+   ```bash
+   git clone https://github.com/LAION-AI/school-bud-e-frontend.git
+   cd school-bud-e-frontend
+   cd docker-compose
+   nano .env # Adjust environment variables accordingly
+   docker-compose up
+   ```
+
+Then log into localhost:8000 in your browser.
 
 ## 🤝 Contributing
 
