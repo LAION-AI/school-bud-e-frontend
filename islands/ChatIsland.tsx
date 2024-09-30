@@ -16,7 +16,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const [localStorageKeys, setLocalStorageKeys] = useState([] as string[]);
   const [currentChatSuffix, setCurrentChatSuffix] = useState("0");
   const [audioFileDict, setAudioFileDict] = useState<
-    Record<number, HTMLAudioElement[]>
+    Record<number, Record<number, HTMLAudioElement>>
   >({});
   const [resetTranscript, setResetTranscript] = useState(0);
   const [readAlways, setReadAlways] = useState(true);
@@ -65,6 +65,18 @@ export default function ChatIsland({ lang }: { lang: string }) {
       getClientId();
     }
   }, []);
+
+  const stopAndResetAudio = () => {
+    Object.values(audioFileDict).forEach((group) => {
+      Object.values(group).forEach((audio) => {
+        if (!audio.paused) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      });
+    });
+    setAudioFileDict({});
+  };
 
   useEffect(() => {
     if (IS_BROWSER) {
@@ -155,13 +167,18 @@ export default function ChatIsland({ lang }: { lang: string }) {
         }
       }
       setMessages(localStorageMessages);
+      stopAndResetAudio();
     }
   }, [currentChatSuffix]);
 
   useEffect(() => {
     console.log("[LOG] audioFileDict useEffect", audioFileDict);
     for (const key in audioFileDict) {
-      audioFileDict[key][audioFileDict[key].length - 1].onended = () => {
+      // get the highest key of audioFileDict[key]
+      const highestKey = Math.max(
+        ...Object.keys(audioFileDict[key]).map(Number),
+      );
+      audioFileDict[key][highestKey].onended = () => {
         setAudioFileDict({ ...audioFileDict });
       };
     }
@@ -170,45 +187,116 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const handleOnSpeakAtGroupIndexAction = (groupIndex: number) => {
     console.log("[LOG] handleOnSpeakAtGroupIndexAction", groupIndex);
     if (!audioFileDict[groupIndex]) {
+      console.log("No audio file found for groupIndex", groupIndex);
       const lastMessage = Array.isArray(messages[groupIndex])
         ? messages[groupIndex][0]
         : messages[groupIndex];
-      getTTS(lastMessage["content"] as string, groupIndex, "handleOnSpeakAtGroupIndexAction");
+      console.log("lastMessage", lastMessage);
+      const parsedLastMessage = Array.isArray(lastMessage["content"])
+        ? lastMessage["content"].join("")
+        : lastMessage["content"];
+      getTTS(
+        parsedLastMessage as string,
+        groupIndex,
+        "handleOnSpeakAtGroupIndexAction",
+      );
       return;
     } else {
-      const isAudioPlayingInAnyGroup = Object.values(audioFileDict).some(group => 
-        group.some(audio => !audio.paused)
-      );
-      if (isAudioPlayingInAnyGroup) {
-        Object.values(audioFileDict).forEach(group => {
-          group.forEach(audio => {
+      // const [audioFileDict, setAudioFileDict] = useState<Record<number, Record<number, HTMLAudioElement>>>({}); // this is my new audioFileDict
+      // const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
+      // .findIndex(
+      //   (audio) => !audio.paused,
+      // );
+
+      const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
+        .findIndex(
+          (audio) => !audio.paused,
+        );
+
+      if (indexThatIsPlaying !== -1) {
+        audioFileDict[groupIndex][indexThatIsPlaying].pause();
+        audioFileDict[groupIndex][indexThatIsPlaying].currentTime = 0;
+      } else {
+        Object.values(audioFileDict).forEach((group) => {
+          Object.values(group).forEach((audio) => {
             if (!audio.paused) {
               audio.pause();
               audio.currentTime = 0;
             }
           });
+          // group.forEach((audio) => {
+          //   if (!audio.paused) {
+          //     audio.pause();
+          //     audio.currentTime = 0;
+          //   }
+          // });
         });
-        setAudioFileDict({ ...audioFileDict });
-        return;
-      }
-
-      audioFileDict[groupIndex][0].currentTime = 0;
-      if (!audioFileDict[groupIndex][0].paused) {
-        audioFileDict[groupIndex][0].pause();
-        setAudioFileDict({ ...audioFileDict });
-      } else {
         audioFileDict[groupIndex][0].play();
-        setAudioFileDict({ ...audioFileDict });
+        // set all but the last audio file to play the next audio file in the audioFileDict array
+        for (const key of Object.keys(audioFileDict[groupIndex])) {
+          audioFileDict[groupIndex][Number(key)].onended = () => {
+            if (audioFileDict[groupIndex][Number(key) + 1]) {
+              audioFileDict[groupIndex][Number(key) + 1].play();
+            }
+          };
+        }
+        // for (let i = 0; i < Object.keys(audioFileDict[groupIndex]).length - 1; i++) {
+        //   audioFileDict[groupIndex][i].onended = () => {
+        //     audioFileDict[groupIndex][i + 1].play();
+        //   };
+        // }
       }
 
-      audioFileDict[groupIndex][0].onended = () => {
-        setAudioFileDict({ ...audioFileDict });
-        // play the second audio file as well
-        if (audioFileDict[groupIndex][1]) {
-          audioFileDict[groupIndex][1].play();
-          setAudioFileDict({ ...audioFileDict });
-        }
-      }
+      setAudioFileDict({ ...audioFileDict });
+
+      //   console.log("indexThatIsPlaying", indexThatIsPlaying);
+
+      //   if (indexThatIsPlaying === -1) {
+      //     // play the audio that got currently fetched
+      //     audioFileDict[groupIndex][sourceFunctionIndex].play();
+      //   } else {
+      //     // if an audio is playing, play the next audio in the audioFileDict array if it exists
+      //     if (audioFileDict[groupIndex][indexThatIsPlaying + 1]) {
+      //       audioFileDict[groupIndex][indexThatIsPlaying].onended = () => {
+      //         audioFileDict[groupIndex][indexThatIsPlaying + 1].play();
+      //       };
+      //     }
+      //   }
+      // }
+
+      // const isAudioPlayingInAnyGroup = Object.values(audioFileDict).some(
+      //   (group) => group.some((audio) => !audio.paused),
+      // );
+      // if (isAudioPlayingInAnyGroup) {
+      //   Object.values(audioFileDict).forEach((group) => {
+      //     group.forEach((audio) => {
+      //       if (!audio.paused) {
+      //         audio.pause();
+      //         audio.currentTime = 0;
+      //       }
+      //     });
+      //   });
+      //   setAudioFileDict({ ...audioFileDict });
+      //   return;
+      // }
+
+      // audioFileDict[groupIndex][0].currentTime = 0;
+      // if (!audioFileDict[groupIndex][0].paused) {
+      //   audioFileDict[groupIndex][0].pause();
+      //   setAudioFileDict({ ...audioFileDict });
+      // } else {
+      //   audioFileDict[groupIndex][0].play();
+      //   setAudioFileDict({ ...audioFileDict });
+      // }
+
+      // audioFileDict[groupIndex][0].onended = () => {
+      //   setAudioFileDict({ ...audioFileDict });
+      //   // play the second audio file as well
+      //   if (audioFileDict[groupIndex][1]) {
+      //     audioFileDict[groupIndex][1].play();
+      //     setAudioFileDict({ ...audioFileDict });
+      //   }
+      // };
     }
   };
 
@@ -237,8 +325,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
-  const getTTS = async (text: string, groupIndex: number, sourceFunction: string) => {
+  const getTTS = async (
+    text: string,
+    groupIndex: number,
+    sourceFunction: string,
+  ) => {
     console.log("[LOG] getTTS");
+    // console.log("text", text);
+    // console.log("chatIslandContent[lang][welcomeMessage]", chatIslandContent[lang]["welcomeMessage"]);
     if (
       text === chatIslandContent[lang]["welcomeMessage"]
     ) {
@@ -246,12 +340,26 @@ export default function ChatIsland({ lang }: { lang: string }) {
         ? "./intro.wav"
         : "./intro-en.wav";
       const audio = new Audio(audioFile);
+      // audioFileDict[groupIndex] = {
+      //   0: audio,
+      // };
+      const sourceFunctionIndex = Number(sourceFunction.replace("stream", "")) -
+        1;
       if (audioFileDict[groupIndex]) {
-        audioFileDict[groupIndex].push(audio);
+        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
       } else {
-        audioFileDict[groupIndex] = [audio];
+        audioFileDict[groupIndex] = {};
+        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
       }
-      setAudioFileDict((prev) => ({ ...prev, [groupIndex]: audioFileDict[groupIndex] }));
+
+      // // // TRYING DIFFERENT SETTER
+      setAudioFileDict({ ...audioFileDict });
+
+      // // // WORKING SETTER
+      // setAudioFileDict((prev) => ({
+      //   ...prev,
+      //   [groupIndex]: audioFileDict[groupIndex],
+      // }));
       // setAudioFileDict((prev) => ({ ...prev, [groupIndex]: audio }));
       console.log(
         "[LOG] Audio file loaded into audioQueue with groupIndex:",
@@ -264,6 +372,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
 
     try {
+      // // FOR PRODUCTION WHEN TTS SERVER IS WORKING
+      console.log("text for /api/tts", text);
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: {
@@ -285,27 +395,93 @@ export default function ChatIsland({ lang }: { lang: string }) {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
-      if (audioFileDict[groupIndex]) {
-        audioFileDict[groupIndex].push(audio);
+      // // // // FOR TESTING AND DEBUGGING PURPOSE
+      // const audioFile = "./intro-en.wav";
+      // const audio = new Audio(audioFile);
+
+      // if (audioFileDict[groupIndex]) {
+      //   audioFileDict[groupIndex].push(audio);
+      // } else {
+      //   audioFileDict[groupIndex] = [audio];
+      // }
+
+      const startsWithStream = sourceFunction.startsWith("stream");
+
+      if (!audioFileDict[groupIndex]) {
+        audioFileDict[groupIndex] = {};
+      }
+
+      if (startsWithStream) {
+        const sourceFunctionIndex =
+          Number(sourceFunction.replace("stream", "")) - 1;
+        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
       } else {
-        audioFileDict[groupIndex] = [audio];
+        audioFileDict[groupIndex] = {
+          0: audio,
+        };
       }
-      if (sourceFunction === "stream1" && readAlways) {
-        audioFileDict[groupIndex][0].play();
-      }
-      if (sourceFunction === "stream2" && readAlways) {
-        if (audioFileDict[groupIndex][0].paused) {
-          audioFileDict[groupIndex][1].play();
+
+      if (startsWithStream && readAlways) {
+        const sourceFunctionIndex =
+          Number(sourceFunction.replace("stream", "")) - 1;
+
+        const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
+          .findIndex(
+            (audio) => !audio.paused,
+          );
+
+        console.log("indexThatIsPlaying", indexThatIsPlaying);
+
+        if (indexThatIsPlaying === -1) {
+          // play the audio that got currently fetched if no audio is playing
+          audioFileDict[groupIndex][sourceFunctionIndex].play();
         } else {
-          audioFileDict[groupIndex][0].onended = () => {
-            audioFileDict[groupIndex][1].play();
-          };
+          // // if an audio is playing, add an onended play next index in the audioFileDict for all but the last audio file
+          for (
+            let i = indexThatIsPlaying;
+            i <=
+              Math.max(...Object.keys(audioFileDict[groupIndex]).map(Number));
+            i++
+          ) {
+            if (audioFileDict[groupIndex][i]) {
+              audioFileDict[groupIndex][i].onended = () => {
+                audioFileDict[groupIndex][i + 1].play();
+              };
+            }
+          }
+
+          // // if an audio is playing, play the next audio in the audioFileDict array if it exists
+          // if (audioFileDict[groupIndex][indexThatIsPlaying + 1]) {
+          //   audioFileDict[groupIndex][indexThatIsPlaying].onended = () => {
+          //     audioFileDict[groupIndex][indexThatIsPlaying + 1].play();
+          //   };
+          // }
         }
       }
-      setAudioFileDict((prev) => ({ ...prev, [groupIndex]: audioFileDict[groupIndex] }));
+
+      // if (sourceFunction === "stream1" && readAlways) {
+      //   audioFileDict[groupIndex][0].play();
+      // }
+      // if (sourceFunction === "stream2" && readAlways) {
+      //   if (audioFileDict[groupIndex][0].paused) {
+      //     audioFileDict[groupIndex][1].play();
+      //   } else {
+      //     audioFileDict[groupIndex][0].onended = () => {
+      //       audioFileDict[groupIndex][1].play();
+      //     };
+      //   }
+      // }
+
+      setAudioFileDict({ ...audioFileDict });
+      // setAudioFileDict((prev) => ({
+      //   ...prev,
+      //   [groupIndex]: audioFileDict[groupIndex],
+      // }));
+
       if (sourceFunction === "handleOnSpeakAtGroupIndexAction") {
         handleOnSpeakAtGroupIndexAction(groupIndex);
       }
+
       // if (sourceFunction == "stream1") {
       //   audioFileDict[groupIndex].push(audio);
 
@@ -377,7 +553,18 @@ export default function ChatIsland({ lang }: { lang: string }) {
   };
 
   const startStream = (transcript: string, prevMessages?: Message[]) => {
+    // pause all ongoing audio files first
+    Object.values(audioFileDict).forEach((group) => {
+      Object.values(group).forEach((audio) => {
+        if (!audio.paused) {
+          audio.pause();
+        }
+        audio.currentTime = 0;
+      });
+    });
+    setAudioFileDict({ ...audioFileDict });
     const ongoingStream: string[] = [];
+    let currentAudioIndex = 1;
     let ttsFromFirstSentence = false;
     if (isStreamComplete) {
       setIsStreamComplete(false);
@@ -429,9 +616,25 @@ export default function ChatIsland({ lang }: { lang: string }) {
           ongoingStream.push(parsedData);
           if (ttsFromFirstSentence === false) {
             if (/(?<!\d)[.!?]/.test(parsedData)) {
-              getTTS(ongoingStream.join(""), newMessages.length - 1, "stream1");
+              getTTS(
+                ongoingStream.join(""),
+                newMessages.length - 1,
+                `stream${currentAudioIndex}`,
+              );
+              currentAudioIndex++;
               ongoingStream.length = 0;
               ttsFromFirstSentence = true;
+            }
+          } else {
+            // check for \n\n in the parsedData, e.g., ' \n\n', or '\n\n ' etc.
+            if (/\n\n/.test(parsedData)) {
+              getTTS(
+                ongoingStream.join(""),
+                newMessages.length - 1,
+                `stream${currentAudioIndex}`,
+              );
+              currentAudioIndex++;
+              ongoingStream.length = 0;
             }
           }
           setMessages((prevMessagesRoundTwo) => {
@@ -468,7 +671,11 @@ export default function ChatIsland({ lang }: { lang: string }) {
           console.log("Stream closed");
           setIsStreamComplete(true);
           setQuery("");
-          getTTS(ongoingStream.join(""), newMessages.length - 1, "stream2");
+          getTTS(
+            ongoingStream.join(""),
+            newMessages.length - 1,
+            `stream${currentAudioIndex}`,
+          );
           console.log("ONGOING STREAM: ", ongoingStream);
         },
       });
@@ -478,8 +685,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const toggleReadAlways = (value: boolean) => {
     setReadAlways(value);
     if (!value) {
-      Object.values(audioFileDict).forEach(group => {
-        group.forEach(audio => {
+      Object.values(audioFileDict).forEach((group) => {
+        Object.values(group).forEach((audio) => {
           if (!audio.paused) {
             audio.pause();
             audio.currentTime = 0;
@@ -502,6 +709,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       ]);
       setLocalStorageKeys([]);
       setCurrentChatSuffix("0");
+      stopAndResetAudio();
     }
   };
 
@@ -530,6 +738,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
           },
         ]);
       }
+      stopAndResetAudio();
     }
   };
 
@@ -622,7 +831,17 @@ export default function ChatIsland({ lang }: { lang: string }) {
           class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
           onClick={() => deleteCurrentChat()}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="inline-block" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z"/></svg>{chatIslandContent[lang]["deleteCurrentChat"]}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="inline-block"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            fill="#000000"
+          >
+            <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
+          </svg>
+          {chatIslandContent[lang]["deleteCurrentChat"]}
         </button>
       )}
       {Object.keys(localStorageKeys).length > 0 && (
@@ -630,7 +849,17 @@ export default function ChatIsland({ lang }: { lang: string }) {
           class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
           onClick={() => deleteAllChats()}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="inline-block" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z"/></svg>{chatIslandContent[lang]["deleteAllChats"]}
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="inline-block"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            fill="#000000"
+          >
+            <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
+          </svg>
+          {chatIslandContent[lang]["deleteAllChats"]}
         </button>
       )}
       {Object.keys(localStorageKeys).length > 0 && (
@@ -638,7 +867,16 @@ export default function ChatIsland({ lang }: { lang: string }) {
           class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
           onClick={() => saveChatsToLocalFile()}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" class="inline" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/></svg>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="inline"
+            height="24px"
+            viewBox="0 -960 960 960"
+            width="24px"
+            fill="#000000"
+          >
+            <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+          </svg>
         </button>
       )}
       <input
@@ -652,7 +890,16 @@ export default function ChatIsland({ lang }: { lang: string }) {
         onClick={() =>
           document.getElementById("restoreChatFromLocalFile")?.click()}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" class="inline" height="24px" viewBox="0 -960 960 960" width="24px" fill="#000000"><path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="inline"
+          height="24px"
+          viewBox="0 -960 960 960"
+          width="24px"
+          fill="#000000"
+        >
+          <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
+        </svg>
       </button>
       <ChatTemplate
         lang={lang}

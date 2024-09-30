@@ -1,11 +1,24 @@
+import { JSX } from "preact/jsx-runtime";
 import { menuContent } from "../internalization/content.ts";
 
-export default function Menu({ lang }: { lang: string }) {
+/**
+ * Menu Component
+ * 
+ * This component renders the navigation menu and language selector for the application.
+ * 
+ * @param {Object} props - The properties object.
+ * @param {string} props.lang - The language code for content localization.
+ * 
+ * @returns {JSX.Element} The rendered menu component.
+ */
+export default function Menu({ lang }: { lang: string }): JSX.Element {
+  // Define menu items with localized names and URLs
   const menuItems = [
     { name: menuContent[lang]["about"], href: "/about?lang=" + lang },
     { name: menuContent[lang]["imprint"], href: "https://laion.ai/impressum" },
   ];
 
+  // Define available languages with their codes and symbols
   const languages = [
     { name: "Deutsch", code: "de", symbol: "🇩🇪" },
     { name: "English", code: "en", symbol: "🇬🇧" },
@@ -13,6 +26,7 @@ export default function Menu({ lang }: { lang: string }) {
 
   return (
     <div class="absolute flex text-xs space-x-4 top-0 right-0 left-0 m-4 justify-end">
+      {/* Language Selector */}
       <select
         class="bg-transparent"
         onChange={(e) =>
@@ -28,6 +42,8 @@ export default function Menu({ lang }: { lang: string }) {
           </option>
         ))}
       </select>
+      
+      {/* Menu Items */}
       {menuItems.map((item) => (
         <a
           href={item.href}

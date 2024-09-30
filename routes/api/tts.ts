@@ -5,8 +5,11 @@ const STYLE_TTS_SERVER_URL = Deno.env.get("SERVER_URL") || "";
 const SERVER_API_KEY = Deno.env.get("SERVER_API_KEY") || "";
 
 async function textToSpeech(text: string, clientId: string, voice: string): Promise<Buffer | null> {
-    console.log("textToSpeech", text);
+    const boldTextRegex = /\*\*(.*?)\*\*/g;
+    text = String(text).replace(boldTextRegex, "$1");
+
     console.log("clientId", clientId);
+    console.log("textToSpeech", text);
     try {
         const startTime = Date.now();
         // Send the text to the server
