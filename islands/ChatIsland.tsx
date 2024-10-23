@@ -15,9 +15,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const [clientId, setClientId] = useState<string | null>("");
   const [localStorageKeys, setLocalStorageKeys] = useState([] as string[]);
   const [currentChatSuffix, setCurrentChatSuffix] = useState("0");
-  const [audioFileDict, setAudioFileDict] = useState<
-    Record<number, Record<number, HTMLAudioElement>>
-  >({});
+  const [audioFileDict, setAudioFileDict] = useState<AudioFileDict>({});
   const [resetTranscript, setResetTranscript] = useState(0);
   const [readAlways, setReadAlways] = useState(true);
   const [query, setQuery] = useState("");
@@ -37,6 +35,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     },
   ] as Message[]);
 
+  
+  // Start the chat with the welcome message
   useEffect(() => {
     if (IS_BROWSER) {
       let localStorageKeys: string[] = Object.keys(localStorage).filter((key) =>
@@ -66,18 +66,22 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, []);
 
+
+  // stopAndResetAudio stops all audio files and resets their currentTime to 0
   const stopAndResetAudio = () => {
     Object.values(audioFileDict).forEach((group) => {
-      Object.values(group).forEach((audio) => {
-        if (!audio.paused) {
-          audio.pause();
-          audio.currentTime = 0;
+      // deno-lint-ignore no-explicit-any
+      Object.values(group).forEach((item: any) => { // Changed from (audio)
+        if (!item.audio.paused) { // Changed from !audio.paused
+          item.audio.pause(); // Changed from audio.pause()
+          item.audio.currentTime = 0; // Changed from audio.currentTime
         }
       });
     });
     setAudioFileDict({});
   };
 
+  // This useEffect is responsible for saving the last message from the buddy to localStorage
   useEffect(() => {
     if (IS_BROWSER) {
       if (isStreamComplete) {
@@ -118,6 +122,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, [isStreamComplete]);
 
+  // This useEffect is responsible for scrolling to the bottom of the chat window when a new message is added
   useEffect(() => {
     // Only proceed if we're not already scrolling
     const currentPosition = globalThis.innerHeight +
@@ -148,6 +153,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, [messages]);
 
+  // This useEffect is responsible for loading the messages from localStorage when the currentChatSuffix changes
   useEffect(() => {
     // load messages from localStorage if they exist, else start with the default introductory message
     if (IS_BROWSER) {
@@ -171,19 +177,43 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, [currentChatSuffix]);
 
+  // This useEffect is responsible for playing the audio files in the audioFileDict
   useEffect(() => {
     console.log("[LOG] audioFileDict useEffect", audioFileDict);
-    for (const key in audioFileDict) {
-      // get the highest key of audioFileDict[key]
-      const highestKey = Math.max(
-        ...Object.keys(audioFileDict[key]).map(Number),
-      );
-      audioFileDict[key][highestKey].onended = () => {
-        setAudioFileDict({ ...audioFileDict });
-      };
+
+    if (readAlways) {
+      for (const groupIndex in audioFileDict) {
+
+        const lowestKeyThatHasPlayedFalse = Number(Object.entries(audioFileDict[groupIndex]).find(([_, item]) => !item.played)?.[0]);
+
+        console.log("lowestKeyThatHasPlayedFalse", lowestKeyThatHasPlayedFalse);
+
+        // check if one index below lowestKeyThatHasPlayedFalse has played True
+        const hasMemberBelowThatWasPlayed =
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse - 1] &&
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse - 1].played &&
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse - 1].audio.paused;
+
+        console.log("hasMemberBelowThatWasPlayed", hasMemberBelowThatWasPlayed);
+
+        if (lowestKeyThatHasPlayedFalse === 0 || hasMemberBelowThatWasPlayed) {
+          // play the audio that got currently fetched
+          console.log("Playing audio at index: ", lowestKeyThatHasPlayedFalse);
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse].audio.play();
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse].played = true;
+          audioFileDict[groupIndex][lowestKeyThatHasPlayedFalse].audio.onended =
+            () => {
+              setAudioFileDict({ ...audioFileDict });
+            };
+          setAudioFileDict({ ...audioFileDict });
+        }
+      }
     }
+
   }, [audioFileDict]);
 
+  // This useEffect is responsible for playing the audio files in the audioFileDict.
+  // It is fired when the loudspeaker icon is clicked for the respected groupIndex in ChatTemplate
   const handleOnSpeakAtGroupIndexAction = (groupIndex: number) => {
     console.log("[LOG] handleOnSpeakAtGroupIndexAction", groupIndex);
     if (!audioFileDict[groupIndex]) {
@@ -202,104 +232,40 @@ export default function ChatIsland({ lang }: { lang: string }) {
       );
       return;
     } else {
-      // const [audioFileDict, setAudioFileDict] = useState<Record<number, Record<number, HTMLAudioElement>>>({}); // this is my new audioFileDict
-      // const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
-      // .findIndex(
-      //   (audio) => !audio.paused,
-      // );
 
-      const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
-        .findIndex(
-          (audio) => !audio.paused,
-        );
+      const indexThatIsPlaying = Object.entries(audioFileDict[groupIndex])
+        .findIndex(([_, item]) => !item.audio.paused);
 
       if (indexThatIsPlaying !== -1) {
-        audioFileDict[groupIndex][indexThatIsPlaying].pause();
-        audioFileDict[groupIndex][indexThatIsPlaying].currentTime = 0;
+        audioFileDict[groupIndex][indexThatIsPlaying].audio.pause();
+        audioFileDict[groupIndex][indexThatIsPlaying].audio.currentTime = 0;
       } else {
         Object.values(audioFileDict).forEach((group) => {
-          Object.values(group).forEach((audio) => {
-            if (!audio.paused) {
-              audio.pause();
-              audio.currentTime = 0;
+          // deno-lint-ignore no-explicit-any
+          Object.values(group).forEach((item: any) => {
+            if (!item.audio.paused) {
+              item.audio.pause();
+              item.audio.currentTime = 0;
             }
           });
-          // group.forEach((audio) => {
-          //   if (!audio.paused) {
-          //     audio.pause();
-          //     audio.currentTime = 0;
-          //   }
-          // });
         });
-        audioFileDict[groupIndex][0].play();
+        audioFileDict[groupIndex][0].audio.play();
         // set all but the last audio file to play the next audio file in the audioFileDict array
         for (const key of Object.keys(audioFileDict[groupIndex])) {
-          audioFileDict[groupIndex][Number(key)].onended = () => {
+          audioFileDict[groupIndex][Number(key)].audio.onended = () => {
             if (audioFileDict[groupIndex][Number(key) + 1]) {
-              audioFileDict[groupIndex][Number(key) + 1].play();
+              audioFileDict[groupIndex][Number(key) + 1].audio.play();
             }
           };
         }
-        // for (let i = 0; i < Object.keys(audioFileDict[groupIndex]).length - 1; i++) {
-        //   audioFileDict[groupIndex][i].onended = () => {
-        //     audioFileDict[groupIndex][i + 1].play();
-        //   };
-        // }
       }
 
       setAudioFileDict({ ...audioFileDict });
-
-      //   console.log("indexThatIsPlaying", indexThatIsPlaying);
-
-      //   if (indexThatIsPlaying === -1) {
-      //     // play the audio that got currently fetched
-      //     audioFileDict[groupIndex][sourceFunctionIndex].play();
-      //   } else {
-      //     // if an audio is playing, play the next audio in the audioFileDict array if it exists
-      //     if (audioFileDict[groupIndex][indexThatIsPlaying + 1]) {
-      //       audioFileDict[groupIndex][indexThatIsPlaying].onended = () => {
-      //         audioFileDict[groupIndex][indexThatIsPlaying + 1].play();
-      //       };
-      //     }
-      //   }
-      // }
-
-      // const isAudioPlayingInAnyGroup = Object.values(audioFileDict).some(
-      //   (group) => group.some((audio) => !audio.paused),
-      // );
-      // if (isAudioPlayingInAnyGroup) {
-      //   Object.values(audioFileDict).forEach((group) => {
-      //     group.forEach((audio) => {
-      //       if (!audio.paused) {
-      //         audio.pause();
-      //         audio.currentTime = 0;
-      //       }
-      //     });
-      //   });
-      //   setAudioFileDict({ ...audioFileDict });
-      //   return;
-      // }
-
-      // audioFileDict[groupIndex][0].currentTime = 0;
-      // if (!audioFileDict[groupIndex][0].paused) {
-      //   audioFileDict[groupIndex][0].pause();
-      //   setAudioFileDict({ ...audioFileDict });
-      // } else {
-      //   audioFileDict[groupIndex][0].play();
-      //   setAudioFileDict({ ...audioFileDict });
-      // }
-
-      // audioFileDict[groupIndex][0].onended = () => {
-      //   setAudioFileDict({ ...audioFileDict });
-      //   // play the second audio file as well
-      //   if (audioFileDict[groupIndex][1]) {
-      //     audioFileDict[groupIndex][1].play();
-      //     setAudioFileDict({ ...audioFileDict });
-      //   }
-      // };
     }
   };
 
+  // This function is responsible for uploading the messages from the chatIsland to the messages array
+  // It is fired when the user uploads a file in the chat
   const handleUploadActionToMessages = (uploadedMessages: Message[]) => {
     console.log("From hanldeUploadActionToMessages");
     console.log(uploadedMessages);
@@ -310,6 +276,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     textarea!.focus();
   };
 
+  // This function is responsible for fetching the client ID from the server
+  // It is used in the getTTS function
   const getClientId = async () => {
     const response = await fetch("/api/getClientId", {
       method: "POST",
@@ -325,14 +293,20 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for fetching the TTS audio files from the server
+  // It is used in the startStream function, where the incoming messages are split into sentences in 
+  // the following way: 
+  // --> 1st sentence of the 1st section (if it's > 20 characters) 
+  // --> end of 1st abstract 
+  // --> 2nd section
+  // --> 3rd section etc.
+  // This is done to help faster loading of the audio files
   const getTTS = async (
     text: string,
     groupIndex: number,
     sourceFunction: string,
   ) => {
     console.log("[LOG] getTTS");
-    // console.log("text", text);
-    // console.log("chatIslandContent[lang][welcomeMessage]", chatIslandContent[lang]["welcomeMessage"]);
     if (
       text === chatIslandContent[lang]["welcomeMessage"]
     ) {
@@ -340,27 +314,23 @@ export default function ChatIsland({ lang }: { lang: string }) {
         ? "./intro.wav"
         : "./intro-en.wav";
       const audio = new Audio(audioFile);
-      // audioFileDict[groupIndex] = {
-      //   0: audio,
-      // };
       const sourceFunctionIndex = Number(sourceFunction.replace("stream", "")) -
-        1;
+        1 || 0;
       if (audioFileDict[groupIndex]) {
-        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
+        audioFileDict[groupIndex][sourceFunctionIndex] = {
+          audio: audio,
+          played: false,
+        };
       } else {
         audioFileDict[groupIndex] = {};
-        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
+        audioFileDict[groupIndex][sourceFunctionIndex] = {
+          audio: audio,
+          played: false,
+        };
       }
 
-      // // // TRYING DIFFERENT SETTER
       setAudioFileDict({ ...audioFileDict });
 
-      // // // WORKING SETTER
-      // setAudioFileDict((prev) => ({
-      //   ...prev,
-      //   [groupIndex]: audioFileDict[groupIndex],
-      // }));
-      // setAudioFileDict((prev) => ({ ...prev, [groupIndex]: audio }));
       console.log(
         "[LOG] Audio file loaded into audioQueue with groupIndex:",
         groupIndex,
@@ -373,7 +343,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
     try {
       // // FOR PRODUCTION WHEN TTS SERVER IS WORKING
-      console.log("text for /api/tts", text);
+      console.log("text for /api/tts", sourceFunction, text);
       const response = await fetch("/api/tts", {
         method: "POST",
         headers: {
@@ -382,6 +352,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
         body: JSON.stringify({
           text: text,
           clientId: clientId,
+          textPosition: sourceFunction,
           voice: lang === "en" ? "Stefanie" : "Florian",
         }),
       });
@@ -395,16 +366,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
       const audioUrl = URL.createObjectURL(audioBlob);
       const audio = new Audio(audioUrl);
 
-      // // // // FOR TESTING AND DEBUGGING PURPOSE
-      // const audioFile = "./intro-en.wav";
-      // const audio = new Audio(audioFile);
-
-      // if (audioFileDict[groupIndex]) {
-      //   audioFileDict[groupIndex].push(audio);
-      // } else {
-      //   audioFileDict[groupIndex] = [audio];
-      // }
-
       const startsWithStream = sourceFunction.startsWith("stream");
 
       if (!audioFileDict[groupIndex]) {
@@ -414,89 +375,28 @@ export default function ChatIsland({ lang }: { lang: string }) {
       if (startsWithStream) {
         const sourceFunctionIndex =
           Number(sourceFunction.replace("stream", "")) - 1;
-        audioFileDict[groupIndex][sourceFunctionIndex] = audio;
+        audioFileDict[groupIndex][sourceFunctionIndex] = {
+          audio: audio,
+          played: false,
+        };
       } else {
         audioFileDict[groupIndex] = {
-          0: audio,
+          0: { audio: audio, played: true },
         };
       }
 
-      if (startsWithStream && readAlways) {
-        const sourceFunctionIndex =
-          Number(sourceFunction.replace("stream", "")) - 1;
-
-        const indexThatIsPlaying = Object.values(audioFileDict[groupIndex])
-          .findIndex(
-            (audio) => !audio.paused,
-          );
-
-        console.log("indexThatIsPlaying", indexThatIsPlaying);
-
-        if (indexThatIsPlaying === -1) {
-          // play the audio that got currently fetched if no audio is playing
-          audioFileDict[groupIndex][sourceFunctionIndex].play();
-        } else {
-          // // if an audio is playing, add an onended play next index in the audioFileDict for all but the last audio file
-          for (
-            let i = indexThatIsPlaying;
-            i <=
-              Math.max(...Object.keys(audioFileDict[groupIndex]).map(Number));
-            i++
-          ) {
-            if (audioFileDict[groupIndex][i]) {
-              audioFileDict[groupIndex][i].onended = () => {
-                audioFileDict[groupIndex][i + 1].play();
-              };
-            }
-          }
-
-          // // if an audio is playing, play the next audio in the audioFileDict array if it exists
-          // if (audioFileDict[groupIndex][indexThatIsPlaying + 1]) {
-          //   audioFileDict[groupIndex][indexThatIsPlaying].onended = () => {
-          //     audioFileDict[groupIndex][indexThatIsPlaying + 1].play();
-          //   };
-          // }
-        }
-      }
-
-      // if (sourceFunction === "stream1" && readAlways) {
-      //   audioFileDict[groupIndex][0].play();
-      // }
-      // if (sourceFunction === "stream2" && readAlways) {
-      //   if (audioFileDict[groupIndex][0].paused) {
-      //     audioFileDict[groupIndex][1].play();
-      //   } else {
-      //     audioFileDict[groupIndex][0].onended = () => {
-      //       audioFileDict[groupIndex][1].play();
-      //     };
-      //   }
-      // }
-
       setAudioFileDict({ ...audioFileDict });
-      // setAudioFileDict((prev) => ({
-      //   ...prev,
-      //   [groupIndex]: audioFileDict[groupIndex],
-      // }));
 
       if (sourceFunction === "handleOnSpeakAtGroupIndexAction") {
         handleOnSpeakAtGroupIndexAction(groupIndex);
       }
 
-      // if (sourceFunction == "stream1") {
-      //   audioFileDict[groupIndex].push(audio);
-
-      // }
-      // if (sourceFunction == "stream2") {
-      //   streamFirst.current.onended(() => {
-      //     streamSecond.current = audio;
-      //     streamSecond.current.play();
-      //   });
-      // }
     } catch (error) {
       console.error("Error fetching TTS:", error);
     }
   };
 
+  // This function is responsible for editing the message in the chat at the given groupIndex
   const handleEditAction = (groupIndex: number) => {
     const lastMessage = Array.isArray(messages[groupIndex])
       ? messages[groupIndex][0]
@@ -511,16 +411,20 @@ export default function ChatIsland({ lang }: { lang: string }) {
     textarea!.focus();
   };
 
+  // This function is responsible for adding the uploaded images to the images array
   const handleImagesUploaded = (newImages: Image[]) => {
     setImages((prevImages) => [...prevImages, ...newImages]);
   };
 
+  // This function is responsible for changing the images array in the chat
   const handleImageChange = (images: Image[]) => {
     console.log("Images from ChatIsland: ", images);
-
     setImages(images);
   };
 
+  // This function is responsible for refreshing the chat at the given groupIndex
+  // A new stream is started from the beginning of the message at the given groupIndex
+  // It can be used to get a new response from the assistant for the same prompt / message history
   const handleRefreshAction = (groupIndex: number) => {
     if (groupIndex > 0 && groupIndex <= messages.length) {
       const slicedMessages = messages.slice(0, groupIndex - 1) as Message[];
@@ -535,12 +439,13 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for starting a new chat with 
+  // the system message "welcomeMessage" in the chatIslandContent
   const startNewChat = () => {
     const maxValueInChatSuffix = Math.max(
       ...localStorageKeys.map((key) => Number(key.slice(10))),
     );
     const newChatSuffix = String(Number(maxValueInChatSuffix) + 1);
-    // console.log([...localStorageKeys, "bude-chat-" + newChatSuffix]);
     setMessages([
       {
         "role": "assistant",
@@ -552,14 +457,19 @@ export default function ChatIsland({ lang }: { lang: string }) {
     setCurrentChatSuffix(newChatSuffix);
   };
 
+  // This is the central function of the chatIsland, that is responsible for starting a new stream
+  // It is fired when the user presses the "Enter" key in the textarea or clicks the send button
+  // It sends the user message to the server and receives a response from the assistant as a stream
+  // The stream is split into parts as outlined in the getTTS function section above
   const startStream = (transcript: string, prevMessages?: Message[]) => {
     // pause all ongoing audio files first
     Object.values(audioFileDict).forEach((group) => {
-      Object.values(group).forEach((audio) => {
-        if (!audio.paused) {
-          audio.pause();
+      // deno-lint-ignore no-explicit-any
+      Object.values(group).forEach((item: any) => {
+        if (!item.audio.paused) {
+          item.audio.pause();
         }
-        audio.currentTime = 0;
+        item.audio.currentTime = 0;
       });
     });
     setAudioFileDict({ ...audioFileDict });
@@ -615,7 +525,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
           const parsedData = JSON.parse(ev.data);
           ongoingStream.push(parsedData);
           if (ttsFromFirstSentence === false) {
-            if (/(?<!\d)[.!?]/.test(parsedData)) {
+            if (/(?<!\d)[.!?]/.test(parsedData) && parsedData.length > 20) {
               getTTS(
                 ongoingStream.join(""),
                 newMessages.length - 1,
@@ -682,20 +592,25 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for toggling the readAlways state
+  // When readAlways is true, the audio files are played automatically
+  // when they are fetched from the server
   const toggleReadAlways = (value: boolean) => {
     setReadAlways(value);
     if (!value) {
       Object.values(audioFileDict).forEach((group) => {
-        Object.values(group).forEach((audio) => {
-          if (!audio.paused) {
-            audio.pause();
-            audio.currentTime = 0;
+        // deno-lint-ignore no-explicit-any
+        Object.values(group).forEach((item: any) => {
+          if (!item.audio.paused) {
+            item.audio.pause();
+            item.audio.currentTime = 0;
           }
         });
       });
     }
   };
 
+  // This function is responsible for deleting all chats from the localStorage and the message history
   const deleteAllChats = () => {
     if (IS_BROWSER) {
       localStorage.clear();
@@ -713,12 +628,13 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for deleting the current chat from the localStorage and the message history
   const deleteCurrentChat = () => {
     if (IS_BROWSER) {
       if (localStorageKeys.length > 1) {
         localStorage.removeItem("bude-chat-" + currentChatSuffix);
 
-        const nextChatSuffix = localStorageKeys.filter((key) =>
+        const nextChatSuffix = localStorageKeys.filter((key: string) =>
           key !== "bude-chat-" + currentChatSuffix
         )[0].slice(10);
 
@@ -742,6 +658,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for saving the chats to a local file
   const saveChatsToLocalFile = () => {
     if (IS_BROWSER) {
       // deno-lint-ignore no-explicit-any
@@ -760,6 +677,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // This function is responsible for restoring the chats from a local, uploaded file
   // deno-lint-ignore no-explicit-any
   const restoreChatsFromLocalFile = (e: any) => {
     if (IS_BROWSER) {
@@ -802,6 +720,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // The following html code is the main structure of the chatIsland
   return (
     <div class="w-full">
       {localStorageKeys.sort().map((key) => {

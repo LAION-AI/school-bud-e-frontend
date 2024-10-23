@@ -83,6 +83,59 @@ School Bud-E is an intelligent and empathetic learning assistant designed to rev
 
 Then log into localhost:8000 in your browser.
 
+## Interaction Between API Routes and Chat Components
+
+This section describes how the various API routes and chat components interact within the application.
+
+### API Routes
+
+- **`tts.ts`**:
+  - **Description**: Handles Text-to-Speech (TTS) requests. It receives text input and returns an audio response.
+  - **Endpoint**: `/api/tts`
+  - **Example Usage**: Fetching audio data for a given text input.
+
+- **`chat.ts`**:
+  - **Description**: Manages chat messages. It processes incoming chat messages and returns appropriate responses.
+  - **Endpoint**: `/api/chat`
+  - **Example Usage**: Sending and receiving chat messages.
+
+- **`getClientId.ts`**:
+  - **Description**: Provides a unique client ID for each user session.
+  - **Endpoint**: `/api/getClientId`
+  - **Example Usage**: Generating a unique identifier for a new chat session.
+
+### Chat Components
+
+- **`ChatIsland.tsx`**:
+  - **Description**: Responsible for rendering the chat interface. It interacts with the chat API to send and receive messages.
+  - **Usage**: Uses the client ID obtained from the `getClientId` API to manage user sessions.
+  - **Example Usage**: Displaying the chat UI and handling user interactions.
+
+- **`ChatTemplate.tsx`**:
+  - **Description**: Serves as a template for the chat interface. It defines the layout and structure of the chat UI.
+  - **Usage**: Used by `ChatIsland.tsx` to render the chat interface consistently.
+  - **Example Usage**: Providing a consistent layout for the chat interface.
+
+### Interaction Flow
+
+1. When a user opens the chat interface, `ChatIsland.tsx` requests a unique client ID from the `getClientId` API.
+2. The user sends a chat message through the chat interface rendered by `ChatIsland.tsx`.
+3. `ChatIsland.tsx` sends the message to the chat API endpoint.
+4. The chat API processes the message and returns a **streaming** response.
+5. `ChatIsland.tsx` updates the chat interface with the response reflected in `ChatTemplate.tsx`.
+6. If the user requests a TTS response, `ChatIsland.tsx` sends the text to the `tts` API endpoint.
+7. The `tts` API returns the audio data, which is then played back to the user.
+
+By following this interaction flow, the application ensures a seamless chat experience for users.
+
+For more details, refer to the following files:
+
+- `routes/api/tts.ts`
+- `routes/api/chat.ts`
+- `routes/api/getClientId.ts`
+- `islands/ChatIsland.tsx`
+- `components/ChatTemplate.tsx`
+
 ## 🤝 Contributing
 
 We welcome contributions to School Bud-E! Please join our [Discord server](https://discord.com/invite/eq3cAMZtCC) or contact us at <contact@laion.ai> to get involved.
