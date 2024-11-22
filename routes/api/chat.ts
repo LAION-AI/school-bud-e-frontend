@@ -6,9 +6,11 @@ import { chatContent } from "../../internalization/content.ts";
 // const API_URL = Deno.env.get("API_URL_TOGETHER") || "";
 // const API_KEY = Deno.env.get("API_KEY_TOGETHER") || "";
 // const API_MODEL = "MISTRALAI/MIXTRAL-8X22B-INSTRUCT-V0.1";
-const API_URL = Deno.env.get('API_URL') || "";
-const API_KEY = Deno.env.get('API_KEY') || "";
-const API_MODEL = Deno.env.get('API_MODEL') || "";
+const API_URL = Deno.env.get("API_URL") || "";
+const API_KEY = Deno.env.get("API_KEY") || "";
+const API_MODEL = Deno.env.get("API_MODEL") || "";
+
+console.log(API_MODEL);
 
 interface Message {
   role: string;
@@ -16,7 +18,8 @@ interface Message {
 }
 
 async function getModelResponseStream(messages: Message[]) {
-  let isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
+  let isLastMessageAssistant =
+    messages[messages.length - 1].role === "assistant";
   while (isLastMessageAssistant) {
     messages.pop();
     isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
@@ -35,11 +38,11 @@ async function getModelResponseStream(messages: Message[]) {
     }),
   };
 
-  console.log("body", {
-    "messages": messages,
-    "model": API_MODEL,
-    "stream": true,
-  });
+  // console.log("body", {
+  //   "messages": messages,
+  //   "model": API_MODEL,
+  //   "stream": true,
+  // });
   const response = await fetch(API_URL, fetchOptions);
 
   if (!response.body) {
@@ -134,6 +137,7 @@ export const handler: Handlers = {
       content: chatContent[payload.lang].systemPrompt,
     });
 
+    console.log("Model used: ", API_MODEL);
     console.log("payload messages", payload.messages);
     return getModelResponseStream(payload.messages);
   },

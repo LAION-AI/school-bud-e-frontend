@@ -2,6 +2,25 @@ import { useEffect, useState } from "preact/hooks";
 
 import { chatTemplateContent } from "../internalization/content.ts";
 
+function downloadAudioFiles(
+  items: { [key: string]: { audio: HTMLAudioElement } },
+) {
+  let c = 0;
+  const timestamp = new Date().getTime();
+  // in format "YYYY-MM-DD-HH-MM-SS"
+  const nicelyFormattedTimestamp = new Date(timestamp).toISOString().slice(0, 19)
+    .replace(/[-:]/g, "-");
+  for (const key in items) {
+    const audio = items[key].audio;
+    const url = audio.src;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audio-${c}-${nicelyFormattedTimestamp}.wav`;
+    a.click();
+    c += 1;
+  }
+}
+
 function ChatTemplate(
   {
     lang,
@@ -60,7 +79,9 @@ function ChatTemplate(
         class={`absolute top-0 left-0 m-4 text-xs align-middle text-gray-600 hover:text-gray-800 transition-colors`}
         onClick={() => onToggleReadAlwaysAction()}
       >
-        {readAlways ? chatTemplateContent[lang]["readOutText"] : chatTemplateContent[lang]["silent"]}
+        {readAlways
+          ? chatTemplateContent[lang]["readOutText"]
+          : chatTemplateContent[lang]["silent"]}
       </button>
       {messages?.map((item, groupIndex) => {
         return (
@@ -91,7 +112,11 @@ function ChatTemplate(
               {item.role !== "user" && (
                 <button onClick={() => onSpeakAtGroupIndexAction(groupIndex)}>
                   {!audioFileDict[groupIndex] ||
-                      !Object.values(audioFileDict[groupIndex]).some((audioFile) => !audioFile.paused)
+                      !Object.values(audioFileDict[groupIndex]).some((
+                        audioFile,
+                      ) =>
+                        !audioFile.audio.paused
+                      )
                     ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -114,6 +139,23 @@ function ChatTemplate(
                     )}
                 </button>
               )}
+              {item.role !== "user" && audioFileDict[groupIndex] &&
+                Object.keys(audioFileDict[groupIndex]).length > 0 && (
+                  // download audio file audioFileDict[groupIndex][0].audio.src to local files
+                  <button
+                    onClick={() =>
+                      downloadAudioFiles(audioFileDict[groupIndex])}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      style="margin-left: 0.5rem; width: 24px; height: 24px;"
+                      viewBox="0 -960 960 960"
+                      fill="currentColor"
+                    >
+                      <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+                    </svg>
+                  </button>
+                )}
             </span>
             <div
               class={`message mt-1 whitespace-pre-wrap [overflow-wrap:anywhere] ${

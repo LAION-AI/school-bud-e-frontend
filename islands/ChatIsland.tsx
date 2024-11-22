@@ -11,11 +11,14 @@ import ImageUploadButton from "../components/ImageUploadButton.tsx";
 import VoiceRecordButton from "../components/VoiceRecordButton.tsx";
 
 // Necessary for streaming service
-import { fetchEventSource } from "https://esm.sh/@microsoft/fetch-event-source@2.0.1";
+import { fetchEventSource, EventSourceMessage } from "https://esm.sh/@microsoft/fetch-event-source@2.0.1";
 import { useEffect, useState } from "preact/hooks";
 
 // Internalization
 import { chatIslandContent } from "../internalization/content.ts";
+
+// // Import necessary types from Preact
+// import { JSX } from 'preact';
 
 // ###############
 // ## / IMPORTS ##
@@ -24,12 +27,18 @@ import { chatIslandContent } from "../internalization/content.ts";
 class RetriableError extends Error {}
 class FatalError extends Error {}
 
+// Define the AudioItem interface if not already defined
+interface AudioItem {
+  audio: HTMLAudioElement;
+  played: boolean;
+}
+
+// Define the AudioFileDict type if not already defined
+type AudioFileDict = Record<number, Record<number, AudioItem>>;
+
 export default function ChatIsland({ lang }: { lang: string }) {
   // Necessary to load the chat messages from localStorage only once
   const [firstLoad, setFirstLoad] = useState(true);
-
-  // clientId is necessary to retrieve audio files from the TTS server
-  const [clientId, setClientId] = useState<string | null>("");
 
   // Multiple chats can be stored in localStorage, each chat is identified by a unique suffix
   const [query, setQuery] = useState("");
@@ -92,9 +101,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
     setLocalStorageKeys(localStorageKeys);
     setMessages(localStorageMessages);
     setCurrentChatSuffix(currentChatSuffix);
-
-    // getting a client id
-    getClientId();
   }, []);
 
   // 2. useEffect [isStreamComplete]
@@ -226,7 +232,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       }
 
       if (stopList.includes(Number(groupIndex))) {
-        Object.values(groupAudios).forEach((item) => {
+        (Object.values(groupAudios) as AudioItem[]).forEach((item) => {
           if (!(item as AudioItem).audio.paused) {
             (item as AudioItem).audio.pause();
             (item as AudioItem).audio.currentTime = 0;
@@ -268,7 +274,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
   ) => {
     audio.play();
     audioFileDict[groupIndex][audioIndex].played = true;
-    audio.onended = () => setAudioFileDict({ ...audioFileDict });
+    
+    // Add onended handler to update state when audio finishes
+    audio.onended = () => {
+      audioFileDict[groupIndex][audioIndex].played = true;
+      setAudioFileDict({ ...audioFileDict }); // Force state update
+    };
+    
+    // Force immediate state update when starting playback
     setAudioFileDict({ ...audioFileDict });
   };
 
@@ -333,29 +346,52 @@ export default function ChatIsland({ lang }: { lang: string }) {
         .findIndex(([_, item]) => !item.audio.paused);
 
       if (indexThatIsPlaying !== -1) {
-        audioFileDict[groupIndex][indexThatIsPlaying].audio.pause();
-        audioFileDict[groupIndex][indexThatIsPlaying].audio.currentTime = 0;
+        // Pause current audio
+        // audioFileDict[groupIndex][indexThatIsPlaying].audio.pause();
+        // audioFileDict[groupIndex][indexThatIsPlaying].audio.currentTime = 0;
+
+        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
+          (Object.values(group) as AudioItem[]).forEach((item) => {
+            if (!item.audio.paused) {
+              item.audio.pause();
+              item.audio.currentTime = 0;
+            }
+          });
+        })
+
         setStopList([...stopList, groupIndex]);
+        // Force state update after pausing
+        setAudioFileDict({ ...audioFileDict });
       } else {
         setStopList(stopList.filter((item) => item !== groupIndex));
-        Object.values(audioFileDict).forEach((group) => {
-          // deno-lint-ignore no-explicit-any
-          Object.values(group).forEach((item: any) => {
+        // Stop all other playing audio
+        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
+          (Object.values(group) as AudioItem[]).forEach((item) => {
             if (!item.audio.paused) {
               item.audio.pause();
               item.audio.currentTime = 0;
             }
           });
         });
-        audioFileDict[groupIndex][0].audio.play();
-        // set all but the last audio file to play the next audio file in the audioFileDict array
-        for (const key of Object.keys(audioFileDict[groupIndex])) {
-          audioFileDict[groupIndex][Number(key)].audio.onended = () => {
-            if (audioFileDict[groupIndex][Number(key) + 1]) {
-              audioFileDict[groupIndex][Number(key) + 1].audio.play();
+        
+        // Start playback of current group
+        const firstAudio = audioFileDict[groupIndex][0].audio;
+        firstAudio.play();
+        
+        // Set up sequential playback
+        Object.keys(audioFileDict[groupIndex]).forEach((_, index) => {
+          const currentAudio = audioFileDict[groupIndex][index].audio;
+          currentAudio.onended = () => {
+            if (audioFileDict[groupIndex][index + 1]) {
+              audioFileDict[groupIndex][index + 1].audio.play();
             }
+            // Update state after each audio finishes
+            setAudioFileDict({ ...audioFileDict });
           };
-        }
+        });
+        
+        // Force immediate state update when starting playback
+        setAudioFileDict({ ...audioFileDict });
       }
 
       setAudioFileDict({ ...audioFileDict });
@@ -393,9 +429,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // 1. startStream
   const startStream = (transcript: string, prevMessages?: Message[]) => {
     // pause all ongoing audio files first
-    Object.values(audioFileDict).forEach((group) => {
-      // deno-lint-ignore no-explicit-any
-      Object.values(group).forEach((item: any) => {
+    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
+      (Object.values(group) as AudioItem[]).forEach((item) => {
         if (!item.audio.paused) {
           item.audio.pause();
         }
@@ -451,7 +486,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
           lang: lang,
           messages: newMessages,
         }),
-        onmessage(ev: TextEvent) {
+        onmessage(ev: EventSourceMessage) {
           const parsedData = JSON.parse(ev.data);
           console.warn("parsedData", parsedData);
           ongoingStream.push(parsedData);
@@ -529,7 +564,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             throw new RetriableError();
           }
         },
-        onerror(err: TextEvent) {
+        onerror(err: EventSourceMessage) {
           console.error("Stream error:", err);
         },
         onclose() {
@@ -560,8 +595,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
       text === chatIslandContent[lang]["welcomeMessage"]
     ) {
       const audioFile = text === chatIslandContent["de"]["welcomeMessage"]
-        ? "./intro.wav"
-        : "./intro-en.wav";
+        ? "./intro.mp3"
+        : "./intro-en.mp3";
       const audio = new Audio(audioFile);
       // audioFileDict[groupIndex] = {
       //   0: audio,
@@ -585,7 +620,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       const newStopList = stopList;
       for (let i = 0; i < groupIndex; i++) {
         if (audioFileDict[i]) {
-          Object.values(audioFileDict[i]).forEach((item) => {
+          (Object.values(audioFileDict[i]) as AudioItem[]).forEach((item) => {
             if (!item.audio.paused) {
               item.audio.pause();
               item.audio.currentTime = 0;
@@ -626,7 +661,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
         },
         body: JSON.stringify({
           text: text,
-          clientId: clientId,
           textPosition: sourceFunction,
           voice: lang === "en" ? "Stefanie" : "Florian",
         }),
@@ -676,7 +710,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // General functions
   // 1. toggleReadAlways:
   // 2. stopAndResetAudio
-  // 3. getClientId
 
   // 1. toggleReadAlways
   // - toggles readAlways state
@@ -685,9 +718,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const toggleReadAlways = (value: boolean) => {
     setReadAlways(value);
     if (!value) {
-      Object.values(audioFileDict).forEach((group) => {
-        // deno-lint-ignore no-explicit-any
-        Object.values(group).forEach((item: any) => {
+      (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
+        (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => {
           if (!item.audio.paused) {
             item.audio.pause();
             item.audio.currentTime = 0;
@@ -700,9 +732,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // 2. stopAndResetAudio
   const stopAndResetAudio = () => {
-    Object.values(audioFileDict).forEach((group) => {
-      // deno-lint-ignore no-explicit-any
-      Object.values(group).forEach((item: any) => { // Changed from (audio)
+    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
+      (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => { // Changed from (audio)
         if (!item.audio.paused) { // Changed from !audio.paused
           item.audio.pause(); // Changed from audio.pause()
           item.audio.currentTime = 0; // Changed from audio.currentTime
@@ -710,22 +741,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
       });
     });
     setAudioFileDict({});
-  };
-
-  // 3. getClientId
-  const getClientId = async () => {
-    const response = await fetch("/api/getClientId", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    if (data.client_id) {
-      setClientId(data.client_id);
-    } else {
-      console.error("Failed to get client ID");
-    }
   };
 
   // Chat functions overview

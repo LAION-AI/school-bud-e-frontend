@@ -3,12 +3,12 @@ import { menuContent } from "../internalization/content.ts";
 
 /**
  * Menu Component
- * 
+ *
  * This component renders the navigation menu and language selector for the application.
- * 
+ *
  * @param {Object} props - The properties object.
  * @param {string} props.lang - The language code for content localization.
- * 
+ *
  * @returns {JSX.Element} The rendered menu component.
  */
 export default function Menu({ lang }: { lang: string }): JSX.Element {
@@ -42,7 +42,7 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
           </option>
         ))}
       </select>
-      
+
       {/* Menu Items */}
       {menuItems.map((item) => (
         <a

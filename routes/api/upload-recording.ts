@@ -1,13 +1,13 @@
 import { Handlers } from "$fresh/server.ts";
 // import { ensureDir } from "https://deno.land/std/fs/mod.ts";
-import Groq from 'npm:groq-sdk';
+import Groq from "npm:groq-sdk";
 
-const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY') || ""
-const GROQ_API_MODEL = Deno.env.get('GROQ_API_MODEL') || ""
+const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY") || "";
+const GROQ_API_MODEL = Deno.env.get("GROQ_API_MODEL") || "";
 
 const groq = new Groq({
-    apiKey: GROQ_API_KEY, // This is the default and can be omitted
-  });
+  apiKey: GROQ_API_KEY, // This is the default and can be omitted
+});
 
 export const handler: Handlers = {
   async POST(req) {
@@ -20,7 +20,7 @@ export const handler: Handlers = {
       }
 
       // Create an instance of the Transcriptions API
-    //   const transcriptions = new Transcriptions({ apiKey: GROQ_API_KEY });
+      //   const transcriptions = new Transcriptions({ apiKey: GROQ_API_KEY });
 
       // Prepare the transcription parameters
       const params: Groq.Audio.TranscriptionCreateParams = {
