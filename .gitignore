@@ -13,3 +13,7 @@ _fresh/
 node_modules/
 
 docker-compose/caddy/Caddyfile
+docker-compose/caddy/data
+docker-compose/caddy/data/*
+docker-compose/caddy/config
+docker-compose/caddy/config/*
