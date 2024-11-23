@@ -11,3 +11,5 @@
 _fresh/
 # npm dependencies
 node_modules/
+
+docker-compose/caddy/Caddyfile
