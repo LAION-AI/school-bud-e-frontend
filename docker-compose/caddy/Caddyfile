@@ -1,3 +1,0 @@
-your-domain.com {
-	reverse_proxy school-bud-e-frontend:8000
-}

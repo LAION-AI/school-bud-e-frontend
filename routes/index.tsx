@@ -3,9 +3,11 @@ import Warning from "../components/Warning.tsx";
 import ChatIsland from "../islands/ChatIsland.tsx";
 
 export default function Home(req: Request) {
-
   const url = new URL(req.url);
-  const lang = url.searchParams.get("lang") as string !== undefined && url.searchParams.get("lang") !== null ? url.searchParams.get("lang") : "de";
+  const lang = url.searchParams.get("lang") as string !== undefined &&
+      url.searchParams.get("lang") !== null
+    ? url.searchParams.get("lang")
+    : "de";
 
   return (
     <div

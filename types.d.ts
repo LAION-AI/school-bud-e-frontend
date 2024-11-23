@@ -15,8 +15,11 @@ interface SpeechRecognitionEventMap {
 
 // Adding a construct signature
 interface SpeechRecognitionConstructor {
-  new(): SpeechRecognition;
+  new (): SpeechRecognition;
 }
+
+interface RetriableError extends Error {}
+interface FatalError extends Error {}
 
 // https://wicg.github.io/speech-api/#speechreco-section
 interface SpeechRecognition extends EventTarget {
@@ -75,7 +78,7 @@ interface Image {
 }
 
 interface TextEvent {
-  data: string;
+  readonly data: string;
 }
 
 interface Message {
@@ -92,8 +95,25 @@ interface Image {
   preview: string;
 }
 
+// interface AudioFileDict {
+//   [key: string]: HTMLAudioElement[];
+// }
+
+// const [audioFileDict, setAudioFileDict] = useState<
+// Record<number, Record<number, HTMLAudioElement>>
+// >({});
+
+// interface AudioFileDict {
+//   [key: string]: Record<number, HTMLAudioElement>;
+// }
+
+interface AudioItem {
+  audio: HTMLAudioElement;
+  played: boolean;
+}
+
 interface AudioFileDict {
-  [key: string]: HTMLAudioElement[];
+  [groupIndex: number]: Record<number, AudioItem>;
 }
 
 interface HeaderContent {
@@ -106,8 +126,4 @@ interface InternalizationContent {
   [key: string]: {
     [key: string]: string;
   };
-}
-
-interface TextEvent {
-  data: string;
 }

@@ -2,11 +2,10 @@ import { aboutContent } from "../internalization/content.ts";
 
 export default function About(req: Request) {
   const url = new URL(req.url);
-  const lang =
-    (url.searchParams.get("lang") as string !== undefined &&
-        url.searchParams.get("lang") !== null
-      ? url.searchParams.get("lang")
-      : "de") as string;
+  const lang = (url.searchParams.get("lang") as string !== undefined &&
+      url.searchParams.get("lang") !== null
+    ? url.searchParams.get("lang")
+    : "de") as string;
 
   return (
     <div>
