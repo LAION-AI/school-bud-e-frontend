@@ -10,7 +10,7 @@ services:
     env_file:
       - .env
     volumes:
-      - .:/app
+      - ./app:/app
     command: sh -c "apt-get update && apt-get install -y git && git clone https://github.com/LAION-AI/school-bud-e-frontend.git && cd school-bud-e-frontend && deno task build && deno task preview"
 
   caddy:
