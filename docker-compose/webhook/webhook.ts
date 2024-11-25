@@ -17,6 +17,7 @@ async function verifyGitHubSignature(payload: string, signature: string): Promis
   return `sha256=${hash}` === signature;
 }
 
+
 const server = Deno.listen({ port: 9000 });
 
 async function handleWebhook(req: Request) {
