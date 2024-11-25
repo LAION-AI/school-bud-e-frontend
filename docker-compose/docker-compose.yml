@@ -5,8 +5,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    labels:
-      - "webhook.rebuild=true"
     ports:
       - "8000:8000"
     env_file:
