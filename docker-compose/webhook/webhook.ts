@@ -55,6 +55,7 @@ async function handleWebhook(req: Request) {
     
     if (body.ref === 'refs/heads/main') {
       console.log('Main branch updated, rebuilding labeled services...');
+      console.log('Pulling latest changes and rebuilding frontend service...');
       
       // First pull latest changes
       const pull = new Deno.Command('docker', {
