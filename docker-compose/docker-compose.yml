@@ -26,10 +26,10 @@ services:
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
-      - ./webhook:/app
-      - ./docker-compose.yml:/app/docker-compose.yml
+      - ./:/app
+      # - ./docker-compose.yml:/app/docker-compose.yml
       - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "apt-get update && apt-get install -y docker.io && deno run --allow-net --allow-run --allow-env /app/webhook.ts frontend"
+    command: sh -c "apt-get update && apt-get install -y docker.io && deno run --allow-net --allow-run --allow-env /app/webhook/webhook.ts frontend"
     networks:
       - app-network
     restart: unless-stopped
