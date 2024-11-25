@@ -4,6 +4,8 @@ const WEBHOOK_SECRET = Deno.env.get("WEBHOOK_SECRET");
 
 async function verifyGitHubSignature(payload: string, signature: string): Promise<boolean> {
   if (!WEBHOOK_SECRET || !signature) return false;
+
+  console.log('Verifying signature...');
   
   const key = new TextEncoder().encode(WEBHOOK_SECRET);
   const message = new TextEncoder().encode(payload);
