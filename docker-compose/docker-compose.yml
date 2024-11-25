@@ -18,19 +18,6 @@ services:
       - app-network
     restart: unless-stopped
 
-  webhook:
-    image: docker:dind
-    container_name: webhook
-    privileged: true
-    environment:
-      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
-    volumes:
-      - ./:/app
-      - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "apk add --no-cache curl unzip && curl -fsSL https://deno.land/x/install/install.sh && deno run --allow-net --allow-run --allow-env /app/webhook/webhook.ts frontend"
-    network_mode: host
-    restart: unless-stopped
-
   caddy:
     image: caddy:latest
     container_name: caddy
