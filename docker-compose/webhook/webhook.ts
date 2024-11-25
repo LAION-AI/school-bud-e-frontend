@@ -60,19 +60,33 @@ async function handleWebhook(req: Request) {
       // First pull latest changes
       const pull = new Deno.Command('docker', {
         args: ['compose', '-f', '/app/docker-compose.yml', 'pull', 'school-bud-e-frontend'],
-        cwd: '/app'
+        cwd: '/app',
+        stdout: "piped",
+        stderr: "piped",
       });
       
       // Then rebuild and restart only the frontend service
       const rebuild = new Deno.Command('docker', {
         args: ['compose', '-f', '/app/docker-compose.yml', 'up', '-d', '--build', '--force-recreate', 'school-bud-e-frontend'],
-        cwd: '/app'
+        cwd: '/app',
+        stdout: "piped",
+        stderr: "piped",
       });
       
       try {
-        await pull.output();
-        const { code } = await rebuild.output();
-        if (code === 0) {
+        const pullOutput = await pull.output();
+        console.log('Pull output:', new TextDecoder().decode(pullOutput.stdout));
+        if (pullOutput.stderr.length > 0) {
+          console.error('Pull stderr:', new TextDecoder().decode(pullOutput.stderr));
+        }
+
+        const rebuildOutput = await rebuild.output();
+        console.log('Rebuild output:', new TextDecoder().decode(rebuildOutput.stdout));
+        if (rebuildOutput.stderr.length > 0) {
+          console.error('Rebuild stderr:', new TextDecoder().decode(rebuildOutput.stderr));
+        }
+
+        if (rebuildOutput.code === 0) {
           return new Response('Rebuild triggered successfully', { status: 200 });
         } else {
           return new Response('Rebuild failed', { status: 500 });
