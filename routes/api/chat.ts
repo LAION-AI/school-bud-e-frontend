@@ -10,7 +10,9 @@ const API_URL = Deno.env.get("API_URL") || "";
 const API_KEY = Deno.env.get("API_KEY") || "";
 const API_MODEL = Deno.env.get("API_MODEL") || "";
 
-console.log(API_MODEL);
+const CURRENT_DATETIME = new Date().toISOString();
+
+console.log(CURRENT_DATETIME, API_MODEL);
 
 interface Message {
   role: string;
