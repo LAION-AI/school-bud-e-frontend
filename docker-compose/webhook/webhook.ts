@@ -37,15 +37,22 @@ async function handleWebhook(req: Request) {
     
     const body = JSON.parse(payload);
     if (body.ref === 'refs/heads/main') {
-      console.log('Main branch updated, rebuilding application...');
+      console.log('Main branch updated, rebuilding labeled services...');
       
-      // Execute docker compose commands from the parent directory
+      // First pull latest changes
+      const pull = new Deno.Command('docker', {
+        args: ['compose', '-f', '/app/docker-compose.yml', 'pull', 'school-bud-e-frontend'],
+        cwd: '/app'
+      });
+      
+      // Then rebuild and restart only the frontend service
       const rebuild = new Deno.Command('docker', {
-        args: ['compose', '-f', '/app/docker-compose.yml', 'up', '-d', '--build', 'school-bud-e-frontend'],
+        args: ['compose', '-f', '/app/docker-compose.yml', 'up', '-d', '--build', '--force-recreate', 'school-bud-e-frontend'],
         cwd: '/app'
       });
       
       try {
+        await pull.output();
         const { code } = await rebuild.output();
         if (code === 0) {
           return new Response('Rebuild triggered successfully', { status: 200 });

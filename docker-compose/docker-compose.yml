@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    labels:
+      - "webhook.rebuild=true"
     ports:
       - "8000:8000"
     env_file:
@@ -27,7 +29,7 @@ services:
       - ./webhook:/app
       - ./docker-compose.yml:/app/docker-compose.yml
       - /var/run/docker.sock:/var/run/docker.sock
-    command: sh -c "apt-get update && apt-get install -y docker.io && deno run --allow-net --allow-run --allow-env /app/webhook.ts"
+    command: sh -c "apt-get update && apt-get install -y docker.io && deno run --allow-net --allow-run --allow-env /app/webhook.ts frontend"
     networks:
       - app-network
     restart: unless-stopped
