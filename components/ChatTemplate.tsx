@@ -15,7 +15,7 @@ function downloadAudioFiles(
     const url = audio.src;
     const a = document.createElement("a");
     a.href = url;
-    a.download = `audio-${c}-${nicelyFormattedTimestamp}.wav`;
+    a.download = `audio-${c}-${nicelyFormattedTimestamp}.mp3`;
     a.click();
     c += 1;
   }
