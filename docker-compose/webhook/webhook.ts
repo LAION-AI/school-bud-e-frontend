@@ -8,15 +8,21 @@ async function verifyGitHubSignature(payload: string, signature: string): Promis
   const key = new TextEncoder().encode(WEBHOOK_SECRET);
   const message = new TextEncoder().encode(payload);
   
-  const hmac = new crypto.HmacSha256(key);
-  hmac.update(message);
-  const hash = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', hmac.digest())))
+  const hmacKey = await crypto.subtle.importKey(
+    "raw",
+    key,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"]
+  );
+  
+  const signed = await crypto.subtle.sign("HMAC", hmacKey, message);
+  const hash = Array.from(new Uint8Array(signed))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
     
   return `sha256=${hash}` === signature;
 }
-
 
 const server = Deno.listen({ port: 9000 });
 
