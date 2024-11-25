@@ -55,38 +55,21 @@ async function handleWebhook(req: Request) {
     
     if (body.ref === 'refs/heads/main') {
       console.log('Main branch updated, rebuilding labeled services...');
-      console.log('Pulling latest changes and rebuilding frontend service...');
-      
-      // First pull latest changes
-      const pull = new Deno.Command('docker', {
-        args: ['compose', '-f', '/app/docker-compose.yml', 'pull', 'school-bud-e-frontend'],
-        cwd: '/app',
-        stdout: "piped",
-        stderr: "piped",
-      });
-      
-      // Then rebuild and restart only the frontend service
-      const rebuild = new Deno.Command('docker', {
-        args: ['compose', '-f', '/app/docker-compose.yml', 'up', '-d', '--build', '--force-recreate', 'school-bud-e-frontend'],
-        cwd: '/app',
-        stdout: "piped",
-        stderr: "piped",
-      });
       
       try {
-        const pullOutput = await pull.output();
-        console.log('Pull output:', new TextDecoder().decode(pullOutput.stdout));
-        if (pullOutput.stderr.length > 0) {
-          console.error('Pull stderr:', new TextDecoder().decode(pullOutput.stderr));
+        const rebuild = new Deno.Command('/app/docker-rebuild.sh', {
+          cwd: '/app',
+          stdout: "piped",
+          stderr: "piped",
+        });
+
+        const output = await rebuild.output();
+        console.log('Rebuild output:', new TextDecoder().decode(output.stdout));
+        if (output.stderr.length > 0) {
+          console.error('Rebuild stderr:', new TextDecoder().decode(output.stderr));
         }
 
-        const rebuildOutput = await rebuild.output();
-        console.log('Rebuild output:', new TextDecoder().decode(rebuildOutput.stdout));
-        if (rebuildOutput.stderr.length > 0) {
-          console.error('Rebuild stderr:', new TextDecoder().decode(rebuildOutput.stderr));
-        }
-
-        if (rebuildOutput.code === 0) {
+        if (output.code === 0) {
           return new Response('Rebuild triggered successfully', { status: 200 });
         } else {
           return new Response('Rebuild failed', { status: 500 });
