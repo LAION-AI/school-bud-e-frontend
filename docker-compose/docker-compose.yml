@@ -19,17 +19,15 @@ services:
     restart: unless-stopped
 
   webhook:
-    image: denoland/deno:latest
+    image: docker:dind
     container_name: webhook
+    privileged: true
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
       - ./:/app
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin:/usr/bin
-      - /usr/local/bin:/usr/local/bin
-      - /bin:/bin
-    command: sh -c "deno run --allow-net --allow-run --allow-env /app/webhook/webhook.ts frontend"
+    command: sh -c "apk add --no-cache curl unzip && curl -fsSL https://deno.land/x/install/install.sh | sh && export DENO_INSTALL=\"/root/.deno\" && export PATH=\"$DENO_INSTALL/bin:$PATH\" && deno run --allow-net --allow-run --allow-env /app/webhook/webhook.ts frontend"
     network_mode: host
     restart: unless-stopped
 
