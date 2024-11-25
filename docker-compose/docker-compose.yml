@@ -12,6 +12,25 @@ services:
     volumes:
       - ./app:/school-bud-e-frontend
     command: sh -c "apt-get update && apt-get install -y git && if [ -d 'school-bud-e-frontend' ]; then git config --global --add safe.directory /school-bud-e-frontend; cd school-bud-e-frontend; git pull; else git clone https://github.com/LAION-AI/school-bud-e-frontend.git; cd school-bud-e-frontend; fi && deno task build && deno task preview"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  webhook:
+    image: denoland/deno:latest
+    container_name: webhook
+    ports:
+      - "9000:9000"
+    environment:
+      - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+    volumes:
+      - ./webhook:/app/webhook
+      - ./docker-compose.yml:/app/docker-compose.yml
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: sh -c "apt-get update && apt-get install -y docker.io && deno run --allow-net --allow-run /app/webhook.ts"
+    networks:
+      - app-network
+    restart: unless-stopped
 
   caddy:
     image: caddy:latest
@@ -23,3 +42,9 @@ services:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./caddy/data:/data
       - ./caddy/config:/config
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
