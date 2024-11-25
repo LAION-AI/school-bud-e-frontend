@@ -1,24 +1,48 @@
 import { useEffect, useState } from "preact/hooks";
-
 import { chatTemplateContent } from "../internalization/content.ts";
 
 function downloadAudioFiles(
   items: { [key: string]: { audio: HTMLAudioElement } },
 ) {
-  let c = 0;
   const timestamp = new Date().getTime();
-  // in format "YYYY-MM-DD-HH-MM-SS"
   const nicelyFormattedTimestamp = new Date(timestamp).toISOString().slice(0, 19)
     .replace(/[-:]/g, "-");
-  for (const key in items) {
-    const audio = items[key].audio;
-    const url = audio.src;
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `audio-${c}-${nicelyFormattedTimestamp}.mp3`;
-    a.click();
-    c += 1;
+
+  // If there's only one item, download it directly
+  if (Object.keys(items).length === 1) {
+    const singleAudio = Object.values(items)[0].audio;
+    fetch(singleAudio.src)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `audio-${nicelyFormattedTimestamp}.mp3`;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    return;
   }
+
+  // For multiple items, download all MP3s first
+  const mp3Promises = Object.values(items).map(item => 
+    fetch(item.audio.src)
+      .then(response => response.blob())
+  );
+
+  Promise.all(mp3Promises)
+    .then(blobs => {
+      // Combine all MP3 blobs into a single blob
+      const combinedBlob = new Blob(blobs, { type: 'audio/mp3' });
+      
+      // Create download link for combined file
+      const url = URL.createObjectURL(combinedBlob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `audio-${nicelyFormattedTimestamp}.mp3`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
 }
 
 function ChatTemplate(
