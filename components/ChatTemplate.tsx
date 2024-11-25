@@ -4,7 +4,6 @@ import { chatTemplateContent } from "../internalization/content.ts";
 function downloadAudioFiles(
   items: { [key: string]: { audio: HTMLAudioElement } },
 ) {
-  console.log("Downloading audio files...");
   const timestamp = new Date().getTime();
   const nicelyFormattedTimestamp = new Date(timestamp).toISOString().slice(0, 19)
     .replace(/[-:]/g, "-");
