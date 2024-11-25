@@ -11,7 +11,7 @@ services:
       - .env
     volumes:
       - ./app:/school-bud-e-frontend
-    command: sh -c "apt-get update && apt-get install -y git && git clone https://github.com/LAION-AI/school-bud-e-frontend.git && cd school-bud-e-frontend && deno task build && deno run --allow-net --allow-read _fresh/main.js"
+    command: sh -c "apt-get update && apt-get install -y git && if [ -d 'school-bud-e-frontend' ]; then cd school-bud-e-frontend && git pull; else git clone https://github.com/LAION-AI/school-bud-e-frontend.git; cd school-bud-e-frontend; fi && deno task build && deno run --allow-net --allow-read _fresh/main.js"
 
   caddy:
     image: caddy:latest
