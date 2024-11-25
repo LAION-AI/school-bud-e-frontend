@@ -24,6 +24,19 @@ async function verifyGitHubSignature(payload: string, signature: string): Promis
   return `sha256=${hash}` === signature;
 }
 
+function parseFormUrlEncoded(formData: string): Record<string, string> {
+  const params: Record<string, string> = {};
+  const pairs = formData.split('&');
+  
+  for (const pair of pairs) {
+    const [key, value] = pair.split('=');
+    if (key && value) {
+      params[decodeURIComponent(key)] = decodeURIComponent(value);
+    }
+  }
+  return params;
+}
+
 const server = Deno.listen({ port: 9000 });
 
 async function handleWebhook(req: Request) {
@@ -35,7 +48,9 @@ async function handleWebhook(req: Request) {
       return new Response('Invalid signature', { status: 403 });
     }
     
-    const body = JSON.parse(payload);
+    const formData = parseFormUrlEncoded(payload);
+    const body = JSON.parse(formData.payload || '{}');
+    
     if (body.ref === 'refs/heads/main') {
       console.log('Main branch updated, rebuilding labeled services...');
       
