@@ -21,18 +21,16 @@ services:
   webhook:
     image: denoland/deno:latest
     container_name: webhook
-    ports:
-      - "9000:9000"
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
       - ./:/app
-      # - ./docker-compose.yml:/app/docker-compose.yml
       - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin:/usr/bin
+      - /usr/local/bin:/usr/local/bin
+      - /bin:/bin
     command: sh -c "deno run --allow-net --allow-run --allow-env /app/webhook/webhook.ts frontend"
     network_mode: host
-    # networks:
-    #   - app-network
     restart: unless-stopped
 
   caddy:
