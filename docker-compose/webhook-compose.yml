@@ -5,7 +5,7 @@
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
     volumes:
-      - ./:/app
+      - ./webhook:/app
       - /var/run/docker.sock:/var/run/docker.sock
     command: tail -f /dev/null
     network_mode: host
