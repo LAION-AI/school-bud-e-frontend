@@ -11,7 +11,10 @@ import ImageUploadButton from "../components/ImageUploadButton.tsx";
 import VoiceRecordButton from "../components/VoiceRecordButton.tsx";
 
 // Necessary for streaming service
-import { fetchEventSource, EventSourceMessage } from "https://esm.sh/@microsoft/fetch-event-source@2.0.1";
+import {
+  EventSourceMessage,
+  fetchEventSource,
+} from "https://esm.sh/@microsoft/fetch-event-source@2.0.1";
 import { useEffect, useState } from "preact/hooks";
 
 // Internalization
@@ -274,13 +277,13 @@ export default function ChatIsland({ lang }: { lang: string }) {
   ) => {
     audio.play();
     audioFileDict[groupIndex][audioIndex].played = true;
-    
+
     // Add onended handler to update state when audio finishes
     audio.onended = () => {
       audioFileDict[groupIndex][audioIndex].played = true;
       setAudioFileDict({ ...audioFileDict }); // Force state update
     };
-    
+
     // Force immediate state update when starting playback
     setAudioFileDict({ ...audioFileDict });
   };
@@ -335,6 +338,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       const parsedLastMessage = Array.isArray(lastMessage["content"])
         ? lastMessage["content"].join("")
         : lastMessage["content"];
+      if (parsedLastMessage === "") return;
       getTTS(
         parsedLastMessage as string,
         groupIndex,
@@ -350,14 +354,16 @@ export default function ChatIsland({ lang }: { lang: string }) {
         // audioFileDict[groupIndex][indexThatIsPlaying].audio.pause();
         // audioFileDict[groupIndex][indexThatIsPlaying].audio.currentTime = 0;
 
-        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
-          (Object.values(group) as AudioItem[]).forEach((item) => {
-            if (!item.audio.paused) {
-              item.audio.pause();
-              item.audio.currentTime = 0;
-            }
-          });
-        })
+        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
+          (group) => {
+            (Object.values(group) as AudioItem[]).forEach((item) => {
+              if (!item.audio.paused) {
+                item.audio.pause();
+                item.audio.currentTime = 0;
+              }
+            });
+          },
+        );
 
         setStopList([...stopList, groupIndex]);
         // Force state update after pausing
@@ -365,19 +371,21 @@ export default function ChatIsland({ lang }: { lang: string }) {
       } else {
         setStopList(stopList.filter((item) => item !== groupIndex));
         // Stop all other playing audio
-        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
-          (Object.values(group) as AudioItem[]).forEach((item) => {
-            if (!item.audio.paused) {
-              item.audio.pause();
-              item.audio.currentTime = 0;
-            }
-          });
-        });
-        
+        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
+          (group) => {
+            (Object.values(group) as AudioItem[]).forEach((item) => {
+              if (!item.audio.paused) {
+                item.audio.pause();
+                item.audio.currentTime = 0;
+              }
+            });
+          },
+        );
+
         // Start playback of current group
         const firstAudio = audioFileDict[groupIndex][0].audio;
         firstAudio.play();
-        
+
         // Set up sequential playback
         Object.keys(audioFileDict[groupIndex]).forEach((_, index) => {
           const currentAudio = audioFileDict[groupIndex][index].audio;
@@ -389,7 +397,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             setAudioFileDict({ ...audioFileDict });
           };
         });
-        
+
         // Force immediate state update when starting playback
         setAudioFileDict({ ...audioFileDict });
       }
@@ -429,14 +437,16 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // 1. startStream
   const startStream = (transcript: string, prevMessages?: Message[]) => {
     // pause all ongoing audio files first
-    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
-      (Object.values(group) as AudioItem[]).forEach((item) => {
-        if (!item.audio.paused) {
-          item.audio.pause();
-        }
-        item.audio.currentTime = 0;
-      });
-    });
+    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
+      (group) => {
+        (Object.values(group) as AudioItem[]).forEach((item) => {
+          if (!item.audio.paused) {
+            item.audio.pause();
+          }
+          item.audio.currentTime = 0;
+        });
+      },
+    );
     setAudioFileDict({ ...audioFileDict });
     const ongoingStream: string[] = [];
     let currentAudioIndex = 1;
@@ -500,28 +510,32 @@ export default function ChatIsland({ lang }: { lang: string }) {
               const textToSpeak = combinedText.slice(0, splitIndex);
               const remaining = combinedText.slice(splitIndex);
 
-              getTTS(
-                textToSpeak,
-                newMessages.length - 1,
-                `stream${currentAudioIndex}`,
-              );
+              if (textToSpeak.trim() !== "") {
+                getTTS(
+                  textToSpeak,
+                  newMessages.length - 1,
+                  `stream${currentAudioIndex}`,
+                );
 
-              currentAudioIndex++;
-              ongoingStream.length = 0; // Clear array
-              if (remaining.trim()) {
-                ongoingStream.push(remaining); // Push remaining text
+                currentAudioIndex++;
+                ongoingStream.length = 0; // Clear array
+                if (remaining.trim()) {
+                  ongoingStream.push(remaining); // Push remaining text
+                }
+                ttsFromFirstSentence = true;
               }
-              ttsFromFirstSentence = true;
             }
           } else {
             // check for \n\n in the parsedData, e.g., ' \n\n', or '\n\n ' etc.
             const combinedText = ongoingStream.join("");
-            if (/\n\n/.test(combinedText.slice(5)) && combinedText.length > 15) {
+            if (
+              /\n\n/.test(combinedText.slice(5)) && combinedText.length > 15
+            ) {
               console.log(JSON.stringify(combinedText));
               const paragraphSplit = combinedText.split(/\n\n/);
               // console.warn("paragraphSplit", paragraphSplit)
-              const textToSpeak = paragraphSplit.slice(0, -1).join('\n\n');
-              
+              const textToSpeak = paragraphSplit.slice(0, -1).join("\n\n");
+
               const remaining = paragraphSplit[paragraphSplit.length - 1];
 
               getTTS(
@@ -718,28 +732,32 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const toggleReadAlways = (value: boolean) => {
     setReadAlways(value);
     if (!value) {
-      (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
-        (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => {
-          if (!item.audio.paused) {
-            item.audio.pause();
-            item.audio.currentTime = 0;
-          }
-        });
-      });
+      (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
+        (group) => {
+          (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => {
+            if (!item.audio.paused) {
+              item.audio.pause();
+              item.audio.currentTime = 0;
+            }
+          });
+        },
+      );
       setStopList(Object.keys(audioFileDict).map(Number));
     }
   };
 
   // 2. stopAndResetAudio
   const stopAndResetAudio = () => {
-    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach((group) => {
-      (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => { // Changed from (audio)
-        if (!item.audio.paused) { // Changed from !audio.paused
-          item.audio.pause(); // Changed from audio.pause()
-          item.audio.currentTime = 0; // Changed from audio.currentTime
-        }
-      });
-    });
+    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
+      (group) => {
+        (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => { // Changed from (audio)
+          if (!item.audio.paused) { // Changed from !audio.paused
+            item.audio.pause(); // Changed from audio.pause()
+            item.audio.currentTime = 0; // Changed from audio.currentTime
+          }
+        });
+      },
+    );
     setAudioFileDict({});
   };
 

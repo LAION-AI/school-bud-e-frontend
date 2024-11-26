@@ -10,9 +10,12 @@ const API_URL = Deno.env.get("API_URL") || "";
 const API_KEY = Deno.env.get("API_KEY") || "";
 const API_MODEL = Deno.env.get("API_MODEL") || "";
 
+const API_IMAGE_URL = Deno.env.get("API_IMAGE_URL") || "";
+const API_IMAGE_KEY = Deno.env.get("API_IMAGE_KEY") || "";
+const API_IMAGE_MODEL = Deno.env.get("API_IMAGE_MODEL") || "";
+
 const CURRENT_DATETIME = new Date().toISOString();
 
-console.log("ADDITION 4");
 console.log(CURRENT_DATETIME, API_MODEL);
 
 interface Message {
@@ -28,15 +31,40 @@ async function getModelResponseStream(messages: Message[]) {
     isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
   }
 
+  // looks for messages with array content that contains objects with a 'type' property set to 'image_url'
+
+  const isImageInMessages = messages.some((message) => {
+    if (Array.isArray(message.content)) {
+      // Check if any item in the array has type "image_url"
+      return message.content.some((item) => item.type === "image_url");
+    } else if (
+      typeof message.content === "object" && message.content !== null
+    ) {
+      // Check if single object has type "image_url"
+      return (message.content as { type?: string }).type === "image_url";
+    }
+    return false;
+  });
+
+  let api_url = API_URL;
+  let api_key = API_KEY;
+  let api_model = API_MODEL;
+
+  if (isImageInMessages) {
+    api_url = API_IMAGE_URL;
+    api_key = API_IMAGE_KEY;
+    api_model = API_IMAGE_MODEL;
+  }
+
   const fetchOptions: RequestInit = {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${API_KEY}`,
+      "Authorization": `Bearer ${api_key}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       "messages": messages,
-      "model": API_MODEL,
+      "model": api_model,
       "stream": true,
     }),
   };
@@ -46,7 +74,7 @@ async function getModelResponseStream(messages: Message[]) {
   //   "model": API_MODEL,
   //   "stream": true,
   // });
-  const response = await fetch(API_URL, fetchOptions);
+  const response = await fetch(api_url, fetchOptions);
 
   if (!response.body) {
     return new Response("Failed to get response body from external API", {
