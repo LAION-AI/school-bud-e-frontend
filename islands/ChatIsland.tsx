@@ -510,20 +510,18 @@ export default function ChatIsland({ lang }: { lang: string }) {
               const textToSpeak = combinedText.slice(0, splitIndex);
               const remaining = combinedText.slice(splitIndex);
 
-              if (textToSpeak.trim() !== "") {
-                getTTS(
-                  textToSpeak,
-                  newMessages.length - 1,
-                  `stream${currentAudioIndex}`,
-                );
+              getTTS(
+                textToSpeak,
+                newMessages.length - 1,
+                `stream${currentAudioIndex}`,
+              );
 
-                currentAudioIndex++;
-                ongoingStream.length = 0; // Clear array
-                if (remaining.trim()) {
-                  ongoingStream.push(remaining); // Push remaining text
-                }
-                ttsFromFirstSentence = true;
+              currentAudioIndex++;
+              ongoingStream.length = 0; // Clear array
+              if (remaining.trim()) {
+                ongoingStream.push(remaining); // Push remaining text
               }
+              ttsFromFirstSentence = true;
             }
           } else {
             // check for \n\n in the parsedData, e.g., ' \n\n', or '\n\n ' etc.

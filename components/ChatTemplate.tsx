@@ -45,6 +45,16 @@ function downloadAudioFiles(
     });
 }
 
+function renderTextWithBold(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={index}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
+
 function ChatTemplate(
   {
     lang,
@@ -191,11 +201,11 @@ function ChatTemplate(
               } shadow`}
             >
               {typeof item.content === "string"
-                ? <span>{item.content}</span>
+                ? <span>{renderTextWithBold(item.content)}</span>
                 : (
                   <span>
                     {typeof item.content[0] === "string"
-                      ? item.content.join("")
+                      ? renderTextWithBold(item.content.join(""))
                       : (
                         <div>
                           {(item.content as unknown as {
@@ -205,7 +215,9 @@ function ChatTemplate(
                           }[]).map((content, contentIndex) => {
                             if (content.type === "text") {
                               return (
-                                <span key={contentIndex}>{content.text}</span>
+                                <span key={contentIndex}>
+                                  {renderTextWithBold(content.text)}
+                                </span>
                               );
                             } else if (content.type === "image_url") {
                               return (
