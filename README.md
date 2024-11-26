@@ -8,7 +8,7 @@ Welcome to School Bud-E, your AI-powered educational assistant! 🚀
 
 ## 🌟 Overview
 
-School Bud-E is an intelligent and empathetic learning assistant designed to revolutionize the educational experience. Developed by [LAION](https://laion.ai) in collaboration with the ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the German Research Center for Artificial Intelligence (DFKI), and Intel, School Bud-E focuses on empathy, natural interaction, and personalized learning. A working demo of the application is available at [school-bud-e.deno.dev](https://school-bud-e.deno.dev).
+School Bud-E is an intelligent and empathetic learning assistant designed to revolutionize the educational experience. Developed by [LAION](https://laion.ai) in collaboration with the ELLIS Institute Tübingen, Collabora, the Tübingen AI Center and the German Research Center for Artificial Intelligence (DFKI), and Intel, School Bud-E focuses on empathy, natural interaction, and personalized learning. A working demo of the application is available at [school.bud-e.ai](https://school.bud-e.ai).
 
 ## 🚀 Features (WIP)
 
@@ -41,26 +41,21 @@ School Bud-E is an intelligent and empathetic learning assistant designed to rev
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/LAION-AI/school-bud-e.git
+   git clone https://github.com/LAION-AI/school-bud-e-frontend.git
    ```
 
-2. Install dependencies:
-
-   ```bash
-   deno task start
-   ```
-
-3. Set up environment variables:
+2. Set up environment variables:
    - Copy `.example.env` to `.env`
    - Fill in the required API keys and endpoints
 
-4. Run the development server:
+3. Run the development server:
 
    ```bash
+   cd school-bud-e-frontend
    deno task start
    ```
 
-5. Open `http://localhost:8000` in your browser
+4. Open `http://localhost:8000` in your browser
 
 ## 🚀 Getting Started: Production
 
