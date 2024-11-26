@@ -8,6 +8,6 @@ services:
     volumes:
       - ./webhook:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: apk update && apk add deno && deno run --allow-env --allow-net /app/webhook.ts
+    command: apk update && apk add deno && deno run --allow-env --allow-net --allow-run /app/webhook.ts
     network_mode: host
     restart: unless-stopped
