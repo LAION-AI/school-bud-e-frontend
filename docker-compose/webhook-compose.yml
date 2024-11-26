@@ -4,6 +4,8 @@
     privileged: true
     environment:
       - WEBHOOK_SECRET=${WEBHOOK_SECRET}
+    env_file:
+      - .env
     volumes:
       - ./webhook:/app
       - /var/run/docker.sock:/var/run/docker.sock
