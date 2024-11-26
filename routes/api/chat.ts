@@ -12,7 +12,7 @@ const API_MODEL = Deno.env.get("API_MODEL") || "";
 
 const CURRENT_DATETIME = new Date().toISOString();
 
-console.log("ADDITION");
+console.log("ADDITION 2");
 console.log(CURRENT_DATETIME, API_MODEL);
 
 interface Message {
