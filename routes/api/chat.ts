@@ -16,6 +16,7 @@ const API_IMAGE_MODEL = Deno.env.get("API_IMAGE_MODEL") || "";
 
 const CURRENT_DATETIME = new Date().toISOString();
 
+console.log("ADDITION 4");
 console.log(CURRENT_DATETIME, API_MODEL);
 
 interface Message {
