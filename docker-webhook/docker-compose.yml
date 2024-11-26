@@ -8,6 +8,6 @@ services:
     volumes:
       - ./webhook:/app
       - /var/run/docker.sock:/var/run/docker.sock
-    command: tail -f /dev/null
+    command: apk update && apk add deno && tail -f /dev/null
     network_mode: host
     restart: unless-stopped
