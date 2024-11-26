@@ -1,3 +1,4 @@
+services:
   webhook:
     image: docker:latest
     container_name: webhook
