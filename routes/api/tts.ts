@@ -12,6 +12,9 @@ async function textToSpeech(
   const boldTextRegex = /\*\*(.*?)\*\*/g;
   text = String(text).replace(boldTextRegex, "$1");
 
+  const buddyRegex = /bud-e/gi;
+  text = text.replace(buddyRegex, "buddy");
+
   console.log("textToSpeech", text);
   console.log("textPosition", textPosition);
   try {
