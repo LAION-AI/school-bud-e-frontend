@@ -544,6 +544,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
             lastArray,
           ];
         });
+        setIsStreamComplete(true);
+        setQuery("");
         return;
       }
 
