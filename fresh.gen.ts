@@ -5,6 +5,7 @@
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
 import * as $about from "./routes/about.tsx";
+import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_upload_recording from "./routes/api/upload-recording.ts";
@@ -19,6 +20,7 @@ const manifest = {
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
     "./routes/about.tsx": $about,
+    "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
     "./routes/api/tts.ts": $api_tts,
     "./routes/api/upload-recording.ts": $api_upload_recording,

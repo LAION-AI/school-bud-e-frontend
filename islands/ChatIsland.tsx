@@ -55,7 +55,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const [resetTranscript, setResetTranscript] = useState(0);
 
   // General settings
-  const [readAlways, setReadAlways] = useState(true);
+  const [readAlways, setReadAlways] = useState(false);
   const [images, setImages] = useState([] as Image[]);
   const [isStreamComplete, setIsStreamComplete] = useState(true);
   const [stopList, setStopList] = useState([] as number[]);
@@ -427,6 +427,32 @@ export default function ChatIsland({ lang }: { lang: string }) {
     setImages(images);
   };
 
+  // BILDUNGSPLAN
+  const fetchBildungsplan = async (query: string, top_n: number) => {
+    try {
+      const response = await fetch("/api/bildungsplan", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: query,
+          top_n: top_n,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json() as BildungsplanResponse;
+
+      return data;
+    } catch (error) {
+      console.error("Error in bildungsplan API:", error);
+    }
+  };
+
   // PRIMARY FUNCTIONS
   // 1. startStream: getting LLM output and streams it to ChatTemplate through messages
   // 2. getTTS: plays audio if
@@ -435,7 +461,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   //     (handleOnSpeakAtGroupIndex)
 
   // 1. startStream
-  const startStream = (transcript: string, prevMessages?: Message[]) => {
+  const startStream = async (transcript: string, prevMessages?: Message[]) => {
     // pause all ongoing audio files first
     (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
       (group) => {
@@ -486,6 +512,40 @@ export default function ChatIsland({ lang }: { lang: string }) {
       setMessages(newMessages as Message[]);
 
       setQuery("");
+
+      // check if the last message has #bildungsplan in the content (case insensitive)
+      // #bildungsplan: wofür braucht man eigentlich trigonometrie:5
+      const isBildungsplanInLastMessage = currentQuerry.toLowerCase().includes(
+        "#bildungsplan",
+      );
+
+      if (isBildungsplanInLastMessage) {
+        const currentQuerrySplit = currentQuerry.split(":");
+        const query = currentQuerrySplit[1].trim();
+        let top_n = 5;
+        if (currentQuerrySplit.length > 2) {
+          top_n = parseInt(currentQuerry.split(":")[2].trim(), 10);
+        }
+
+        // console.log("query", query);
+        // console.log("top_n", top_n);
+
+        const res = await fetchBildungsplan(query, top_n);
+        const beautifulBildungsplan = res!.results.map((result) => {
+          return `${result.text}; Score: ${result.score}`;
+        }).join("\n\n");
+
+        setMessages((messages) => {
+          messages.push({ "role": "assistant", "content": [] });
+          const lastArray = messages[messages.length - 1];
+          (lastArray.content as string[]).push(beautifulBildungsplan);
+          return [
+            ...messages.slice(0, -1),
+            lastArray,
+          ];
+        });
+        return;
+      }
 
       fetchEventSource("/api/chat", {
         method: "POST",
@@ -602,6 +662,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     groupIndex: number,
     sourceFunction: string,
   ) => {
+    if (!readAlways) return;
+
     console.log("[LOG] getTTS");
     // console.log("text", text);
     // console.log("chatIslandContent[lang][welcomeMessage]", chatIslandContent[lang]["welcomeMessage"]);

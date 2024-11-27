@@ -13,6 +13,20 @@ interface SpeechRecognitionEventMap {
   start: Event;
 }
 
+interface BildungsplanQuery {
+  query: string;
+  top_n: number;
+}
+
+interface BildungsplanResult {
+  score: number;
+  text: string;
+}
+
+interface BildungsplanResponse {
+  results: BildungsplanResult[];
+}
+
 // Adding a construct signature
 interface SpeechRecognitionConstructor {
   new (): SpeechRecognition;
