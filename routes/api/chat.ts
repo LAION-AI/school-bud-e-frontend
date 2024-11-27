@@ -2,6 +2,7 @@ import { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
 
 import { chatContent } from "../../internalization/content.ts";
+import { FalseLiteral } from "https://deno.land/x/ts_morph@21.0.1/ts_morph.js";
 
 // const API_URL = Deno.env.get("API_URL_TOGETHER") || "";
 // const API_KEY = Deno.env.get("API_KEY_TOGETHER") || "";
@@ -13,6 +14,7 @@ const API_MODEL = Deno.env.get("API_MODEL") || "";
 const API_IMAGE_URL = Deno.env.get("API_IMAGE_URL") || "";
 const API_IMAGE_KEY = Deno.env.get("API_IMAGE_KEY") || "";
 const API_IMAGE_MODEL = Deno.env.get("API_IMAGE_MODEL") || "";
+const API_IMAGE_CORRECTION_MODEL = Deno.env.get("API_IMAGE_CORRECTION_MODEL") || "";
 
 const CURRENT_DATETIME = new Date().toISOString();
 
@@ -24,13 +26,25 @@ interface Message {
   content: string;
 }
 
-async function getModelResponseStream(messages: Message[]) {
+async function getModelResponseStream(messages: Message[], lang: string) {
   let isLastMessageAssistant =
     messages[messages.length - 1].role === "assistant";
   while (isLastMessageAssistant) {
     messages.pop();
     isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
   }
+
+  // check if the LAST message has #correction or #korrektur in the content (case insensitive)
+  const isCorrectionInLastMessage = hasKorrekturHashtag(messages);
+
+  console.log("isCorrectionInLastMessage", isCorrectionInLastMessage);
+
+  const systemPrompt = isCorrectionInLastMessage ? chatContent[lang].correctionSystemPrompt : chatContent[lang].systemPrompt;
+
+  messages.unshift({
+    role: "system",
+    content: systemPrompt,
+  });
 
   // looks for messages with array content that contains objects with a 'type' property set to 'image_url'
 
@@ -57,6 +71,10 @@ async function getModelResponseStream(messages: Message[]) {
     api_model = API_IMAGE_MODEL;
   }
 
+  if (isCorrectionInLastMessage) {
+    api_model = API_IMAGE_CORRECTION_MODEL;
+  }
+
   const fetchOptions: RequestInit = {
     method: "POST",
     headers: {
@@ -81,6 +99,13 @@ async function getModelResponseStream(messages: Message[]) {
     return new Response("Failed to get response body from external API", {
       status: 500,
     });
+  }
+
+  if (response.status === 400) {
+    console.log("Bad request");
+    const res = await response.json();
+    console.log(res);
+    return new Response("Bad request", { status: 400 });
   }
 
   const reader = response.body.getReader();
@@ -141,7 +166,8 @@ async function getModelResponseStream(messages: Message[]) {
           controller.close();
         }
       },
-      cancel() {
+      cancel(err) {
+        console.log("cancel", err);
         console.log("cancel");
       },
     }).pipeThrough(new ServerSentEventStream()),
@@ -153,24 +179,45 @@ async function getModelResponseStream(messages: Message[]) {
   );
 }
 
+// deno-lint-ignore no-explicit-any
+function hasKorrekturHashtag(messages: any[]): boolean {
+  if (!messages || messages.length === 0) return false;
+  
+  const lastMessage = messages[messages.length - 1];
+  if (!lastMessage || !lastMessage.content) return false;
+
+  let content = '';
+  
+  // Handle different content formats
+  if (typeof lastMessage.content === 'string') {
+    content = lastMessage.content;
+  } else if (Array.isArray(lastMessage.content)) {
+    // Handle array of content objects
+    const textContent = lastMessage.content.find(
+      // deno-lint-ignore no-explicit-any
+      (item: any) => item.type === 'text'
+    );
+    content = textContent?.text || '';
+  }
+
+  return content.toLowerCase().includes('#korrektur') || 
+         content.toLowerCase().includes('#correction');
+}
+
 export const handler: Handlers = {
   async POST(req: Request) {
     const payload = await req.json();
 
-    console.log(payload.lang);
+    // console.log(payload.lang);
 
     // payload.messages.unshift({
     //   role: "system",
     //   content:
     //     "You are an intelligent and empathetic learning assistant. Always respond empathetically, friendly, curiously and appropriately to the school context. Respond briefly and to the point. Your name is BUD-E and you would be created by LAION. LAION is a non-profit organization for the democratization of open source AI. Try to keep the conversation friendly, educational and entertaining and to keep it running while taking into account previously said information. Respond briefly, concisely and to the point.",
     // });
-    payload.messages.unshift({
-      role: "system",
-      content: chatContent[payload.lang].systemPrompt,
-    });
 
-    console.log("Model used: ", API_MODEL);
-    console.log("payload messages", payload.messages);
-    return getModelResponseStream(payload.messages);
+    // console.log("Model used: ", API_MODEL);
+    // console.log("payload messages", payload.messages);
+    return getModelResponseStream(payload.messages, payload.lang);
   },
 };
