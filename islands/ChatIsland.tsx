@@ -603,18 +603,22 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
         // console.log("[API] wikipedia response", res);
 
-        const beautifulWikipedia = res!.map((result: WikipediaResult) => {
-          const content = Object.values(result)[0];
-          return `**${
-            chatIslandContent[lang].wikipediaTitle
-          }**: ${content.Title}\n**${
-            chatIslandContent[lang].wikipediaURL
-          }**: ${content.URL}\n**${
-            chatIslandContent[lang].wikipediaContent
-          }**: ${content["Concat Abstract"]}\n**${
-            chatIslandContent[lang].wikipediaScore
-          }**: ${content.score}\n`;
-        }).join("\n");
+        const beautifulWikipedia = res!.map(
+          (result: WikipediaResult, index: number) => {
+            const content = Object.values(result)[0];
+            return `**${chatIslandContent[lang].result} ${index + 1} ${
+              chatIslandContent[lang].of
+            } ${res!.length}**\n**${
+              chatIslandContent[lang].wikipediaTitle
+            }**: ${content.Title}\n**${
+              chatIslandContent[lang].wikipediaURL
+            }**: ${content.URL}\n**${
+              chatIslandContent[lang].wikipediaContent
+            }**: ${content["Concat Abstract"]}\n**${
+              chatIslandContent[lang].wikipediaScore
+            }**: ${content.score}\n`;
+          },
+        ).join("\n\n");
 
         setMessages((messages) => {
           messages.push({ "role": "assistant", "content": [] });
@@ -643,14 +647,20 @@ export default function ChatIsland({ lang }: { lang: string }) {
         // console.log("[API] papers response", response);
 
         const beautifulPapers = response!.payload.items.map(
-          (result: PapersItem) => {
-            return `**${
-              chatIslandContent[lang].papersTitle
-            }**: ${result.title}\n**${
+          (result: PapersItem, index: number) => {
+            return `**${chatIslandContent[lang].result} ${index + 1} ${
+              chatIslandContent[lang].of
+            } ${response!.payload.items.length}**\n**${
               chatIslandContent[lang].papersDOI
             }**: ${result.doi}\n**${
-              chatIslandContent[lang].papersID
-            }**: ${result.id}`;
+              chatIslandContent[lang].papersSubjects
+            }**: ${result.subjects.join(", ")}\n**${
+              chatIslandContent[lang].papersTitle
+            }**: ${result.title}\n**${
+              chatIslandContent[lang].papersAuthors
+            }**: ${result.authors.join(", ")}\n**${
+              chatIslandContent[lang].papersAbstract
+            }**: ${result.abstract}\n`;
           },
         ).join("\n\n");
 
@@ -681,10 +691,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
         const res = await fetchBildungsplan(query, top_n);
 
-        console.log("[API] bildungsplan response", res);
+        // console.log("[API] bildungsplan response", res);
         const beautifulBildungsplan = res!.results.map((result, index) => {
-          return `**${chatIslandContent[lang].bildungsplanResult} ${index+1} ${chatIslandContent[lang].bildungsplanOf} ${res!.results.length}**\n\n${result.text}\n\n**Score**: ${result.score}`;
-        }).join("\n\n\n");
+          return `**${chatIslandContent[lang].result} ${index + 1} ${
+            chatIslandContent[lang].of
+          } ${
+            res!.results.length
+          }**\n${result.text}\n\n**Score**: ${result.score}`;
+        }).join("\n\n");
 
         setMessages((messages) => {
           messages.push({ "role": "assistant", "content": [] });
@@ -816,7 +830,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     sourceFunction: string,
   ) => {
     // Only return early if readAlways is false AND this is a streaming request
-    if (!readAlways && sourceFunction.startsWith('stream')) return;
+    if (!readAlways && sourceFunction.startsWith("stream")) return;
 
     console.log("[LOG] getTTS");
     // console.log("text", text);

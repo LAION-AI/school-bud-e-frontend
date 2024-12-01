@@ -45,6 +45,9 @@ interface PapersItem {
   id: string;
   doi: string;
   title: string;
+  abstract: string;
+  authors: string[];
+  subjects: string[];
 }
 
 interface BildungsplanQuery {

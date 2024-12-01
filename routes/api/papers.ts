@@ -22,7 +22,7 @@ export const handler: Handlers = {
         `${PAPERS_API_URL}?query=${encodeURIComponent(query)}&limit=${limit}`,
         {
           headers: { "accept": "application/json" },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -49,11 +49,15 @@ export const handler: Handlers = {
         throw new Error("Query parameter is required");
       }
 
+      const top_n = payload.limit || 5;
+
       const response = await fetch(
-        `${PAPERS_API_URL}?query=${encodeURIComponent(payload.query)}&limit=${payload.limit || 5}`,
+        `${PAPERS_API_URL}?query=${encodeURIComponent(payload.query)}&limit=${
+          top_n * 2
+        }`,
         {
           headers: { "accept": "application/json" },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -61,6 +65,17 @@ export const handler: Handlers = {
       }
 
       const data = await response.json();
+
+      if (!data.payload) {
+        throw new Error("Invalid response from papers API");
+      }
+
+      data.payload.items = data.payload.items.filter((item: PapersItem) => {
+        return item.abstract && item.title && item.doi;
+      });
+
+      data.payload.items = data.payload.items.slice(0, top_n);
+
       return new Response(JSON.stringify(data), {
         headers: { "Content-Type": "application/json" },
       });

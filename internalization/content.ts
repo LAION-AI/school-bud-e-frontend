@@ -46,11 +46,13 @@ export const chatIslandContent: InternalizationContent = {
     wikipediaContent: "Content",
     wikipediaURL: "URL",
     wikipediaScore: "Score",
-    papersID: "ID",
     papersDOI: "DOI",
     papersTitle: "Title",
-    bildungsplanResult: "Result",
-    bildungsplanOf: "of",
+    papersSubjects: "Type",
+    papersAuthors: "Authors",
+    papersAbstract: "Abstract",
+    result: "Result",
+    of: "of",
   },
   de: {
     welcomeMessage:
@@ -64,11 +66,13 @@ export const chatIslandContent: InternalizationContent = {
     wikipediaContent: "Inhalt",
     wikipediaURL: "URL",
     wikipediaScore: "Score",
-    papersId: "ID",
     papersDOI: "DOI",
     papersTitle: "Titel",
-    bildungsplanResult: "Ergebnis",
-    bildungsplanOf: "von",
+    papersSubjects: "Typ",
+    papersAuthors: "Autoren",
+    papersAbstract: "Abstract",
+    result: "Ergebnis",
+    of: "von",
   },
 };
 
