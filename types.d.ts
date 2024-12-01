@@ -44,6 +44,7 @@ interface PapersPayload {
 interface PapersItem {
   id: string;
   doi: string;
+  date_published: string;
   title: string;
   abstract: string;
   authors: string[];

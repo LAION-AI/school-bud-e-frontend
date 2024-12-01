@@ -653,6 +653,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
             } ${response!.payload.items.length}**\n**${
               chatIslandContent[lang].papersDOI
             }**: ${result.doi}\n**${
+              chatIslandContent[lang].papersDate
+            }**: ${result.date_published.substring(0, 10)}\n**${
               chatIslandContent[lang].papersSubjects
             }**: ${result.subjects.join(", ")}\n**${
               chatIslandContent[lang].papersTitle
