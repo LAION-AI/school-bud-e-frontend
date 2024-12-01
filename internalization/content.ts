@@ -25,11 +25,15 @@ export const warningContent: InternalizationContent = {
     title: "🚧 Experimental Demo Version 🚧",
     content:
       "Please note that this is an early prototype application that may provide inaccurate answers or generate content that is not suitable for all audiences. We advise caution and encourage you to report any issues you encounter to us.",
+    usage:
+      "**School Bud-E Features**\n1.: Wikipedia search (**#wikipedia**: search term)\n2.: Paper search (**#papers**: search term)\n3.: Curriculum search (**#bildungsplan**: search term)\n4.: Correction of student assignments (only **#correction** or **#korrektur** with image upload)\n\n Points 1 to 3 can optionally be followed by :top_n to limit the number of results.\nExample: **#wikipedia: Artificial Intelligence:3**\n\n Alternatively to #wikipedia, you can also use **#wikipedia_de** or **#wikipedia_en** to set the language of the Wikipedia search.\nExample: **#wikipedia_de: Artificial Intelligence**",
   },
   de: {
     title: "🚧 Experimentelle Demoversion 🚧",
     content:
       "Bitte beachten Sie, dass dies eine frühe Prototyp-Anwendung ist, die möglicherweise ungenaue Antworten liefert oder Inhalte erzeugt, die nicht für alle Zielgruppen geeignet sind. Wir raten zur Vorsicht und raten Ihnen uns alle Probleme, die Sie feststellen, mitzuteilen.",
+    usage:
+      "**School Bud-E Funktionen**\n1.: Wikipedia-Suche (**#wikipedia**: Suchbegriff)\n2.: Paper-Suche (**#papers**: Suchbegriff)\n3.: Bildungsplan-Suche (**#bildungsplan**: Suchbegriff)\n4.: Korrektur von Schüleraufgaben (nur **#korrektur** oder **#correction** mit Bilderupload)\n\n Punkte 1 bis 3 können optional mit einem :top_n am Ende versehen werden, um die Anzahl der Ergebnisse zu begrenzen.\nBeispiel: **#wikipedia: Künstliche Intelligenz:3**\n\n Alternativ zu #wikipedia, kann auch **#wikipedia_de** oder **#wikipedia_en** verwendet werden, um die Sprache der Wikipedia-Suche festzulegen.\nBeispiel: **#wikipedia_de: Künstliche Intelligenz**",
   },
 };
 
@@ -134,7 +138,7 @@ export const aboutContent: InternalizationContent = {
       "The development of School Bud-E is an ongoing collaboration. We are committed to continuously enhancing its capabilities to better serve students and educators alike. From reducing system requirements and latency to enriching its understanding of conversational nuances, each update aims to make School Bud-E an indispensable asset in educational institutions. At the same time, we are building an architecture that enables the technology to be implemented in various educational environments, to scale, and to integrate modules tailored to the specific needs of students and educators in different learning settings.",
     partFourTwo:
       "Are you interested in contributing to the School Bud-E project or integrating it into your suite of educational technologies? Then join our",
-    partFourThree: "or contact us directly at"
+    partFourThree: "or contact us directly at",
   },
   de: {
     title: "Über School Bud-E",
