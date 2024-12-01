@@ -7,8 +7,10 @@ import * as $_app from "./routes/_app.tsx";
 import * as $about from "./routes/about.tsx";
 import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
+import * as $api_papers from "./routes/api/papers.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_upload_recording from "./routes/api/upload-recording.ts";
+import * as $api_wikipedia from "./routes/api/wikipedia.ts";
 import * as $index from "./routes/index.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $Header from "./islands/Header.tsx";
@@ -22,8 +24,10 @@ const manifest = {
     "./routes/about.tsx": $about,
     "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
+    "./routes/api/papers.ts": $api_papers,
     "./routes/api/tts.ts": $api_tts,
     "./routes/api/upload-recording.ts": $api_upload_recording,
+    "./routes/api/wikipedia.ts": $api_wikipedia,
     "./routes/index.tsx": $index,
   },
   islands: {

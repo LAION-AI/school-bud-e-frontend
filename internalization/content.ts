@@ -42,6 +42,13 @@ export const chatIslandContent: InternalizationContent = {
     backupChat: "Download",
     restoreChat: "Upload",
     placeholderText: "Chat with the School Bud-E...",
+    wikipediaTitle: "Title",
+    wikipediaContent: "Content",
+    wikipediaURL: "URL",
+    wikipediaScore: "Score",
+    papersID: "ID",
+    papersDOI: "DOI",
+    papersTitle: "Title",
   },
   de: {
     welcomeMessage:
@@ -51,6 +58,13 @@ export const chatIslandContent: InternalizationContent = {
     backupChat: "Download",
     restoreChat: "Upload",
     placeholderText: "Schreibe mit dem School Bud-E...",
+    wikipediaTitle: "Titel",
+    wikipediaContent: "Inhalt",
+    wikipediaURL: "URL",
+    wikipediaScore: "Score",
+    papersId: "ID",
+    papersDOI: "DOI",
+    papersTitle: "Titel",
   },
 };
 
@@ -110,7 +124,7 @@ export const aboutContent: InternalizationContent = {
       "The development of School Bud-E is an ongoing collaboration. We are committed to continuously enhancing its capabilities to better serve students and educators alike. From reducing system requirements and latency to enriching its understanding of conversational nuances, each update aims to make School Bud-E an indispensable asset in educational institutions. At the same time, we are building an architecture that enables the technology to be implemented in various educational environments, to scale, and to integrate modules tailored to the specific needs of students and educators in different learning settings.",
     partFourTwo:
       "Are you interested in contributing to the School Bud-E project or integrating it into your suite of educational technologies? Then join our",
-    partFourThree: "or contact us directly at",
+    partFourThree: "or contact us directly at"
   },
   de: {
     title: "Über School Bud-E",

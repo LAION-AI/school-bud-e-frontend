@@ -45,11 +45,44 @@ function downloadAudioFiles(
     });
 }
 
-function renderTextWithBold(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*)/g);
+function convertDoiToUrl(doi: string): string {
+  // Remove 'DOI: ' if present and handle null DOIs
+  const cleanDoi = doi.replace(/^DOI:\s*/, '');
+  return cleanDoi === 'null' ? '#' : `https://doi.org/${cleanDoi}`;
+}
+
+function renderTextWithLinksAndBold(text: string) {
+  // Updated regex to catch DOIs in the format "DOI: 10.1234/xxx" or just "10.1234/xxx"
+  const parts = text.split(/((?:\*\*.*?\*\*)|(?:https?:\/\/[^\s]+)|(?:www\.[^\s]+)|(?:DOI:\s*(?:null|[\d.]+\/[^\s]+))|(?:(?<![\w/])\b10\.\d+\/[^\s]+))/g);
+  
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
+    } else if (part.startsWith('DOI:') || part.match(/^10\.\d+\//)) {
+      return (
+        <a 
+          key={index}
+          href={convertDoiToUrl(part)}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-600 hover:text-blue-800 underline"
+        >
+          {part}
+        </a>
+      );
+    } else if (part.startsWith('http://') || part.startsWith('https://') || part.startsWith('www.')) {
+      const url = part.startsWith('www.') ? `https://${part}` : part;
+      return (
+        <a 
+          key={index}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-600 hover:text-blue-800 underline"
+        >
+          {part}
+        </a>
+      );
     }
     return <span key={index}>{part}</span>;
   });
@@ -201,11 +234,11 @@ function ChatTemplate(
               } shadow`}
             >
               {typeof item.content === "string"
-                ? <span>{renderTextWithBold(item.content)}</span>
+                ? <span>{renderTextWithLinksAndBold(item.content)}</span>
                 : (
                   <span>
                     {typeof item.content[0] === "string"
-                      ? renderTextWithBold(item.content.join(""))
+                      ? renderTextWithLinksAndBold(item.content.join(""))
                       : (
                         <div>
                           {(item.content as unknown as {
@@ -216,7 +249,7 @@ function ChatTemplate(
                             if (content.type === "text") {
                               return (
                                 <span key={contentIndex}>
-                                  {renderTextWithBold(content.text)}
+                                  {renderTextWithLinksAndBold(content.text)}
                                 </span>
                               );
                             } else if (content.type === "image_url") {

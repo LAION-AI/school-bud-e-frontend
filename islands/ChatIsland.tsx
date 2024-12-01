@@ -331,6 +331,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     console.log("[LOG] handleOnSpeakAtGroupIndexAction", groupIndex);
     if (!audioFileDict[groupIndex]) {
       console.log("No audio file found for groupIndex", groupIndex);
+      console.log("AudioFileDict", audioFileDict);
       const lastMessage = Array.isArray(messages[groupIndex])
         ? messages[groupIndex][0]
         : messages[groupIndex];
@@ -453,6 +454,63 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   };
 
+  // WIKIPEDIA
+  const fetchWikipedia = async (
+    text: string,
+    collection: string,
+    n: number,
+  ) => {
+    try {
+      const response = await fetch("/api/wikipedia", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: text,
+          collection: collection,
+          n: n,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json() as WikipediaResult[];
+
+      return data;
+    } catch (error) {
+      console.error("Error in wikipedia API:", error);
+    }
+  };
+
+  // PAPERS
+  const fetchPapers = async (query: string, limit: number) => {
+    try {
+      const response = await fetch("/api/papers", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: query,
+          limit: limit,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json() as PapersResponse;
+
+      return data;
+    } catch (error) {
+      console.error("Error in papers API:", error);
+    }
+  };
+
   // PRIMARY FUNCTIONS
   // 1. startStream: getting LLM output and streams it to ChatTemplate through messages
   // 2. getTTS: plays audio if
@@ -518,6 +576,97 @@ export default function ChatIsland({ lang }: { lang: string }) {
       const isBildungsplanInLastMessage = currentQuerry.toLowerCase().includes(
         "#bildungsplan",
       );
+
+      const isWikipediaInLastMessage = currentQuerry.toLowerCase().includes(
+        "#wikipedia",
+      );
+
+      const isPapersInLastMessage = currentQuerry.toLowerCase().includes(
+        "#papers",
+      );
+
+      if (isWikipediaInLastMessage) {
+        let collection = lang === "en"
+          ? "English-ConcatX-Abstract"
+          : "German-ConcatX-Abstract";
+        if (currentQuerry.toLowerCase().includes("#wikipedia_de")) {
+          collection = "German-ConcatX-Abstract";
+        }
+        const currentQuerrySplit = currentQuerry.split(":");
+        const query = currentQuerrySplit[1].trim();
+        let n = 5;
+        if (currentQuerrySplit.length > 2) {
+          n = parseInt(currentQuerry.split(":")[2].trim(), 10);
+        }
+
+        const res = await fetchWikipedia(query, collection, n);
+
+        // console.log("[API] wikipedia response", res);
+
+        const beautifulWikipedia = res!.map((result: WikipediaResult) => {
+          const content = Object.values(result)[0];
+          return `**${
+            chatIslandContent[lang].wikipediaTitle
+          }**: ${content.Title}\n**${
+            chatIslandContent[lang].wikipediaURL
+          }**: ${content.URL}\n**${
+            chatIslandContent[lang].wikipediaContent
+          }**: ${content["Concat Abstract"]}\n**${
+            chatIslandContent[lang].wikipediaScore
+          }**: ${content.score}\n`;
+        }).join("\n");
+
+        setMessages((messages) => {
+          messages.push({ "role": "assistant", "content": [] });
+          const lastArray = messages[messages.length - 1];
+          (lastArray.content as string[]).push(beautifulWikipedia);
+          return [
+            ...messages.slice(0, -1),
+            lastArray,
+          ];
+        });
+        setIsStreamComplete(true);
+        setQuery("");
+        return;
+      }
+
+      if (isPapersInLastMessage) {
+        const currentQuerrySplit = currentQuerry.split(":");
+        const query = currentQuerrySplit[1].trim();
+        let limit = 5;
+        if (currentQuerrySplit.length > 2) {
+          limit = parseInt(currentQuerry.split(":")[2].trim(), 10);
+        }
+
+        const response = await fetchPapers(query, limit);
+
+        // console.log("[API] papers response", response);
+
+        const beautifulPapers = response!.payload.items.map(
+          (result: PapersItem) => {
+            return `**${
+              chatIslandContent[lang].papersTitle
+            }**: ${result.title}\n**${
+              chatIslandContent[lang].papersDOI
+            }**: ${result.doi}\n**${
+              chatIslandContent[lang].papersID
+            }**: ${result.id}`;
+          },
+        ).join("\n\n");
+
+        setMessages((messages) => {
+          messages.push({ "role": "assistant", "content": [] });
+          const lastArray = messages[messages.length - 1];
+          (lastArray.content as string[]).push(beautifulPapers);
+          return [
+            ...messages.slice(0, -1),
+            lastArray,
+          ];
+        });
+        setIsStreamComplete(true);
+        setQuery("");
+        return;
+      }
 
       if (isBildungsplanInLastMessage) {
         const currentQuerrySplit = currentQuerry.split(":");
@@ -664,7 +813,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     groupIndex: number,
     sourceFunction: string,
   ) => {
-    if (!readAlways) return;
+    // Only return early if readAlways is false AND this is a streaming request
+    if (!readAlways && sourceFunction.startsWith('stream')) return;
 
     console.log("[LOG] getTTS");
     // console.log("text", text);

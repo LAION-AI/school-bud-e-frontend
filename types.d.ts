@@ -13,6 +13,40 @@ interface SpeechRecognitionEventMap {
   start: Event;
 }
 
+interface WikipediaQuery {
+  text: string;
+  collection?: string;
+  n?: number;
+}
+
+interface WikipediaResult {
+  Title: string;
+  content: string;
+  URL: string;
+  score: string;
+}
+
+interface PapersQuery {
+  query: string;
+  limit?: number;
+}
+
+interface PapersResponse {
+  payload: PapersPayload;
+}
+
+interface PapersPayload {
+  items: PapersItem[];
+  total_hits: number;
+  has_more: boolean;
+}
+
+interface PapersItem {
+  id: string;
+  doi: string;
+  title: string;
+}
+
 interface BildungsplanQuery {
   query: string;
   top_n: number;
