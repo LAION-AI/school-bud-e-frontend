@@ -53,7 +53,7 @@ export const handler: Handlers = {
 
       const response = await fetch(
         `${PAPERS_API_URL}?query=${encodeURIComponent(payload.query)}&limit=${
-          top_n * 2
+          top_n * 4
         }`,
         {
           headers: { "accept": "application/json" },
@@ -71,7 +71,7 @@ export const handler: Handlers = {
       }
 
       data.payload.items = data.payload.items.filter((item: PapersItem) => {
-        return item.abstract && item.title && item.doi;
+        return item.abstract && item.title && item.doi && item.date_published;
       });
 
       data.payload.items = data.payload.items.slice(0, top_n);
