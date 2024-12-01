@@ -680,8 +680,10 @@ export default function ChatIsland({ lang }: { lang: string }) {
         // console.log("top_n", top_n);
 
         const res = await fetchBildungsplan(query, top_n);
-        const beautifulBildungsplan = res!.results.map((result) => {
-          return `${result.text}; Score: ${result.score}`;
+
+        console.log("[API] bildungsplan response", res);
+        const beautifulBildungsplan = res!.results.map((result, index) => {
+          return `**${chatIslandContent[lang].bildungsplanResult} ${index+1} ${chatIslandContent[lang].bildungsplanOf} ${res!.results.length}**\n\n${result.text}\n\n**Score**: ${result.score}`;
         }).join("\n\n");
 
         setMessages((messages) => {

@@ -49,6 +49,8 @@ export const chatIslandContent: InternalizationContent = {
     papersID: "ID",
     papersDOI: "DOI",
     papersTitle: "Title",
+    bildungsplanResult: "Result",
+    bildungsplanOf: "of",
   },
   de: {
     welcomeMessage:
@@ -65,6 +67,8 @@ export const chatIslandContent: InternalizationContent = {
     papersId: "ID",
     papersDOI: "DOI",
     papersTitle: "Titel",
+    bildungsplanResult: "Ergebnis",
+    bildungsplanOf: "von",
   },
 };
 
