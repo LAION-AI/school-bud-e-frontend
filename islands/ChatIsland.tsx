@@ -592,6 +592,10 @@ export default function ChatIsland({ lang }: { lang: string }) {
         if (currentQuerry.toLowerCase().includes("#wikipedia_de")) {
           collection = "German-ConcatX-Abstract";
         }
+        if (currentQuerry.toLowerCase().includes("#wikipedia_en")) {
+          collection = "English-ConcatX-Abstract";
+        }
+
         const currentQuerrySplit = currentQuerry.split(":");
         const query = currentQuerrySplit[1].trim();
         let n = 5;
