@@ -25,7 +25,7 @@ function downloadAudioFiles(
   }
 
   // For multiple items, download all MP3s first
-  const mp3Promises = Object.values(items).map(item => 
+  const mp3Promises = Object.values(items).map(item =>
     fetch(item.audio.src)
       .then(response => response.blob())
   );
@@ -34,7 +34,7 @@ function downloadAudioFiles(
     .then(blobs => {
       // Combine all MP3 blobs into a single blob
       const combinedBlob = new Blob(blobs, { type: 'audio/mp3' });
-      
+
       // Create download link for combined file
       const url = URL.createObjectURL(combinedBlob);
       const a = document.createElement("a");
@@ -54,13 +54,13 @@ function convertDoiToUrl(doi: string): string {
 function renderTextWithLinksAndBold(text: string) {
   // Updated regex to catch DOIs in the format "DOI: 10.1234/xxx" or just "10.1234/xxx"
   const parts = text.split(/((?:\*\*.*?\*\*)|(?:https?:\/\/[^\s]+)|(?:www\.[^\s]+)|(?:DOI:\s*(?:null|[\d.]+\/[^\s]+))|(?:(?<![\w/])\b10\.\d+\/[^\s]+))/g);
-  
+
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
     } else if (part.startsWith('DOI:') || part.match(/^10\.\d+\//)) {
       return (
-        <a 
+        <a
           key={index}
           href={convertDoiToUrl(part)}
           target="_blank"
@@ -73,7 +73,7 @@ function renderTextWithLinksAndBold(text: string) {
     } else if (part.startsWith('http://') || part.startsWith('https://') || part.startsWith('www.')) {
       const url = part.startsWith('www.') ? `https://${part}` : part;
       return (
-        <a 
+        <a
           key={index}
           href={url}
           target="_blank"
@@ -94,10 +94,14 @@ function ChatTemplate(
     parentImages,
     messages,
     readAlways,
+    autoScroll,
+    currentEditIndex,
     audioFileDict,
     onRefreshAction,
+    onEditAction,
     onSpeakAtGroupIndexAction,
     onImageChange,
+    onToggleAutoScrollAction,
     onToggleReadAlwaysAction,
   }: {
     lang: string;
@@ -105,7 +109,10 @@ function ChatTemplate(
     messages: Message[];
     isComplete: boolean;
     readAlways: boolean;
+    autoScroll: boolean;
+    currentEditIndex: number;
     audioFileDict: AudioFileDict;
+    onToggleAutoScrollAction: () => void;
     onToggleReadAlwaysAction: () => void;
     onSpeakAtGroupIndexAction: (groupIndex: number) => void;
     onRefreshAction: (groupIndex: number) => void;
@@ -150,20 +157,39 @@ function ChatTemplate(
           ? chatTemplateContent[lang]["readOutText"]
           : chatTemplateContent[lang]["silent"]}
       </button>
+      <button
+        class={`absolute top-4 left-0 m-4 text-xs align-middle text-gray-600 hover:text-gray-800 transition-colors`}
+        onClick={() => onToggleAutoScrollAction()}
+      >
+        {autoScroll
+          ? chatTemplateContent[lang]["autoScrollOn"]
+          : chatTemplateContent[lang]["autoScrollOff"]}
+      </button>
       {messages?.map((item, groupIndex) => {
         return (
           <div
             key={groupIndex}
-            class={`message-group flex flex-col ${
-              item.role === "user" ? "items-end" : "items-start"
-            }`}
+            class={`message-group flex flex-col ${item.role === "user" ? "items-end" : "items-start"
+              }`}
           >
             <span
-              class={`text-sm font-semibold flex justify-center items-center ${
-                item.role === "user" ? "text-blue-600" : "text-gray-600"
-              }`}
+              class={`text-sm font-semibold flex justify-center items-center ${item.role === "user" ? "text-blue-600" : "text-gray-600"
+                }`}
             >
-              {item.role === "user" ? "Du" : "School Bud-E"}
+              {item.role === "user" ? "Du" : "Bud-E"}
+              {groupIndex !== 0 && (
+                <button onClick={() => onEditAction(groupIndex)}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    style={`margin-left: 0.5rem; width: 24px; height: 24px; ${currentEditIndex === groupIndex ? "fill: red;" : "fill: grey;"}`}
+                    viewBox="0 -960 960 960"
+                    fill="grey"
+                  >
+                    <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 17l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-648L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+                  </svg>
+                </button>
+              )}
+
               {item.role !== "user" && groupIndex !== 0 && (
                 <button onClick={() => onRefreshAction(groupIndex)}>
                   <svg
@@ -179,11 +205,11 @@ function ChatTemplate(
               {item.role !== "user" && (
                 <button onClick={() => onSpeakAtGroupIndexAction(groupIndex)}>
                   {!audioFileDict[groupIndex] ||
-                      !Object.values(audioFileDict[groupIndex]).some((
-                        audioFile,
-                      ) =>
-                        !audioFile.audio.paused
-                      )
+                    !Object.values(audioFileDict[groupIndex]).some((
+                      audioFile,
+                    ) =>
+                      !audioFile.audio.paused
+                    )
                     ? (
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -225,13 +251,11 @@ function ChatTemplate(
                 )}
             </span>
             <div
-              class={`message mt-1 whitespace-pre-wrap [overflow-wrap:anywhere] ${
-                item.role === "user"
+              class={`message mt-1 whitespace-pre-wrap [overflow-wrap:anywhere] ${item.role === "user"
                   ? "bg-blue-100 sm:ml-20 md:ml-40"
                   : "bg-gray-100 sm:mr-20 md:mr-40"
-              } p-3 rounded-lg ${
-                item.role === "user" ? "rounded-tr-none" : "rounded-tl-none"
-              } shadow`}
+                } p-3 rounded-lg ${item.role === "user" ? "rounded-tr-none" : "rounded-tl-none"
+                } shadow`}
             >
               {typeof item.content === "string"
                 ? <span>{renderTextWithLinksAndBold(item.content)}</span>
