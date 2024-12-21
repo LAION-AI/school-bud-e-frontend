@@ -22,13 +22,14 @@ import { chatIslandContent } from "../internalization/content.ts";
 
 // // Import necessary types from Preact
 // import { JSX } from 'preact';
+import Settings from "../components/Settings.tsx";
 
 // ###############
 // ## / IMPORTS ##
 // ###############
 
-class RetriableError extends Error {}
-class FatalError extends Error {}
+class RetriableError extends Error { }
+class FatalError extends Error { }
 
 // Define the AudioItem interface if not already defined
 interface AudioItem {
@@ -56,9 +57,11 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // General settings
   const [readAlways, setReadAlways] = useState(false);
+  const [autoScroll, setAutoScroll] = useState(true);
   const [images, setImages] = useState([] as Image[]);
   const [isStreamComplete, setIsStreamComplete] = useState(true);
   const [stopList, setStopList] = useState([] as number[]);
+  const [currentEditIndex, setCurrentEditIndex] = useState(-1 as number | undefined);
 
   const [messages, setMessages] = useState([
     {
@@ -66,6 +69,68 @@ export default function ChatIsland({ lang }: { lang: string }) {
       "content": [chatIslandContent[lang]["welcomeMessage"]],
     },
   ] as Message[]);
+
+  const [showSettings, setShowSettings] = useState(false);
+  
+  const [settings, setSettings] = useState({
+    apiUrl: localStorage.getItem("bud-e-api-url") || "",
+    apiKey: localStorage.getItem("bud-e-api-key") || "",
+    apiModel: localStorage.getItem("bud-e-model") || "",
+    ttsUrl: localStorage.getItem("bud-e-tts-url") || "",
+    ttsKey: localStorage.getItem("bud-e-tts-key") || "",
+    ttsModel: localStorage.getItem("bud-e-tts-model") || "",
+    sttUrl: localStorage.getItem("bud-e-stt-url") || "",
+    sttKey: localStorage.getItem("bud-e-stt-key") || "",
+    sttModel: localStorage.getItem("bud-e-stt-model") || "",
+    systemPrompt: localStorage.getItem("bud-e-system-prompt") || "",
+    vlmUrl: localStorage.getItem("bud-e-vlm-url") || "",
+    vlmKey: localStorage.getItem("bud-e-vlm-key") || "",
+    vlmModel: localStorage.getItem("bud-e-vlm-model") || "",
+    vlmCorrectionModel: localStorage.getItem("bud-e-vlm-correction-model") || "",
+  });
+
+  // Add useEffect for loading settings
+  useEffect(() => {
+    const savedSettings = {
+      apiUrl: localStorage.getItem("bud-e-api-url") || "",
+      apiKey: localStorage.getItem("bud-e-api-key") || "",
+      apiModel: localStorage.getItem("bud-e-model") || "",
+      ttsUrl: localStorage.getItem("bud-e-tts-url") || "",
+      ttsKey: localStorage.getItem("bud-e-tts-key") || "",
+      ttsModel: localStorage.getItem("bud-e-tts-model") || "",
+      sttUrl: localStorage.getItem("bud-e-stt-url") || "",
+      sttKey: localStorage.getItem("bud-e-stt-key") || "",
+      sttModel: localStorage.getItem("bud-e-stt-model") || "",
+      systemPrompt: localStorage.getItem("bud-e-system-prompt") || "",
+      vlmUrl: localStorage.getItem("bud-e-vlm-url") || "",
+      vlmKey: localStorage.getItem("bud-e-vlm-key") || "",
+      vlmModel: localStorage.getItem("bud-e-vlm-model") || "",
+      vlmCorrectionModel: localStorage.getItem("bud-e-vlm-correction-model") || "",
+    };
+    setSettings(savedSettings);
+  }, []);
+
+  const handleSaveSettings = (newSettings: typeof settings) => {
+    setSettings(newSettings);
+    localStorage.setItem("bud-e-api-url", newSettings.apiUrl);
+    localStorage.setItem("bud-e-api-key", newSettings.apiKey);
+    localStorage.setItem("bud-e-model", newSettings.apiModel);
+    localStorage.setItem("bud-e-tts-url", newSettings.ttsUrl);
+    localStorage.setItem("bud-e-tts-key", newSettings.ttsKey);
+    localStorage.setItem("bud-e-tts-model", newSettings.ttsModel);
+    localStorage.setItem("bud-e-stt-url", newSettings.sttUrl);
+    localStorage.setItem("bud-e-stt-key", newSettings.sttKey);
+    localStorage.setItem("bud-e-stt-model", newSettings.sttModel);
+    localStorage.setItem("bud-e-system-prompt", newSettings.systemPrompt);
+    localStorage.setItem("bud-e-vlm-url", newSettings.vlmUrl);
+    localStorage.setItem("bud-e-vlm-key", newSettings.vlmKey);
+    localStorage.setItem("bud-e-vlm-model", newSettings.vlmModel);
+    localStorage.setItem(
+      "bud-e-vlm-correction-model",
+      newSettings.vlmCorrectionModel
+    );
+    setShowSettings(false);
+  };
 
   // #################
   // ### useEffect ###
@@ -147,17 +212,19 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // 3. useEffect [messages]
   useEffect(() => {
-    // Only proceed if we're not already scrolling
-    const currentPosition = globalThis.innerHeight +
-      globalThis.scrollY;
-    const totalScrollHeight = document.body.scrollHeight;
+    if (autoScroll) {
+      // Only proceed if we're not already scrolling
+      const currentPosition = globalThis.innerHeight +
+        globalThis.scrollY;
+      const totalScrollHeight = document.body.scrollHeight;
 
-    // Only scroll if the deviation is more than 100 pixels
-    if (totalScrollHeight - currentPosition > 500) {
-      globalThis.scrollTo({
-        top: totalScrollHeight,
-        behavior: "smooth",
-      });
+      // Only scroll if the deviation is more than 100 pixels
+      if (totalScrollHeight - currentPosition > 500) {
+        globalThis.scrollTo({
+          top: totalScrollHeight,
+          behavior: "smooth",
+        });
+      }
     }
 
     if (!firstLoad) {
@@ -174,7 +241,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     if (firstLoad) {
       setFirstLoad(false);
     }
-  }, [messages]);
+  }, [messages, autoScroll]);
 
   // 4. useEffect [currentChatSuffix]
   useEffect(() => {
@@ -182,17 +249,17 @@ export default function ChatIsland({ lang }: { lang: string }) {
     const localStorageMessages = JSON.parse(
       String(localStorage.getItem("bude-chat-" + currentChatSuffix)),
     ) || [
-      {
-        "role": "assistant",
-        "content": [
-          chatIslandContent[lang]["welcomeMessage"],
-        ],
-      },
-    ];
+        {
+          "role": "assistant",
+          "content": [
+            chatIslandContent[lang]["welcomeMessage"],
+          ],
+        },
+      ];
     if (localStorageMessages.length === 1) {
       if (
         localStorageMessages[0].content[0] !==
-          chatIslandContent[lang]["welcomeMessage"]
+        chatIslandContent[lang]["welcomeMessage"]
       ) {
         localStorageMessages[0].content[0] =
           chatIslandContent[lang]["welcomeMessage"];
@@ -214,7 +281,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
       const isLatestGroup =
         Math.max(...Object.keys(audioFileDict).map(Number)) <=
-          Number(groupIndex);
+        Number(groupIndex);
 
       if (
         isLatestGroup &&
@@ -312,16 +379,28 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // 2. handleEditAction
   const handleEditAction = (groupIndex: number) => {
-    const lastMessage = Array.isArray(messages[groupIndex])
-      ? messages[groupIndex][0]
-      : messages[groupIndex];
+    const message = messages[groupIndex];
+    let contentToEdit = "";
 
-    setMessages((prevMessages) => {
-      const updatedMessages = prevMessages.slice(0, groupIndex);
-      return updatedMessages;
-    });
-    setQuery(lastMessage);
+    if (typeof message.content === "string") {
+      contentToEdit = message.content;
+    } else if (Array.isArray(message.content)) {
+      if (typeof message.content[0] === "string") {
+        contentToEdit = message.content.join("");
+      } else {
+        // Handle content array of objects with text and image_url
+        contentToEdit = message.content
+          .filter(item => item.type === "text")
+          .map(item => item.text)
+          .join("");
+      }
+    }
+
+    // setMessages((prevMessages) => prevMessages.slice(0, groupIndex));
+    setQuery(contentToEdit);
     setStopList([]);
+    setCurrentEditIndex(groupIndex, u);
+
     const textarea = document.querySelector("textarea");
     textarea!.focus();
   };
@@ -520,6 +599,19 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // 1. startStream
   const startStream = async (transcript: string, prevMessages?: Message[]) => {
+    // if currentEditIndex is set, we are editing a message instead of starting the stream
+    // except if the currentEditIndex is the last user message, then we do start the stream
+
+    if (currentEditIndex && currentEditIndex !== -1) {
+      // set the message at currentEditIndex to the transcript
+      const newMessages = [...messages];
+      newMessages[currentEditIndex]["content"] = query;
+      setMessages(newMessages);
+      setQuery("");
+      setCurrentEditIndex(-1);
+      return;
+    }
+
     // pause all ongoing audio files first
     (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
       (group) => {
@@ -610,17 +702,12 @@ export default function ChatIsland({ lang }: { lang: string }) {
         const beautifulWikipedia = res!.map(
           (result: WikipediaResult, index: number) => {
             const content = Object.values(result)[0];
-            return `**${chatIslandContent[lang].result} ${index + 1} ${
-              chatIslandContent[lang].of
-            } ${res!.length}**\n**${
-              chatIslandContent[lang].wikipediaTitle
-            }**: ${content.Title}\n**${
-              chatIslandContent[lang].wikipediaURL
-            }**: ${content.URL}\n**${
-              chatIslandContent[lang].wikipediaContent
-            }**: ${content["Concat Abstract"]}\n**${
-              chatIslandContent[lang].wikipediaScore
-            }**: ${content.score}\n`;
+            return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
+              } ${res!.length}**\n**${chatIslandContent[lang].wikipediaTitle
+              }**: ${content.Title}\n**${chatIslandContent[lang].wikipediaURL
+              }**: ${content.URL}\n**${chatIslandContent[lang].wikipediaContent
+              }**: ${content["Concat Abstract"]}\n**${chatIslandContent[lang].wikipediaScore
+              }**: ${content.score}\n`;
           },
         ).join("\n\n");
 
@@ -652,21 +739,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
         const beautifulPapers = response!.payload.items.map(
           (result: PapersItem, index: number) => {
-            return `**${chatIslandContent[lang].result} ${index + 1} ${
-              chatIslandContent[lang].of
-            } ${response!.payload.items.length}**\n**${
-              chatIslandContent[lang].papersDOI
-            }**: ${result.doi}\n**${
-              chatIslandContent[lang].papersDate
-            }**: ${result.date_published.substring(0, 10)}\n**${
-              chatIslandContent[lang].papersSubjects
-            }**: ${result.subjects.join(", ")}\n**${
-              chatIslandContent[lang].papersTitle
-            }**: ${result.title}\n**${
-              chatIslandContent[lang].papersAuthors
-            }**: ${result.authors.join(", ")}\n**${
-              chatIslandContent[lang].papersAbstract
-            }**: ${result.abstract}\n`;
+            return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
+              } ${response!.payload.items.length}**\n**${chatIslandContent[lang].papersDOI
+              }**: ${result.doi}\n**${chatIslandContent[lang].papersDate
+              }**: ${result.date_published.substring(0, 10)}\n**${chatIslandContent[lang].papersSubjects
+              }**: ${result.subjects.join(", ")}\n**${chatIslandContent[lang].papersTitle
+              }**: ${result.title}\n**${chatIslandContent[lang].papersAuthors
+              }**: ${result.authors.join(", ")}\n**${chatIslandContent[lang].papersAbstract
+              }**: ${result.abstract}\n`;
           },
         ).join("\n\n");
 
@@ -699,11 +779,9 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
         // console.log("[API] bildungsplan response", res);
         const beautifulBildungsplan = res!.results.map((result, index) => {
-          return `**${chatIslandContent[lang].result} ${index + 1} ${
-            chatIslandContent[lang].of
-          } ${
-            res!.results.length
-          }**\n${result.text}\n\n**Score**: ${result.score}`;
+          return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
+            } ${res!.results.length
+            }**\n${result.text}\n\n**Score**: ${result.score}`;
         }).join("\n\n");
 
         setMessages((messages) => {
@@ -728,6 +806,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
         body: JSON.stringify({
           lang: lang,
           messages: newMessages,
+          llmApiUrl: settings.apiUrl,
+          llmApiKey: settings.apiKey,
+          llmApiModel: settings.apiModel,
+          vlmApiUrl: settings.vlmUrl,
+          vlmApiKey: settings.vlmKey,
+          vlmApiModel: settings.vlmModel,
+          vlmCorrectionModel: settings.vlmCorrectionModel,
+          systemPrompt: settings.systemPrompt
         }),
         onmessage(ev: EventSourceMessage) {
           const parsedData = JSON.parse(ev.data);
@@ -852,7 +938,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       //   0: audio,
       // };
       const sourceFunctionIndex = Number(sourceFunction.replace("stream", "")) -
-          1 || 0;
+        1 || 0;
       if (audioFileDict[groupIndex]) {
         audioFileDict[groupIndex][sourceFunctionIndex] = {
           audio: audio,
@@ -913,6 +999,9 @@ export default function ChatIsland({ lang }: { lang: string }) {
           text: text,
           textPosition: sourceFunction,
           voice: lang === "en" ? "Stefanie" : "Florian",
+          ttsKey: settings.ttsKey,
+          ttsUrl: settings.ttsUrl,
+          ttsModel: settings.ttsModel,
         }),
       });
 
@@ -958,8 +1047,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
   };
 
   // General functions
-  // 1. toggleReadAlways:
+  // 0. toggleAutoScroll
+  // 1. toggleReadAlways
   // 2. stopAndResetAudio
+
+  // 0. toggleAutoScroll
+  const toggleAutoScroll = (value: boolean) => {
+    setAutoScroll(value);
+  };
 
   // 1. toggleReadAlways
   // - toggles readAlways state
@@ -1127,68 +1222,100 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // MAIN CONTENT THAT IS RENDERED
   return (
     <div class="w-full">
-      {localStorageKeys.sort().map((key) => {
-        // remove bude-chat- from the beginning of the key
-        const chatSuffix = key.substring(10);
-        return (
+      <div class="flex items-center mb-4 flex-wrap">
+        {/* Add settings button next to existing chat buttons */}
+        <button
+          class="rounded-full bg-slate-200 px-4 py-2 mx-2 mb-2"
+          onClick={() => setShowSettings(true)}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 -960 960 960" width="24">
+            <path d="m370-80-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Z"/>
+          </svg>
+        </button>
+        {localStorageKeys.sort().map((key) => {
+          // remove bude-chat- from the beginning of the key
+          const chatSuffix = key.substring(10);
+          return (
+            <button
+              className={`rounded-full ${chatSuffix === currentChatSuffix
+                  ? "bg-slate-400 text-white font-bold"
+                  : "bg-slate-200"
+                } px-4 py-2 mx-2 mb-2`}
+              onClick={() => setCurrentChatSuffix(chatSuffix)}
+            >
+              {Number(chatSuffix) + 1}
+            </button>
+          );
+        })}
+        <button
+          class="rounded-full bg-slate-200 px-4 py-2 mx-2 mb-2"
+          onClick={() => startNewChat()}
+        >
+          +
+        </button>
+        {Object.keys(localStorageKeys).length > 0 && (
           <button
-            className={`rounded-full ${
-              chatSuffix === currentChatSuffix
-                ? "bg-slate-400 text-white font-bold"
-                : "bg-slate-200"
-            } px-4 py-2 mx-2 mb-2`}
-            onClick={() => setCurrentChatSuffix(chatSuffix)}
+            class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
+            onClick={() => deleteCurrentChat()}
           >
-            {Number(chatSuffix) + 1}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="inline-block"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+              fill="#000000"
+            >
+              <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
+            </svg>
+            {chatIslandContent[lang]["deleteCurrentChat"]}
           </button>
-        );
-      })}
-      <button
-        class="rounded-full bg-slate-200 px-4 py-2 mx-2 mb-2"
-        onClick={() => startNewChat()}
-      >
-        +
-      </button>
-      {Object.keys(localStorageKeys).length > 0 && (
-        <button
-          class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
-          onClick={() => deleteCurrentChat()}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="inline-block"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#000000"
+        )}
+        {Object.keys(localStorageKeys).length > 0 && (
+          <button
+            class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
+            onClick={() => deleteAllChats()}
           >
-            <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
-          </svg>
-          {chatIslandContent[lang]["deleteCurrentChat"]}
-        </button>
-      )}
-      {Object.keys(localStorageKeys).length > 0 && (
-        <button
-          class="rounded-full bg-red-200 font-bold px-4 py-2 mx-2 mb-2"
-          onClick={() => deleteAllChats()}
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="inline-block"
-            height="24px"
-            viewBox="0 -960 960 960"
-            width="24px"
-            fill="#000000"
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="inline-block"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+              fill="#000000"
+            >
+              <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
+            </svg>
+            {chatIslandContent[lang]["deleteAllChats"]}
+          </button>
+        )}
+        {Object.keys(localStorageKeys).length > 0 && (
+          <button
+            class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
+            onClick={() => saveChatsToLocalFile()}
           >
-            <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
-          </svg>
-          {chatIslandContent[lang]["deleteAllChats"]}
-        </button>
-      )}
-      {Object.keys(localStorageKeys).length > 0 && (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="inline"
+              height="24px"
+              viewBox="0 -960 960 960"
+              width="24px"
+              fill="#000000"
+            >
+              <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+            </svg>
+          </button>
+        )}
+        <input
+          type="file"
+          id="restoreChatFromLocalFile"
+          style="display: none;"
+          onChange={(e) => restoreChatsFromLocalFile(e)}
+        />
         <button
           class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
-          onClick={() => saveChatsToLocalFile()}
+          onClick={() =>
+            document.getElementById("restoreChatFromLocalFile")?.click()}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1198,47 +1325,37 @@ export default function ChatIsland({ lang }: { lang: string }) {
             width="24px"
             fill="#000000"
           >
-            <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+            <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
           </svg>
         </button>
-      )}
-      <input
-        type="file"
-        id="restoreChatFromLocalFile"
-        style="display: none;"
-        onChange={(e) => restoreChatsFromLocalFile(e)}
-      />
-      <button
-        class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
-        onClick={() =>
-          document.getElementById("restoreChatFromLocalFile")?.click()}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="inline"
-          height="24px"
-          viewBox="0 -960 960 960"
-          width="24px"
-          fill="#000000"
-        >
-          <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
-        </svg>
-      </button>
+      </div>
       <ChatTemplate
         lang={lang}
         parentImages={images}
         messages={messages}
         isComplete={isStreamComplete}
         readAlways={readAlways}
+        autoScroll={autoScroll}
         audioFileDict={audioFileDict}
+        currentEditIndex={currentEditIndex!}
         onSpeakAtGroupIndexAction={handleOnSpeakAtGroupIndexAction}
         onToggleReadAlwaysAction={() => toggleReadAlways(!readAlways)}
+        onToggleAutoScrollAction={() => toggleAutoScroll(!autoScroll)}
         onRefreshAction={handleRefreshAction}
         onEditAction={handleEditAction}
         onUploadActionToMessages={handleUploadActionToMessages}
         onImageChange={handleImageChange}
         onTrashAction={() => setMessages([])}
       />
+
+      {showSettings && (
+        <Settings 
+          settings={settings}
+          onSave={handleSaveSettings}
+          onClose={() => setShowSettings(false)}
+          lang={lang}
+        />
+      )}
 
       <div className="relative mt-4 mb-12">
         <textarea
@@ -1266,6 +1383,9 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
         <VoiceRecordButton
           resetTranscript={resetTranscript}
+          sttUrl={settings.sttUrl}
+          sttKey={settings.sttKey}
+          sttModel={settings.sttModel}
           onFinishRecording={(finalTranscript) => {
             startStream(finalTranscript);
           }}
