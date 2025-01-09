@@ -1,3 +1,5 @@
+import { agreementContentRaw } from "./agreement-content.ts";
+
 export const headerContent: InternalizationContent = {
   en: {
     overTitle: "Experimental",
@@ -9,26 +11,7 @@ export const headerContent: InternalizationContent = {
   },
 };
 
-export const agreementContent: InternalizationContent = {
-  en: {
-    title: "Welcome to School Bud-E!",
-    content:
-      "Please read and accept the following terms and conditions to continue using School Bud-E.",
-    termsAndConditionsTitle: "Terms and Conditions",
-    temsAndConditionsContent: "Placeholder Terms and Conditions",
-    agree: "I agree to the terms and conditions",
-    accept: "Accept",
-  },
-  de: {
-    title: "Willkommen bei School Bud-E!",
-    content:
-      "Bitte lesen und akzeptieren Sie die folgenden Nutzungsbedingungen, um mit der Nutzung von School Bud-E fortzufahren.",
-    termsAndConditionsTitle: "Nutzungsbedingungen",
-    temsAndConditionsContent: "Platzhalter Nutzungsbedingungen",
-    agree: "Ich stimme den Nutzungsbedingungen zu",
-    accept: "Akzeptieren",
-  },
-};
+export const agreementContent: InternalizationContent = agreementContentRaw;
 
 export const menuContent: InternalizationContent = {
   en: {
@@ -79,7 +62,8 @@ export const chatIslandContent: InternalizationContent = {
     papersDate: "Date",
     result: "Result",
     of: "of",
-    noSettings: "⚠️ The minimum requirement to run the chat is missing. You need to open the settings and either provide an Universal API key or a custom API key with the corresponding url and model. ⚠️",
+    noSettings:
+      "⚠️ The minimum requirement to run the chat is missing. You need to open the settings and either provide an Universal API key or a custom API key with the corresponding url and model. ⚠️",
   },
   de: {
     welcomeMessage:
@@ -101,7 +85,8 @@ export const chatIslandContent: InternalizationContent = {
     papersDate: "Datum",
     result: "Ergebnis",
     of: "von",
-    noSettings: "⚠️ Die Mindestanforderung zum Ausführen des Chats fehlt. Du musst die Einstellungen öffnen und entweder einen Universal-API-Schlüssel oder einen benutzerdefinierten API-Schlüssel mit der entsprechender URL und dem Modell eintragen. ⚠️",
+    noSettings:
+      "⚠️ Die Mindestanforderung zum Ausführen des Chats fehlt. Du musst die Einstellungen öffnen und entweder einen Universal-API-Schlüssel oder einen benutzerdefinierten API-Schlüssel mit der entsprechender URL und dem Modell eintragen. ⚠️",
   },
 };
 
@@ -240,7 +225,7 @@ export const settingsContent: InternalizationContent = {
     chatApiTitle: "Chat API",
     ttsTitle: "Text-to-Speech",
     sttTitle: "Speech-to-Text",
-    vlmTitle: "Vision Language Model"
+    vlmTitle: "Vision Language Model",
   },
   de: {
     title: "Einstellungen",
@@ -281,6 +266,6 @@ export const settingsContent: InternalizationContent = {
     chatApiTitle: "Chat API",
     ttsTitle: "Text-zu-Sprache",
     sttTitle: "Sprache-zu-Text",
-    vlmTitle: "Bildverarbeitung"
+    vlmTitle: "Bildverarbeitung",
   },
 };
