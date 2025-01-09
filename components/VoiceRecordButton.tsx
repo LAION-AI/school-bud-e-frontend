@@ -9,16 +9,25 @@ import { IS_BROWSER } from "$fresh/runtime.ts";
  * @param {Function} props.onFinishRecording - Callback function called when recording is finished. It receives the transcript as a parameter.
  * @param {Function} props.onInterimTranscript - Callback function called when interim transcript is available. It receives the interim transcript as a parameter.
  * @param {number} props.resetTranscript - A number used to trigger a reset of the transcript.
+ * @param {string} props.sttUrl - The URL for the speech-to-text service.
+ * @param {string} props.sttKey - The API key for the speech-to-text service.
+ * @param {string} props.sttModel - The model to use for speech-to-text conversion.
  * @returns {JSX.Element} The VoiceRecordButton component.
  */
 function VoiceRecordButton({
   onFinishRecording,
   onInterimTranscript,
   resetTranscript,
+  sttUrl,
+  sttKey,
+  sttModel,
 }: {
   onFinishRecording: (transcript: string) => void;
   onInterimTranscript: (transcript: string) => void;
   resetTranscript: number;
+  sttUrl: string;
+  sttKey: string;
+  sttModel: string;
 }) {
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -89,6 +98,9 @@ function VoiceRecordButton({
   const sendAudioToServer = async (audioBlob: Blob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
+    formData.append("sttUrl", sttUrl);
+    formData.append("sttKey", sttKey);
+    formData.append("sttModel", sttModel);
 
     try {
       const response = await fetch("/api/upload-recording", {

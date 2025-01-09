@@ -390,8 +390,10 @@ export default function ChatIsland({ lang }: { lang: string }) {
       } else {
         // Handle content array of objects with text and image_url
         contentToEdit = message.content
-          .filter(item => item.type === "text")
-          .map(item => item.text)
+          // deno-lint-ignore no-explicit-any
+          .filter((item: any) => item.type === "text")
+          // deno-lint-ignore no-explicit-any
+          .map((item: any) => item.text)
           .join("");
       }
     }
@@ -399,7 +401,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     // setMessages((prevMessages) => prevMessages.slice(0, groupIndex));
     setQuery(contentToEdit);
     setStopList([]);
-    setCurrentEditIndex(groupIndex, u);
+    setCurrentEditIndex(groupIndex);
 
     const textarea = document.querySelector("textarea");
     textarea!.focus();

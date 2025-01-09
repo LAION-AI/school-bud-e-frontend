@@ -1,5 +1,5 @@
 import { useState } from "preact/hooks";
-import { settingsContent, chatContent } from "../internalization/content.ts";
+import { settingsContent } from "../internalization/content.ts";
 
 export default function Settings({
   settings,
@@ -33,20 +33,6 @@ export default function Settings({
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4 overflow-y-scroll max-h-[90dvh]">
         <h2 class="text-xl font-bold mb-4">{settingsContent[lang].title}</h2>
-
-        {/* <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].systemPromptLabel}
-          </label>
-          <textarea
-            value={newSettings.systemPrompt}
-            placeholder={chatContent[lang].systemPrompt}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, systemPrompt: (e.target as HTMLTextAreaElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 h-32"
-          />
-        </div> */}
 
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
