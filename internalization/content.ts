@@ -79,6 +79,7 @@ export const chatIslandContent: InternalizationContent = {
     papersDate: "Date",
     result: "Result",
     of: "of",
+    noSettings: "⚠️ The minimum requirement to run the chat is missing. You need to open the settings and either provide an Universal API key or a custom API key with the corresponding url and model. ⚠️",
   },
   de: {
     welcomeMessage:
@@ -100,6 +101,7 @@ export const chatIslandContent: InternalizationContent = {
     papersDate: "Datum",
     result: "Ergebnis",
     of: "von",
+    noSettings: "⚠️ Die Mindestanforderung zum Ausführen des Chats fehlt. Du musst die Einstellungen öffnen und entweder einen Universal-API-Schlüssel oder einen benutzerdefinierten API-Schlüssel mit der entsprechender URL und dem Modell eintragen. ⚠️",
   },
 };
 

@@ -8,7 +8,7 @@ export default function Settings({
   lang = 'en'
 }: {
   settings: {
-    universalApiKey?: string;
+    universalApiKey: string;
     apiUrl: string;
     apiKey: string;
     apiModel: string;
@@ -29,7 +29,6 @@ export default function Settings({
   lang?: string;
 }) {
   const [newSettings, setNewSettings] = useState({ 
-    universalApiKey: settings.universalApiKey || '',
     ...settings 
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -58,11 +57,7 @@ export default function Settings({
             onChange={(e) =>
               setNewSettings({ 
                 ...newSettings, 
-                universalApiKey: (e.target as HTMLInputElement).value,
-                apiKey: (e.target as HTMLInputElement).value,
-                ttsKey: (e.target as HTMLInputElement).value,
-                sttKey: (e.target as HTMLInputElement).value,
-                vlmKey: (e.target as HTMLInputElement).value,
+                universalApiKey: (e.target as HTMLInputElement).value
               })
             }
             class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"

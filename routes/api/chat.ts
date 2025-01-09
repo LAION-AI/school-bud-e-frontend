@@ -6,10 +6,10 @@ import { chatContent } from "../../internalization/content.ts";
 // const API_URL = Deno.env.get("API_URL_TOGETHER") || "";
 // const API_KEY = Deno.env.get("API_KEY_TOGETHER") || "";
 // const API_MODEL = "MISTRALAI/MIXTRAL-8X22B-INSTRUCT-V0.1";
+
 const API_URL = Deno.env.get("LLM_URL") || "";
 const API_KEY = Deno.env.get("LLM_KEY") || "";
 const API_MODEL = Deno.env.get("LLM_MODEL") || "";
-
 const API_IMAGE_URL = Deno.env.get("VLM_URL") || "";
 const API_IMAGE_KEY = Deno.env.get("VLM_KEY") || "";
 const API_IMAGE_MODEL = Deno.env.get("VLM_MODEL") || "";
@@ -23,7 +23,9 @@ interface Message {
   content: string;
 }
 
-async function getModelResponseStream(messages: Message[], lang: string, llmApiUrl: string, llmApiKey: string, llmApiModel: string, systemPrompt: string, vlmApiUrl: string, vlmApiKey: string, vlmApiModel: string, vlmCorrectionModel: string) {
+async function getModelResponseStream(messages: Message[], lang: string, universalApiKey: string,llmApiUrl: string, llmApiKey: string, llmApiModel: string, systemPrompt: string, vlmApiUrl: string, vlmApiKey: string, vlmApiModel: string, vlmCorrectionModel: string) {
+
+
   let isLastMessageAssistant =
     messages[messages.length - 1].role === "assistant";
   while (isLastMessageAssistant) {
@@ -64,19 +66,54 @@ async function getModelResponseStream(messages: Message[], lang: string, llmApiU
     return false;
   });
 
-  let api_url = llmApiUrl != '' ? llmApiUrl : API_URL;
-  let api_key = llmApiKey != '' ? llmApiKey : API_KEY;
-  let api_model = llmApiModel != '' ? llmApiModel : API_MODEL;
 
+  let api_url = "";
+  let api_key = "";
+  let api_model = "";
   if (isImageInMessages) {
-    api_url = vlmApiUrl != '' ? vlmApiUrl : API_IMAGE_URL;
-    api_key = vlmApiKey != '' ? vlmApiKey : API_IMAGE_KEY;
-    api_model = vlmApiModel != '' ? vlmApiModel : API_IMAGE_MODEL;
+    api_url = "";
+    api_key = "";
+    api_model = "";
+  }
+  if (isCorrectionInLastMessage) {
+    api_model = "";
   }
 
-  if (isCorrectionInLastMessage) {
-    api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
+  if (universalApiKey != '' && universalApiKey.startsWith("sbe-")) {
+    api_url = llmApiUrl != '' ? llmApiUrl : API_URL;
+    api_key = llmApiKey != '' ? llmApiKey : API_KEY;
+    api_model = llmApiModel != '' ? llmApiModel : API_MODEL;
+    if (isImageInMessages) {
+      api_url = vlmApiUrl != '' ? vlmApiUrl : API_IMAGE_URL;
+      api_key = vlmApiKey != '' ? vlmApiKey : API_IMAGE_KEY;
+      api_model = vlmApiModel != '' ? vlmApiModel : API_IMAGE_MODEL;
+    }
+    if (isCorrectionInLastMessage) {
+      api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
+    }
   }
+
+  console.log("Using this API URL: ", api_url);
+  console.log("Using this API Key: ", api_key);
+  console.log("Using this API Model: ", api_model);
+
+  if (api_url == '' || api_key == '' || api_model == '') {
+    const missingSettingsText = "The following settings are missing: " + (api_url == '' ? "api_url " : "") + (api_key == '' ? "api_key " : "") + (api_model == '' ? "api_model " : "") + ". The current generation mode is: " + (isImageInMessages ? "VLM" : "LLM") + ". The current correction mode is: " + (isCorrectionInLastMessage ? "Running with correction" : "Running without correction");
+    return new Response(missingSettingsText, { status: 400 });
+  }
+
+  // let api_url = llmApiUrl != '' ? llmApiUrl : API_URL;
+  // let api_key = llmApiKey != '' ? llmApiKey : API_KEY;
+  // let api_model = llmApiModel != '' ? llmApiModel : API_MODEL;
+  // if (isImageInMessages) {
+  //   api_url = vlmApiUrl != '' ? vlmApiUrl : API_IMAGE_URL;
+  //   api_key = vlmApiKey != '' ? vlmApiKey : API_IMAGE_KEY;
+  //   api_model = vlmApiModel != '' ? vlmApiModel : API_IMAGE_MODEL;
+  // }
+  // if (isCorrectionInLastMessage) {
+  //   api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
+  // }
+
 
   const fetchOptions: RequestInit = {
     method: "POST",
@@ -230,6 +267,6 @@ export const handler: Handlers = {
 
     // console.log("Model used: ", API_MODEL);
     // console.log("payload messages", payload.messages);
-    return getModelResponseStream(payload.messages, payload.lang, payload.llmApiUrl, payload.llmApiKey, payload.llmApiModel, payload.systemPrompt, payload.vlmApiUrl, payload.vlmApiKey, payload.vlmApiModel, payload.vlmCorrectionModel);
+    return getModelResponseStream(payload.messages, payload.lang, payload.universalApiKey, payload.llmApiUrl, payload.llmApiKey, payload.llmApiModel, payload.systemPrompt, payload.vlmApiUrl, payload.vlmApiKey, payload.vlmApiModel, payload.vlmCorrectionModel);
   },
 };
