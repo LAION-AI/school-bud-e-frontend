@@ -98,12 +98,18 @@ function VoiceRecordButton({
   const sendAudioToServer = async (audioBlob: Blob) => {
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
+
+    if (sttKey.startsWith("gsk_")) {
+      sttUrl = sttUrl == "" ? "https://api.groq.com/openai/v1/audio/transcriptions" : sttUrl;
+      sttModel = sttModel == "" ? "whisper-large-v3-turbo" : sttModel;
+    }
+
     formData.append("sttUrl", sttUrl);
     formData.append("sttKey", sttKey);
     formData.append("sttModel", sttModel);
 
     try {
-      const response = await fetch("/api/upload-recording", {
+      const response = await fetch("/api/stt", {
         method: "POST",
         body: formData,
       });
