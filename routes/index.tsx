@@ -1,6 +1,7 @@
 import Header from "../islands/Header.tsx";
 import Warning from "../components/Warning.tsx";
 import ChatIsland from "../islands/ChatIsland.tsx";
+import ChatAgreementOrIsland from "../islands/ChatAgreementOrIsland.tsx";
 
 export default function Home(req: Request) {
   const url = new URL(req.url);
@@ -22,8 +23,12 @@ export default function Home(req: Request) {
     >
       <div class="max-w-screen-md mx-auto flex flex-col items-center justify-center">
         <Header lang={lang as string} />
-        <ChatIsland lang={lang as string} />
-        <Warning lang={lang as string} />
+        <ChatAgreementOrIsland lang={lang as string} />
+        {/* {hasAgreed ? <ChatIsland lang={lang as string} /> : (
+          <>
+            <Warning lang={lang as string} />
+          </>
+        )} */}
       </div>
     </div>
   );

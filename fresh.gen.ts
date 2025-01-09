@@ -12,6 +12,8 @@ import * as $api_stt from "./routes/api/stt.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_wikipedia from "./routes/api/wikipedia.ts";
 import * as $index from "./routes/index.tsx";
+import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
+import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $Menu from "./islands/Menu.tsx";
@@ -31,6 +33,8 @@ const manifest = {
     "./routes/index.tsx": $index,
   },
   islands: {
+    "./islands/ChatAgreement.tsx": $ChatAgreement,
+    "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/Header.tsx": $Header,
     "./islands/Menu.tsx": $Menu,
