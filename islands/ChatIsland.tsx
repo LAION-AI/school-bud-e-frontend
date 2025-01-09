@@ -916,8 +916,9 @@ export default function ChatIsland({ lang }: { lang: string }) {
             response.status != 200
           ) {
             // client-side errors are usually non-retriable:
+            const errorText = await response.text();
             throw new FatalError(
-              `**BACKEND ERROR**\nStatuscode: ${response.status}\nMessage: ${response.statusText}`,
+              `**BACKEND ERROR**\nStatuscode: ${response.status}\nMessage: ${errorText}`,
             );
           } else {
             throw new RetriableError();

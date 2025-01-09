@@ -25,6 +25,10 @@ interface Message {
 
 async function getModelResponseStream(messages: Message[], lang: string, universalApiKey: string,llmApiUrl: string, llmApiKey: string, llmApiModel: string, systemPrompt: string, vlmApiUrl: string, vlmApiKey: string, vlmApiModel: string, vlmCorrectionModel: string) {
 
+  if (universalApiKey != '' && !universalApiKey.startsWith("sbe-")) {
+    return new Response("Invalid Universal API Key. It needs to start with '**sbe-**'.", { status: 400 });
+  }
+
 
   let isLastMessageAssistant =
     messages[messages.length - 1].role === "assistant";
