@@ -29,7 +29,7 @@ export const agreementContentRaw: InternalizationContent = {
             <div class="space-y-4">
 
                 <p>
-                  1. LAION aims to advance self-learning algorithms in artificial intelligence and make training datasets and AI models available to the general public. LAION provides users with a portal at https://school-bud-e.deno.dev/ where users can utilize a school assistant for students. School Bud-E is a chatbot specialized in educational purposes that can be used via both prompts and voice input to provide students with individualized assistance for various school activities.
+                  1. LAION aims to advance self-learning algorithms in artificial intelligence and make training datasets and AI models available to the general public. LAION provides users with a portal at https://school.bud-e.ai where users can utilize a school assistant for students. School Bud-E is a chatbot specialized in educational purposes that can be used via both prompts and voice input to provide students with individualized assistance for various school activities.
                 </p>
   
 
