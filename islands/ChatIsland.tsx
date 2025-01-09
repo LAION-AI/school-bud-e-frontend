@@ -890,17 +890,29 @@ export default function ChatIsland({ lang }: { lang: string }) {
           if (response.ok) {
             return; // everything's good
           } else if (
-            response.status >= 400 && response.status < 500 &&
-            response.status !== 429
+            response.status != 200
           ) {
             // client-side errors are usually non-retriable:
-            throw new FatalError();
+            throw new FatalError(
+              `**BACKEND ERROR**\nStatuscode: ${response.status}\nMessage: ${response.statusText}`,
+            );
           } else {
             throw new RetriableError();
           }
         },
-        onerror(err: EventSourceMessage) {
-          console.error("Stream error:", err);
+        onerror(err: FatalError) {
+          setIsStreamComplete(true);
+          /// add err.message to messages
+          setMessages((prevMessagesRoundTwo) => {
+            const lastArray =
+              prevMessagesRoundTwo[prevMessagesRoundTwo.length - 1];
+            (lastArray.content as string[]).push(err.message);
+            return [
+              ...prevMessagesRoundTwo.slice(0, -1),
+              lastArray,
+            ];
+          });
+          throw err;
         },
         onclose() {
           console.log("Stream closed");

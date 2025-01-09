@@ -98,20 +98,29 @@ async function getModelResponseStream(messages: Message[], lang: string, llmApiU
   // });
   const response = await fetch(api_url, fetchOptions);
 
-  if (!response.body) {
-    return new Response("Failed to get response body from external API", {
-      status: 500,
-    });
+  console.log("response", response);
+  console.log("response status", response.status);
+
+  if (response.status !== 200) {
+    // const res = await response.json();
+    // console.log(res);
+    return new Response(response.statusText, { status: response.status });
   }
 
-  if (response.status === 400) {
-    console.log("Bad request");
-    const res = await response.json();
-    console.log(res);
-    return new Response("Bad request", { status: 400 });
-  }
+  // if (!response.body) {
+  //   return new Response("Failed to get response body from external API", {
+  //     status: 500,
+  //   });
+  // }
 
-  const reader = response.body.getReader();
+  // if (response.status === 400) {
+  //   console.log("Bad request");
+  //   const res = await response.json();
+  //   console.log(res);
+  //   return new Response("Bad request", { status: 400 });
+  // }
+
+  const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
 
