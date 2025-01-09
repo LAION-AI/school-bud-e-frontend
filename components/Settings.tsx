@@ -8,6 +8,7 @@ export default function Settings({
   lang = 'en'
 }: {
   settings: {
+    universalApiKey?: string;
     apiUrl: string;
     apiKey: string;
     apiModel: string;
@@ -27,207 +28,223 @@ export default function Settings({
   onClose: () => void;
   lang?: string;
 }) {
-  const [newSettings, setNewSettings] = useState({ ...settings });
+  const [newSettings, setNewSettings] = useState({ 
+    universalApiKey: settings.universalApiKey || '',
+    ...settings 
+  });
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white p-6 rounded-lg shadow-xl max-w-md w-full m-4 overflow-y-scroll max-h-[90dvh]">
-        <h2 class="text-xl font-bold mb-4">{settingsContent[lang].title}</h2>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">⚙️ {settingsContent[lang].title}</h2>
+          <button
+            onClick={onClose}
+            class="px-4 py-2 text-gray-600 hover:text-gray-800"
+          >
+            {settingsContent[lang].back}
+          </button>
+        </div>
 
+        {/* Basic Settings */}
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].apiUrlLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.apiUrl}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, apiUrl: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].apiUrlPlaceholder}
-          />
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].apiKeyLabel}
+            🌐 {settingsContent[lang].universalApiKeyLabel}
           </label>
           <input
             type="password"
-            value={newSettings.apiKey}
+            value={newSettings.universalApiKey}
             onChange={(e) =>
-              setNewSettings({ ...newSettings, apiKey: (e.target as HTMLInputElement).value })
+              setNewSettings({ 
+                ...newSettings, 
+                universalApiKey: (e.target as HTMLInputElement).value,
+                apiKey: (e.target as HTMLInputElement).value,
+                ttsKey: (e.target as HTMLInputElement).value,
+                sttKey: (e.target as HTMLInputElement).value,
+                vlmKey: (e.target as HTMLInputElement).value,
+              })
             }
             class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].apiKeyPlaceholder}
+            placeholder={settingsContent[lang].universalApiKeyPlaceholder}
           />
         </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].modelLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.apiModel}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, apiModel: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].modelPlaceholder}
-          />
-        </div>
+        {/* Advanced Settings Toggle Button */}
+        <button
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          class="mb-4 text-blue-500 hover:text-blue-600"
+        >
+          {showAdvanced 
+            ? settingsContent[lang].lessSettings
+            : settingsContent[lang].advancedSettings}
+        </button>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].ttsUrlLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.ttsUrl}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, ttsUrl: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].ttsUrlPlaceholder}
-          />
-        </div>
+        {/* Advanced Settings */}
+        {showAdvanced && (
+          <>
+            {/* Chat API Settings */}
+            <div class="mb-4">
+              <h3 class="font-medium mb-2">💬 {settingsContent[lang].chatApiTitle}</h3>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    {settingsContent[lang].apiKeyLabel}
+                  </label>
+                  <input
+                    type="password"
+                    value={newSettings.apiKey}
+                    onChange={(e) =>
+                      setNewSettings({ ...newSettings, apiKey: (e.target as HTMLInputElement).value })
+                    }
+                    class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder={settingsContent[lang].apiKeyPlaceholder}
+                  />
+                </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    {settingsContent[lang].apiUrlLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={newSettings.apiUrl}
+                    onChange={(e) =>
+                      setNewSettings({ ...newSettings, apiUrl: (e.target as HTMLInputElement).value })
+                    }
+                    class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder={settingsContent[lang].apiUrlPlaceholder}
+                  />
+                </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].ttsKeyLabel}
-          </label>
-          <input
-            type="password"
-            value={newSettings.ttsKey}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, ttsKey: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].ttsKeyPlaceholder}
-          />
-        </div>
+                <div class="mb-4">
+                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                    {settingsContent[lang].modelLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={newSettings.apiModel}
+                    onChange={(e) =>
+                      setNewSettings({ ...newSettings, apiModel: (e.target as HTMLInputElement).value })
+                    }
+                    class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    placeholder={settingsContent[lang].modelPlaceholder}
+                  />
+                </div>
+              </div>
+            </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].ttsModelLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.ttsModel}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, ttsModel: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].ttsModelPlaceholder}
-          />
-        </div>
+            {/* TTS Settings */}
+            <div class="mb-4">
+              <h3 class="font-medium mb-2">🗣️ {settingsContent[lang].ttsTitle}</h3>
+              <div class="space-y-4">
+                <input
+                  type="text"
+                  value={newSettings.ttsUrl}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, ttsUrl: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].ttsUrlPlaceholder}
+                />
+                <input
+                  type="password"
+                  value={newSettings.ttsKey}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, ttsKey: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].ttsKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.ttsModel}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, ttsModel: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].ttsModelPlaceholder}
+                />
+              </div>
+            </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].sttUrlLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.sttUrl}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, sttUrl: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].sttUrlPlaceholder}
-          />
-        </div>
+            {/* STT Settings */}
+            <div class="mb-4">
+              <h3 class="font-medium mb-2">👂 {settingsContent[lang].sttTitle}</h3>
+              <div class="space-y-4">
+                <input
+                  type="text"
+                  value={newSettings.sttUrl}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, sttUrl: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].sttUrlPlaceholder}
+                />
+                <input
+                  type="password"
+                  value={newSettings.sttKey}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, sttKey: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].sttKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.sttModel}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, sttModel: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].sttModelPlaceholder}
+                />
+              </div>
+            </div>
 
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].sttKeyLabel}
-          </label>
-          <input
-            type="password"
-            value={newSettings.sttKey}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, sttKey: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].sttKeyPlaceholder}
-          />
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].sttModelLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.sttModel}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, sttModel: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].sttModelPlaceholder}
-          />
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].vlmUrlLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.vlmUrl}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, vlmUrl: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].vlmUrlPlaceholder}
-          />
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].vlmKeyLabel}
-          </label>
-          <input
-            type="password"
-            value={newSettings.vlmKey}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, vlmKey: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].vlmKeyPlaceholder}
-          />
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].vlmModelLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.vlmModel}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, vlmModel: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].vlmModelPlaceholder}
-          />
-        </div>
-
-        <div class="mb-6">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            {settingsContent[lang].vlmCorrectionModelLabel}
-          </label>
-          <input
-            type="text"
-            value={newSettings.vlmCorrectionModel}
-            onChange={(e) =>
-              setNewSettings({ ...newSettings, vlmCorrectionModel: (e.target as HTMLInputElement).value })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            placeholder={settingsContent[lang].vlmCorrectionModelPlaceholder}
-          />
-        </div>
+            {/* VLM Settings */}
+            <div class="mb-4">
+              <h3 class="font-medium mb-2">👀 {settingsContent[lang].vlmTitle}</h3>
+              <div class="space-y-4">
+                <input
+                  type="text"
+                  value={newSettings.vlmUrl}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, vlmUrl: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].vlmUrlPlaceholder}
+                />
+                <input
+                  type="password"
+                  value={newSettings.vlmKey}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, vlmKey: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].vlmKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.vlmModel}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, vlmModel: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].vlmModelPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.vlmCorrectionModel}
+                  onChange={(e) =>
+                    setNewSettings({ ...newSettings, vlmCorrectionModel: (e.target as HTMLInputElement).value })
+                  }
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].vlmCorrectionModelPlaceholder}
+                />
+              </div>
+            </div>
+          </>
+        )}
 
         <div class="flex justify-end space-x-4">
           <button
