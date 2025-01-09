@@ -9,9 +9,14 @@ export const handler: Handlers = {
     try {
       const formData = await req.formData();
       const audioFile = formData.get("audio") as File;
-      const sttUrl = formData.get("sttUrl") as string || STT_URL;
+      let sttUrl = formData.get("sttUrl") as string || STT_URL;
       const sttKey = formData.get("sttKey") as string || STT_KEY;
-      const sttModel = formData.get("sttModel") as string || STT_MODEL;
+      let sttModel = formData.get("sttModel") as string || STT_MODEL;
+
+      if (sttKey.startsWith("gsk_")) {
+        sttUrl = sttUrl == "" ? "https://api.groq.com/openai/v1/audio/transcriptions" : sttUrl;
+        sttModel = sttModel == "" ? "whisper-large-v3-turbo" : sttModel;
+      }
 
       if (!audioFile) {
         return new Response("No audio file uploaded", { status: 400 });
