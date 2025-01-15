@@ -33,17 +33,18 @@ export default function Settings({
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
 
-
   const providerConfigs = {
     googleai: {
       keyCharacteristics: { startsWith: "AI" },
       config: {
         api: {
-          url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+          url:
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
           model: "gemini-1.5-flash",
         },
         vlm: {
-          url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+          url:
+            "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
           model: "gemini-1.5-flash",
         },
       },
@@ -118,30 +119,32 @@ export default function Settings({
   function updateSettings(key: string, value: string) {
     const updatedSettings = { ...newSettings };
 
-    if (key.endsWith("Key") && value !== "") {
-      const serviceType = key.slice(0, -3);
-      const urlKey = `${serviceType}Url` as keyof typeof settings;
-      const modelKey = `${serviceType}Model` as keyof typeof settings;
+    if (key !== "universalApiKey") {
+      if (key.endsWith("Key") && value !== "") {
+        const serviceType = key.slice(0, -3);
+        const urlKey = `${serviceType}Url` as keyof typeof settings;
+        const modelKey = `${serviceType}Model` as keyof typeof settings;
 
-      // Find matching provider based on key characteristics
-      const provider = Object.values(providerConfigs).find((provider) => {
-        const { keyCharacteristics } = provider;
-        return (
-          ("startsWith" in keyCharacteristics &&
-            value.startsWith(keyCharacteristics.startsWith)) ||
-          ("length" in keyCharacteristics &&
-            keyCharacteristics.length === value.length)
-        );
-      });
+        // Find matching provider based on key characteristics
+        const provider = Object.values(providerConfigs).find((provider) => {
+          const { keyCharacteristics } = provider;
+          return (
+            ("startsWith" in keyCharacteristics &&
+              value.startsWith(keyCharacteristics.startsWith)) ||
+            ("length" in keyCharacteristics &&
+              keyCharacteristics.length === value.length)
+          );
+        });
 
-      if (provider?.config[serviceType as keyof typeof provider.config]) {
-        const serviceConfig = provider
-          .config[serviceType as keyof typeof provider.config] as {
-            url: string;
-            model: string;
-          };
-        updatedSettings[urlKey] = serviceConfig.url;
-        updatedSettings[modelKey] = serviceConfig.model;
+        if (provider?.config[serviceType as keyof typeof provider.config]) {
+          const serviceConfig = provider
+            .config[serviceType as keyof typeof provider.config] as {
+              url: string;
+              model: string;
+            };
+          updatedSettings[urlKey] = serviceConfig.url;
+          updatedSettings[modelKey] = serviceConfig.model;
+        }
       }
     }
 
