@@ -95,6 +95,15 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
     if (isCorrectionInLastMessage) {
       api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
     }
+  } else {
+    api_url = llmApiUrl != '' ? llmApiUrl : '';
+    api_key = llmApiKey != '' ? llmApiKey : '';
+    api_model = llmApiModel != '' ? llmApiModel : '';
+    if (isImageInMessages) {
+      api_url = vlmApiUrl != '' ? vlmApiUrl : '';
+      api_key = vlmApiKey != '' ? vlmApiKey : '';
+      api_model = vlmApiModel != '' ? vlmApiModel : '';
+    }
   }
 
   console.log("Using this API URL: ", api_url);

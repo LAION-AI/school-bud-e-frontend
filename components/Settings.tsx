@@ -5,7 +5,7 @@ export default function Settings({
   settings,
   onSave,
   onClose,
-  lang = 'en'
+  lang = "en",
 }: {
   settings: {
     universalApiKey: string;
@@ -28,10 +28,126 @@ export default function Settings({
   onClose: () => void;
   lang?: string;
 }) {
-  const [newSettings, setNewSettings] = useState({ 
-    ...settings 
+  const [newSettings, setNewSettings] = useState({
+    ...settings,
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+
+  const providerConfigs = {
+    googleai: {
+      keyCharacteristics: { startsWith: "AI" },
+      config: {
+        api: {
+          url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+          model: "gemini-1.5-flash",
+        },
+        vlm: {
+          url: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+          model: "gemini-1.5-flash",
+        },
+      },
+    },
+    hyprlab: {
+      keyCharacteristics: { startsWith: "hypr-lab" },
+      config: {
+        api: {
+          url: "https://api.hyprlab.io/v1/chat/completions",
+          model: "gemini-1.5-pro",
+        },
+        vlm: {
+          url: "https://api.hyprlab.io/v1/chat/completions",
+          model: "gemini-1.5-pro",
+        },
+      },
+    },
+    groq: {
+      keyCharacteristics: { startsWith: "gsk_" },
+      config: {
+        api: {
+          url: "https://api.groq.com/openai/v1/chat/completions",
+          model: "llama-3.3-70b-versatile",
+        },
+        vlm: {
+          url: "https://api.groq.com/openai/v1/chat/completions",
+          model: "llama-3.2-90b-vision-preview",
+        },
+        stt: {
+          url: "https://api.groq.com/openai/v1/audio/transcriptions",
+          model: "whisper-large-v3-turbo",
+        },
+      },
+    },
+    sambanova: {
+      keyCharacteristics: { length: 36 },
+      config: {
+        api: {
+          url: "https://api.sambanova.ai/v1/chat/completions",
+          model: "Meta-Llama-3.3-70B-Instruct",
+        },
+        vlm: {
+          url: "https://api.sambanova.ai/v1/chat/completions",
+          model: "Meta-Llama-3.2-90B-Vision-Instruct",
+        },
+      },
+    },
+    fish: {
+      keyCharacteristics: { length: 32 },
+      config: {
+        tts: {
+          url: "https://api.fish.audio/v1/tts",
+          model: "61561f50f41046e0b267aa4cb30e4957",
+        },
+      },
+    },
+    deepgram: {
+      keyCharacteristics: { length: 40 },
+      config: {
+        stt: {
+          url: `https://api.deepgram.com/v1/listen?language=en&model=nova-2`,
+          model: "nova-2",
+        },
+        tts: {
+          url: `https://api.deepgram.com/v1/speak?model=aura-helios-en`,
+          model: "aura-helios-en",
+        },
+      },
+    },
+  };
+
+  function updateSettings(key: string, value: string) {
+    const updatedSettings = { ...newSettings };
+
+    if (key.endsWith("Key") && value !== "") {
+      const serviceType = key.slice(0, -3);
+      const urlKey = `${serviceType}Url` as keyof typeof settings;
+      const modelKey = `${serviceType}Model` as keyof typeof settings;
+
+      // Find matching provider based on key characteristics
+      const provider = Object.values(providerConfigs).find((provider) => {
+        const { keyCharacteristics } = provider;
+        return (
+          ("startsWith" in keyCharacteristics &&
+            value.startsWith(keyCharacteristics.startsWith)) ||
+          ("length" in keyCharacteristics &&
+            keyCharacteristics.length === value.length)
+        );
+      });
+
+      if (provider?.config[serviceType as keyof typeof provider.config]) {
+        const serviceConfig = provider
+          .config[serviceType as keyof typeof provider.config] as {
+            url: string;
+            model: string;
+          };
+        updatedSettings[urlKey] = serviceConfig.url;
+        updatedSettings[modelKey] = serviceConfig.model;
+      }
+    }
+
+    updatedSettings[key as keyof typeof settings] = value;
+    setNewSettings(updatedSettings);
+  }
 
   return (
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -55,12 +171,11 @@ export default function Settings({
             type="password"
             value={newSettings.universalApiKey}
             onChange={(e) =>
-              setNewSettings({ 
-                ...newSettings, 
-                universalApiKey: (e.target as HTMLInputElement).value
-              })
-            }
-            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              updateSettings(
+                "universalApiKey",
+                (e.target as HTMLInputElement).value,
+              )}
+            class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-yellow-50"
             placeholder={settingsContent[lang].universalApiKeyPlaceholder}
           />
         </div>
@@ -70,7 +185,7 @@ export default function Settings({
           onClick={() => setShowAdvanced(!showAdvanced)}
           class="mb-4 text-blue-500 hover:text-blue-600"
         >
-          {showAdvanced 
+          {showAdvanced
             ? settingsContent[lang].lessSettings
             : settingsContent[lang].advancedSettings}
         </button>
@@ -80,7 +195,9 @@ export default function Settings({
           <>
             {/* Chat API Settings */}
             <div class="mb-4">
-              <h3 class="font-medium mb-2">💬 {settingsContent[lang].chatApiTitle}</h3>
+              <h3 class="font-medium mb-2">
+                💬 {settingsContent[lang].chatApiTitle}
+              </h3>
               <div class="space-y-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -90,9 +207,11 @@ export default function Settings({
                     type="password"
                     value={newSettings.apiKey}
                     onChange={(e) =>
-                      setNewSettings({ ...newSettings, apiKey: (e.target as HTMLInputElement).value })
-                    }
-                    class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                      updateSettings(
+                        "apiKey",
+                        (e.target as HTMLInputElement).value,
+                      )}
+                    class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-yellow-50"
                     placeholder={settingsContent[lang].apiKeyPlaceholder}
                   />
                 </div>
@@ -104,8 +223,10 @@ export default function Settings({
                     type="text"
                     value={newSettings.apiUrl}
                     onChange={(e) =>
-                      setNewSettings({ ...newSettings, apiUrl: (e.target as HTMLInputElement).value })
-                    }
+                      updateSettings(
+                        "apiUrl",
+                        (e.target as HTMLInputElement).value,
+                      )}
                     class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                     placeholder={settingsContent[lang].apiUrlPlaceholder}
                   />
@@ -119,8 +240,10 @@ export default function Settings({
                     type="text"
                     value={newSettings.apiModel}
                     onChange={(e) =>
-                      setNewSettings({ ...newSettings, apiModel: (e.target as HTMLInputElement).value })
-                    }
+                      updateSettings(
+                        "apiModel",
+                        (e.target as HTMLInputElement).value,
+                      )}
                     class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                     placeholder={settingsContent[lang].modelPlaceholder}
                   />
@@ -130,32 +253,40 @@ export default function Settings({
 
             {/* TTS Settings */}
             <div class="mb-4">
-              <h3 class="font-medium mb-2">🗣️ {settingsContent[lang].ttsTitle}</h3>
+              <h3 class="font-medium mb-2">
+                🗣️ {settingsContent[lang].ttsTitle}
+              </h3>
               <div class="space-y-4">
-                <input
-                  type="text"
-                  value={newSettings.ttsUrl}
-                  onChange={(e) =>
-                    setNewSettings({ ...newSettings, ttsUrl: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder={settingsContent[lang].ttsUrlPlaceholder}
-                />
                 <input
                   type="password"
                   value={newSettings.ttsKey}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, ttsKey: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    updateSettings(
+                      "ttsKey",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-yellow-50"
                   placeholder={settingsContent[lang].ttsKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.ttsUrl}
+                  onChange={(e) =>
+                    updateSettings(
+                      "ttsUrl",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].ttsUrlPlaceholder}
                 />
                 <input
                   type="text"
                   value={newSettings.ttsModel}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, ttsModel: (e.target as HTMLInputElement).value })
-                  }
+                    updateSettings(
+                      "ttsModel",
+                      (e.target as HTMLInputElement).value,
+                    )}
                   class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder={settingsContent[lang].ttsModelPlaceholder}
                 />
@@ -164,32 +295,40 @@ export default function Settings({
 
             {/* STT Settings */}
             <div class="mb-4">
-              <h3 class="font-medium mb-2">👂 {settingsContent[lang].sttTitle}</h3>
+              <h3 class="font-medium mb-2">
+                👂 {settingsContent[lang].sttTitle}
+              </h3>
               <div class="space-y-4">
-                <input
-                  type="text"
-                  value={newSettings.sttUrl}
-                  onChange={(e) =>
-                    setNewSettings({ ...newSettings, sttUrl: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder={settingsContent[lang].sttUrlPlaceholder}
-                />
                 <input
                   type="password"
                   value={newSettings.sttKey}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, sttKey: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    updateSettings(
+                      "sttKey",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-yellow-50"
                   placeholder={settingsContent[lang].sttKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.sttUrl}
+                  onChange={(e) =>
+                    updateSettings(
+                      "sttUrl",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].sttUrlPlaceholder}
                 />
                 <input
                   type="text"
                   value={newSettings.sttModel}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, sttModel: (e.target as HTMLInputElement).value })
-                  }
+                    updateSettings(
+                      "sttModel",
+                      (e.target as HTMLInputElement).value,
+                    )}
                   class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder={settingsContent[lang].sttModelPlaceholder}
                 />
@@ -198,32 +337,40 @@ export default function Settings({
 
             {/* VLM Settings */}
             <div class="mb-4">
-              <h3 class="font-medium mb-2">👀 {settingsContent[lang].vlmTitle}</h3>
+              <h3 class="font-medium mb-2">
+                👀 {settingsContent[lang].vlmTitle}
+              </h3>
               <div class="space-y-4">
-                <input
-                  type="text"
-                  value={newSettings.vlmUrl}
-                  onChange={(e) =>
-                    setNewSettings({ ...newSettings, vlmUrl: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder={settingsContent[lang].vlmUrlPlaceholder}
-                />
                 <input
                   type="password"
                   value={newSettings.vlmKey}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, vlmKey: (e.target as HTMLInputElement).value })
-                  }
-                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                    updateSettings(
+                      "vlmKey",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 bg-yellow-50"
                   placeholder={settingsContent[lang].vlmKeyPlaceholder}
+                />
+                <input
+                  type="text"
+                  value={newSettings.vlmUrl}
+                  onChange={(e) =>
+                    updateSettings(
+                      "vlmUrl",
+                      (e.target as HTMLInputElement).value,
+                    )}
+                  class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+                  placeholder={settingsContent[lang].vlmUrlPlaceholder}
                 />
                 <input
                   type="text"
                   value={newSettings.vlmModel}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, vlmModel: (e.target as HTMLInputElement).value })
-                  }
+                    updateSettings(
+                      "vlmModel",
+                      (e.target as HTMLInputElement).value,
+                    )}
                   class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
                   placeholder={settingsContent[lang].vlmModelPlaceholder}
                 />
@@ -231,10 +378,13 @@ export default function Settings({
                   type="text"
                   value={newSettings.vlmCorrectionModel}
                   onChange={(e) =>
-                    setNewSettings({ ...newSettings, vlmCorrectionModel: (e.target as HTMLInputElement).value })
-                  }
+                    updateSettings(
+                      "vlmCorrectionModel",
+                      (e.target as HTMLInputElement).value,
+                    )}
                   class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-                  placeholder={settingsContent[lang].vlmCorrectionModelPlaceholder}
+                  placeholder={settingsContent[lang]
+                    .vlmCorrectionModelPlaceholder}
                 />
               </div>
             </div>

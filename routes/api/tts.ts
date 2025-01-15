@@ -47,7 +47,8 @@ async function callMARS6API(
   }
 
   async function pollTTSTask(ttsUrl: string, ttsKey: string, taskID: string) {
-    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+    const delay = (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms));
     try {
       const response = await fetch(`${ttsUrl}/tts/${taskID}`, {
         method: "GET",
@@ -135,6 +136,25 @@ async function textToSpeech(
   const useThisTtsKey = ttsKey != "" ? ttsKey : TTS_KEY;
   const useThisTtsModel = ttsModel != "" ? ttsModel : TTS_MODEL;
 
+  //   Deepgram random with 40 chars
+  // 9371dfaed6d8b42e9eaf9458ba8604126fb373d0
+  // STT
+  // curl \
+  //   -X POST \
+  //   -H "Authorization: Token 6c4fa34dac9fb4c3aa6bc0421ca805e173e85ed3" \
+  //   -H "Content-Type: application/json" \
+  //   -d '{"url":"https://static.deepgram.com/examples/Bueller-Life-moves-pretty-fast.wav"}' \
+  //   "https://api.deepgram.com/v1/listen?language=en&model=nova-2"
+
+  // TTS
+  // curl \
+  //   -X POST \
+  //   -H "Authorization: Token YOUR_SECRET" \
+  //   -H "Content-Type: text/plain" \
+  //   -d "Deepgram is great for real-time conversations… and also, you can build apps for things like customer support, logistics, and more. What do you think of the voices?" \
+  //   "https://api.deepgram.com/v1/speak?model=aura-helios-en" \
+  //   -o audio.mp3
+
   try {
     switch (useThisTtsModel) {
       case "MARS6": {
@@ -149,6 +169,30 @@ async function textToSpeech(
           console.error(`Failed to synthesize speech.`);
           break;
         }
+      }
+      case "aura-helios-en": {
+        const startTime = Date.now();
+        const response = await fetch(useThisTttsUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            "Authorization": `Token ${useThisTtsKey}`,
+          },
+          body: text,
+        });
+        if (response.ok) {
+          const audioData = await response.arrayBuffer();
+          console.log(
+            `Audio file received for ${textPosition}, Latency:`,
+            Date.now() - startTime,
+          );
+          return Buffer.from(audioData);
+        } else {
+          console.error(
+            `Failed to synthesize speech. Status code: ${response.status}: ${response.statusText}`,
+          );
+        }
+        break;
       }
       default: {
         const startTime = Date.now();
