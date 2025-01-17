@@ -97,7 +97,7 @@ export default function Settings({
       config: {
         tts: {
           url: "https://api.fish.audio/v1/tts",
-          model: "61561f50f41046e0b267aa4cb30e4957",
+          model: lang === "de" ? "61561f50f41046e0b267aa4cb30e4957" : "6f45f4694ff54d6980337a68902e20d7",
         },
       },
     },
