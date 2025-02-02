@@ -1,0 +1,46 @@
+/* Sidebar styles */
+.sidebar {
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 16rem;
+  background-color: #1f2937;
+  color: white;
+  overflow-y: auto;
+  z-index: 50;
+}
+
+.sidebar-button {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  text-align: left;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.sidebar-button:hover {
+  background-color: rgba(55, 65, 81, 0.7);
+}
+
+.sidebar-button.active {
+  background-color: rgba(55, 65, 81, 1);
+}
+
+/* Scrollbar styles */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.8);
+}

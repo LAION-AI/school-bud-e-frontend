@@ -4,9 +4,9 @@ export const agreementContentRaw: InternalizationContent = {
     content:
       "Please read and accept the following terms and conditions to continue using School Bud-E.",
     temsAndConditionsContent:
-      `<div class="max-w-4xl mx-auto p-8 text-gray-800">      
+      `<div class="max-w-4xl mx-auto text-gray-800">      
           <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-4">Definitions</h2>
+            <h2 class="text-xl font-semibold mb-4">Definitions</h2>
             <div class="space-y-4">
               <p><span class="font-semibold">Portal:</span> the website at https://school.bud-e.ai/ including all services available there</p>
               <p><span class="font-semibold">Language Model:</span> an algorithm trained on text data analysis to understand and generate human-like language</p>
@@ -17,7 +17,7 @@ export const agreementContentRaw: InternalizationContent = {
           </section>
   
           <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-4">Scope, Changes</h2>
+            <h2 class="text-xl font-semibold mb-4">Scope, Changes</h2>
             <div class="space-y-4">
               <p>These terms of use govern the contractual relationship between LAION e.V., Herman-Lange-Weg 26, 21035 Hamburg (hereinafter referred to as "LAION") and the users of the services on the website at https://school.bud-e.ai/. They apply in their current version at the time of contract conclusion.</p>
               <p>LAION reserves the right to modify these terms of use at any time - including for existing users - particularly in case of legal changes, changes in supreme court jurisprudence, or changes in LAION's offerings. Existing users will be informed of any changes to the terms of use when accessing the website.</p>
@@ -25,7 +25,7 @@ export const agreementContentRaw: InternalizationContent = {
           </section>
   
           <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-6">Subject Matter, Contract Conclusion</h2>
+            <h2 class="text-xl font-semibold mb-6">Subject Matter, Contract Conclusion</h2>
             <div class="space-y-4">
 
                 <p>
@@ -53,7 +53,7 @@ export const agreementContentRaw: InternalizationContent = {
           </section>
   
           <section class="mt-8">
-            <h2 class="text-2xl font-semibold mb-4">DISCLAIMER</h2>
+            <h2 class="text-xl font-semibold mb-4">DISCLAIMER</h2>
             <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
               <p class="mb-2">LAION's language model is still under development and may therefore be faulty in function and content - it is a demo or test version.</p>
               <p>LAION therefore assumes no guarantee for the correctness, currentness and/or completeness of the content.</p>
@@ -61,7 +61,7 @@ export const agreementContentRaw: InternalizationContent = {
           </section>
   
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">User Obligations</h2>
+<h2 class="text-xl font-semibold mb-4">User Obligations</h2>
 <div class="space-y-4">
 <p>1. The user agrees not to misuse the Portal. The user is prohibited from making false or misleading statements on the Portal. The user must refrain from all activities in connection with the Portal that constitute a violation of:</p>
 <ul class="list-none pl-8 space-y-2">
@@ -100,7 +100,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
 
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Contract Duration and Termination</h2>
+<h2 class="text-xl font-semibold mb-4">Contract Duration and Termination</h2>
 <div class="space-y-4">
 <p>1. The user agreement begins when the user accepts these terms of use and is concluded for an indefinite period. The agreement may be terminated by either party at any time without notice.</p>
 
@@ -113,7 +113,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
 
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Intellectual Property</h2>
+<h2 class="text-xl font-semibold mb-4">Intellectual Property</h2>
 <div class="space-y-4">
 <p>1. The Portal and its contents regularly constitute protected intellectual property. In particular, all logos, layouts, graphics, texts, images, and videos are protected by copyright and trademark law.</p>
 
@@ -133,7 +133,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
   
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Data Protection</h2>
+<h2 class="text-xl font-semibold mb-4">Data Protection</h2>
 <div class="space-y-4">
 <p>1. Users may not enter any personal data concerning themselves when using the services for improving the language model and using the chatbot.</p>
 
@@ -142,7 +142,7 @@ export const agreementContentRaw: InternalizationContent = {
 <p>3. LAION processes the user's personal data in accordance with data protection regulations, particularly the European General Data Protection Regulation (GDPR). Detailed information can be found in the Privacy Policy, available at: https://laion.ai/privacy-policy/</p>
 </div>
 
-<h2 class="text-2xl font-semibold mb-4 mt-8">Liability</h2>
+<h2 class="text-xl font-semibold mb-4 mt-8">Liability</h2>
 <div class="space-y-4">
 <p>1. LAION assumes unlimited liability for intent and gross negligence. For simple negligence, LAION is only liable for damages resulting from:</p>
 <ul class="list-none pl-8 space-y-2">
@@ -162,7 +162,7 @@ export const agreementContentRaw: InternalizationContent = {
 <p>5. LAION assumes no liability for the prompts or language inputs entered by users, or for incorrect application of the chatbot. Furthermore, LAION assumes no liability for damages resulting from incorrect or improper use of content generated by the chatbot.</p>
 </div>
 
-<h2 class="text-2xl font-semibold mb-4 mt-8">Final Provisions</h2>
+<h2 class="text-xl font-semibold mb-4 mt-8">Final Provisions</h2>
 <div class="space-y-4">
 <p>1. The contractual relationship is exclusively governed by the law of the Federal Republic of Germany, excluding the UN Convention on Contracts for the International Sale of Goods.</p>
 
@@ -181,9 +181,9 @@ export const agreementContentRaw: InternalizationContent = {
     content:
       "Bitte lesen und akzeptieren Sie die folgenden Nutzungsbedingungen, um mit der Nutzung von School Bud-E fortzufahren.",
     temsAndConditionsContent:
-      `<div class="max-w-4xl mx-auto p-8 text-gray-800">      
+      `<div class="max-w-4xl mx-auto text-gray-800">      
         <section class="mt-8">
-          <h2 class="text-2xl font-semibold mb-4">Begriffsbestimmungen</h2>
+          <h2 class="text-xl font-semibold mb-4">Begriffsbestimmungen</h2>
           <div class="space-y-4">
             <p><span class="font-semibold">Portal:</span> die Website unter https://school.bud-e.ai/ mitsamt der dort zur Verfügung stehenden Dienste</p>
             <p><span class="font-semibold">Sprachmodell:</span> ein Algorithmus, der auf der Analyse von Textdaten trainiert wird, um menschenähnliche Sprache zu verstehen und zu generieren</p>
@@ -194,7 +194,7 @@ export const agreementContentRaw: InternalizationContent = {
         </section>
   
         <section class="mt-8">
-          <h2 class="text-2xl font-semibold mb-4">Geltungsbereich, Änderungen</h2>
+          <h2 class="text-xl font-semibold mb-4">Geltungsbereich, Änderungen</h2>
           <div class="space-y-4">
             <p>Die vorliegenden Nutzungsbedingungen regeln das Vertragsverhältnis zwischen dem LAION e.V., Herman-Lange-Weg 26, 21035 Hamburg (nachfolgend bezeichnet als „LAION") und den Nutzern der Dienste auf der Website unter https://school.bud-e.ai/. Sie gelten in ihrer jeweils zum Zeitpunkt des Vertragsschlusses aktuellen Fassung.</p>
             <p>LAION behält sich vor, diese Nutzungsbedingungen jederzeit - auch gegenüber bestehenden Nutzern - zu ändern, insbesondere bei Gesetzesänderungen, Änderungen der höchstrichterlichen Rechtsprechung sowie bei Veränderungen des Angebots von LAION. Bei Änderungen der Nutzungsbedingungen werden bestehende Nutzer hierüber beim Aufruf der Website informiert.</p>
@@ -203,7 +203,7 @@ export const agreementContentRaw: InternalizationContent = {
 
   
         <section class="mt-8">
-          <h2 class="text-2xl font-semibold mb-6">1. Vertragsgegenstand, Vertragsschluss</h2>
+          <h2 class="text-xl font-semibold mb-6">1. Vertragsgegenstand, Vertragsschluss</h2>
           <div class="space-y-4">
 
               <p>
@@ -227,7 +227,7 @@ export const agreementContentRaw: InternalizationContent = {
         </section>
   
         <section class="mt-8">
-          <h2 class="text-2xl font-semibold mb-4">DISCLAIMER</h2>
+          <h2 class="text-xl font-semibold mb-4">DISCLAIMER</h2>
           <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
             <p class="mb-2">Das Sprachmodell von LAION befindet sich noch in der Entwicklung und kann daher fehlerhaft in Funktion und Inhalt sein - es handelt sich um eine Demo- bzw. Testversion.</p>
             <p>LAION übernimmt daher insbesondere keinerlei Gewähr für die Richtigkeit, Aktualität und/oder Vollständigkeit der Inhalte.</p>
@@ -235,7 +235,7 @@ export const agreementContentRaw: InternalizationContent = {
         </section>
   
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Nutzerpflichten</h2>
+<h2 class="text-xl font-semibold mb-4">Nutzerpflichten</h2>
 <div class="space-y-4">
 <p>1. Der Nutzer verpflichtet sich, das Portal nicht missbräuchlich zu verwenden. Es ist dem Nutzer untersagt, auf dem Portal falsche oder irreführende Angaben zu machen. Der Nutzer hat alle Aktivitäten in Zusammenhang mit dem Portal zu unterlassen, die eine Verletzung:</p>
 <ul class="list-none pl-8 space-y-2">
@@ -274,7 +274,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
 
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Vertragslaufzeit, Kündigung</h2>
+<h2 class="text-xl font-semibold mb-4">Vertragslaufzeit, Kündigung</h2>
 <div class="space-y-4">
 <p>1. Der Nutzungsvertrag beginnt mit dem Akzeptieren der vorliegenden Nutzungsbedingungen durch den Nutzer und wird auf unbestimmte Zeit geschlossen. Der Vertrag kann von beiden Parteien jederzeit ohne Einhaltung einer Frist gekündigt werden.</p>
 
@@ -287,7 +287,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
 
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Geistiges Eigentum</h2>
+<h2 class="text-xl font-semibold mb-4">Geistiges Eigentum</h2>
 <div class="space-y-4">
 <p>1. Das Portal und seine Inhalte stellen regelmäßig geschütztes geistiges Eigentum dar. Insbesondere sind alle Logos, Layouts, Grafiken, Texte, Bilder und Videos durch das Urheber- und Markenrecht geschützt.</p>
 
@@ -307,7 +307,7 @@ export const agreementContentRaw: InternalizationContent = {
 </section>
   
 <section class="mt-8">
-<h2 class="text-2xl font-semibold mb-4">Datenschutz</h2>
+<h2 class="text-xl font-semibold mb-4">Datenschutz</h2>
 <div class="space-y-4">
 <p>1. Nutzer dürfen im Rahmen der Nutzung der Dienste zur Verbesserung des Sprachmodells und der Nutzung des Chatbots keine die eigene Person betreffenden personenbezogenen Daten eingeben.</p>
 
@@ -316,7 +316,7 @@ export const agreementContentRaw: InternalizationContent = {
 <p>3. Die personenbezogenen Daten des Nutzers verarbeitet LAION im Einklang mit den datenschutzrechtlichen Bestimmungen, insbesondere der Europäischen Datenschutzgrundverordnung (DSGVO). Detaillierte Informationen finden sich in der Datenschutzerklärung, abrufbar unter: https://laion.ai/privacy-policy/</p>
 </div>
 
-<h2 class="text-2xl font-semibold mb-4 mt-8">Haftung</h2>
+<h2 class="text-xl font-semibold mb-4 mt-8">Haftung</h2>
 <div class="space-y-4">
 <p>1. LAION haftet unbeschränkt für Vorsatz und grobe Fahrlässigkeit. Für einfache Fahrlässigkeit haftet LAION nur für Schäden aus:</p>
 <ul class="list-none pl-8 space-y-2">
@@ -336,7 +336,7 @@ export const agreementContentRaw: InternalizationContent = {
 <p>5. LAION übernimmt keine Haftung für die eingegebenen Prompts oder Spracheingaben der Nutzer, sowie bei falscher Anwendung des Chatbots. Weiterhin übernimmt LAION keine Haftung für Schäden, die durch eine unkorrekte oder missbräuchliche Verwendung der vom Chatbot generierten Inhalte entstehen.</p>
 </div>
 
-<h2 class="text-2xl font-semibold mb-4 mt-8">Schlussbestimmungen</h2>
+<h2 class="text-xl font-semibold mb-4 mt-8">Schlussbestimmungen</h2>
 <div class="space-y-4">
 <p>1. Für das Vertragsverhältnis gilt ausschließlich das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.</p>
 

@@ -17,31 +17,23 @@ import Menu from "./Menu.tsx";
  */
 function Header({ lang }: { lang: string }): JSX.Element {
   return (
-    <header class="flex flex-col justify-between items-center my-6 w-full px-4">
-      {/* Render the navigation menu */}
-      <Menu lang={lang} />
-
-      <div class="flex items-center align-middle px-4 drop-shadow-2xl rounded-md">
+    <header class="flex justify-between items-center text-white w-full bg-gray-900">
+      <div class="flex items-center px-4 py-1 gap-2">
         {/* Logo Image */}
         <img
           src="/logo.png"
-          width="128"
-          height="128"
+          width="50"
+          height="50"
           alt="A little lion wearing a graduation cap."
         />
 
-        <div class="flex flex-col">
-          {/* Over Title */}
-          <h2 class="text-gray-600 font-semibold tracking-widest italic">
-            {headerContent[lang]["overTitle"]}
-          </h2>
-
-          {/* Main Title */}
-          <h1 class="text-4xl text-gray-600 font-semibold block self-center">
-            {headerContent[lang]["title"]}
-          </h1>
-        </div>
+        <span class="font-semibold">
+          {headerContent[lang]["title"]}
+        </span>
       </div>
+      {/* Render the navigation menu */}
+      <Menu lang={lang} />
+
     </header>
   );
 }

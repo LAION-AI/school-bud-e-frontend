@@ -1,6 +1,9 @@
 import { warningContent } from "../internalization/content.ts";
+import { useState } from "preact/hooks";
 
 function Warning({ lang }: { lang: string }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const formatBoldTextWhereDoubleAsterisk = (text: string) => {
     const parts = text.split('**');
     return parts.reduce((acc, part, i) => {
@@ -10,19 +13,32 @@ function Warning({ lang }: { lang: string }) {
 
   return (
     <div
-      class="bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 p-4 mb-24"
+      class="bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 mb-24"
       role="alert"
     >
-      <p class="font-bold">{warningContent[lang]["title"]}</p>
-      <p>
-        {warningContent[lang]["content"]}
-      </p>
-      <p 
-        class="whitespace-pre-line mt-4"
-        dangerouslySetInnerHTML={{ 
-          __html: formatBoldTextWhereDoubleAsterisk(warningContent[lang]["usage"]) 
-        }}
-      />
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        class="w-full p-4 flex justify-between items-center cursor-pointer hover:bg-yellow-200/90 transition-colors"
+        aria-expanded={isExpanded}
+      >
+        <p class="font-bold">{warningContent[lang]["title"]}</p>
+        <span class={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+          ▼
+        </span>
+      </button>
+      <div
+        class={`px-4 pb-4 overflow-hidden transition-[max-height] duration-300 ease-in-out ${isExpanded ? 'max-h-[800px]' : 'max-h-0'}`}
+      >
+        <p class="mb-4">
+          {warningContent[lang]["content"]}
+        </p>
+        <p 
+          class="whitespace-pre-line"
+          dangerouslySetInnerHTML={{ 
+            __html: formatBoldTextWhereDoubleAsterisk(warningContent[lang]["usage"]) 
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -17,6 +17,7 @@ import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $Menu from "./islands/Menu.tsx";
+import * as $Sidebar from "./islands/Sidebar.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -38,6 +39,7 @@ const manifest = {
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/Header.tsx": $Header,
     "./islands/Menu.tsx": $Menu,
+    "./islands/Sidebar.tsx": $Sidebar,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

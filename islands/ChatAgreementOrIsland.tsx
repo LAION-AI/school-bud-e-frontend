@@ -1,6 +1,5 @@
 import ChatAgreement from "./ChatAgreement.tsx";
 import ChatIsland from "./ChatIsland.tsx";
-import ChatWarning from "../components/Warning.tsx";
 
 interface ChatAgreementOrIslandProps {
   lang: string;
@@ -15,7 +14,7 @@ export default function ChatAgreementOrIsland(
       {hasAgreed
         ? (
           <>
-            <ChatIsland lang={lang} /> <ChatWarning lang={lang} />
+            <ChatIsland lang={lang} />
           </>
         )
         : <ChatAgreement lang={lang} />}

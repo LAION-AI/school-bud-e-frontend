@@ -25,7 +25,7 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
   ];
 
   return (
-    <div class="absolute flex text-xs space-x-4 top-0 right-0 left-0 m-4 justify-end">
+    <div class="">
       {/* Language Selector */}
       <select
         class="bg-transparent"
@@ -47,7 +47,7 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
       {menuItems.map((item) => (
         <a
           href={item.href}
-          class="text-gray-600 hover:text-gray-800 hover:drop-shadow-md self-end"
+          class="text-white hover:text-gray-200 hover:drop-shadow-md self-end px-2"
         >
           {item.name}
         </a>
