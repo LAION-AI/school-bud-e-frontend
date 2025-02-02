@@ -47,7 +47,7 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
       {menuItems.map((item) => (
         <a
           href={item.href}
-          class="text-white hover:text-gray-200 hover:drop-shadow-md self-end px-2"
+          class="hover:text-gray-900 hover:drop-shadow-md self-end px-2"
         >
           {item.name}
         </a>

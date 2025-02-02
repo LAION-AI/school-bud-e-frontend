@@ -70,7 +70,7 @@ export const chatIslandContent: InternalizationContent = {
     welcomeMessage:
       "Hallo! Ich bin School Bud-E, dein persönlicher Assistent. Wie kann ich dir helfen?",
     deleteCurrentChat: "diesen Chat",
-    deleteAllChats: "alle Chats",
+    deleteAllChats: "Alle Chats löschen",
     backupChat: "Download",
     restoreChat: "Upload",
     newChat: "Neuer Chat",

@@ -1,5 +1,15 @@
-import { useEffect, useState } from "preact/hooks";
+import { useState } from "preact/hooks";
 import Settings from "../components/Settings.tsx";
+
+interface SidebarProps {
+  localStorageKeys: string[];
+  currentChatSuffix: string;
+  onChatSelect: (suffix: string) => void;
+  onNewChat: () => void;
+  settings: any;
+  onSaveSettings: (newSettings: any) => void;
+  lang?: string;
+}
 
 export default function Sidebar({
   localStorageKeys,
@@ -9,41 +19,36 @@ export default function Sidebar({
   settings,
   onSaveSettings,
   lang = "en",
-}: {
-  localStorageKeys: string[];
-  currentChatSuffix: string;
-  onChatSelect: (suffix: string) => void;
-  onNewChat: () => void;
-  settings: any;
-  onSaveSettings: (newSettings: any) => void;
-  lang?: string;
-}) {
+}: SidebarProps) {
   const [showSettings, setShowSettings] = useState(false);
   return (
-    <div class="sidebar">
-      <div class="p-4">
-        <button
-          onClick={onNewChat}
-          class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mb-4"
-        >
-          New Chat
-        </button>
-        <div class="space-y-2">
-          {localStorageKeys.sort().map((key) => {
-            const suffix = key.slice(10);
-            return (
-              <button
-                key={suffix}
-                onClick={() => onChatSelect(suffix)}
-                class={`sidebar-button ${suffix === currentChatSuffix ? 'active' : ''}`}
-              >
-                Chat {parseInt(suffix) + 1}
-              </button>
-            );
-          })}
+    <>
+      <div class="sidebar bg-neu-light rounded-lg shadow-lg h-full flex flex-col">
+        <div class="p-4 flex-1 overflow-y-auto">
+          <button
+            onClick={onNewChat}
+            class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mb-4"
+          >
+            New Chat
+          </button>
+          <div class="space-y-2">
+            {localStorageKeys.sort().map((key) => {
+              const suffix = key.slice(10);
+              return (
+                <button
+                  key={suffix}
+                  onClick={() => onChatSelect(suffix)}
+                  class={`sidebar-button ${suffix === currentChatSuffix ? 'active' : ''}`}
+                >
+                  Chat {parseInt(suffix) + 1}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
       </div>
-      <div class="absolute bottom-0 left-0 w-full p-4 border-t border-gray-700">
+      <div class="p-4 border-t border-gray-200">
         <button
           onClick={() => setShowSettings(true)}
           class="w-full text-white p-2 rounded hover:bg-gray-700 flex items-center justify-center"
@@ -71,6 +76,6 @@ export default function Sidebar({
           lang={lang}
         />
       )}
-    </div>
+    </>
   );
 }

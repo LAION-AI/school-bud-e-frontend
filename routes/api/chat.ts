@@ -3,10 +3,6 @@ import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server
 
 import { chatContent } from "../../internalization/content.ts";
 
-// const API_URL = Deno.env.get("API_URL_TOGETHER") || "";
-// const API_KEY = Deno.env.get("API_KEY_TOGETHER") || "";
-// const API_MODEL = "MISTRALAI/MIXTRAL-8X22B-INSTRUCT-V0.1";
-
 const API_URL = Deno.env.get("LLM_URL") || "";
 const API_KEY = Deno.env.get("LLM_KEY") || "";
 const API_MODEL = Deno.env.get("LLM_MODEL") || "";
@@ -15,61 +11,107 @@ const API_IMAGE_KEY = Deno.env.get("VLM_KEY") || "";
 const API_IMAGE_MODEL = Deno.env.get("VLM_MODEL") || "";
 const API_IMAGE_CORRECTION_MODEL = Deno.env.get("VLM_CORRECTION_MODEL") || "";
 
-// const CURRENT_DATETIME = new Date().toISOString();
-// console.log(CURRENT_DATETIME, API_MODEL);
-
+// Definiere das Message-Interface
 interface Message {
   role: string;
   content: string;
 }
 
-async function getModelResponseStream(messages: Message[], lang: string, universalApiKey: string,llmApiUrl: string, llmApiKey: string, llmApiModel: string, systemPrompt: string, vlmApiUrl: string, vlmApiKey: string, vlmApiModel: string, vlmCorrectionModel: string) {
+/**
+ * Hilfsfunktion, die versucht, einen JSON-String aus einem Text zu extrahieren.
+ */
+function extractJSON(text: string): string | null {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start !== -1 && end !== -1 && end > start) {
+    return text.substring(start, end + 1);
+  }
+  return null;
+}
 
-  if (universalApiKey != '' && !universalApiKey.startsWith("sbe-")) {
+async function getModelResponseStream(
+  messages: Message[],
+  lang: string,
+  universalApiKey: string,
+  llmApiUrl: string,
+  llmApiKey: string,
+  llmApiModel: string,
+  systemPrompt: string,
+  vlmApiUrl: string,
+  vlmApiKey: string,
+  vlmApiModel: string,
+  vlmCorrectionModel: string,
+) {
+  if (universalApiKey != "" && !universalApiKey.startsWith("sbe-")) {
     return new Response("Invalid Universal API Key. It needs to start with '**sbe-**'.", { status: 400 });
   }
 
-
-  let isLastMessageAssistant =
-    messages[messages.length - 1].role === "assistant";
+  // Entferne ggf. alte Assistant-Nachrichten am Ende der Konversation
+  let isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
   while (isLastMessageAssistant) {
     messages.pop();
     isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
   }
 
-  // check if the LAST message has #correction or #korrektur in the content (case insensitive)
+  // Prüfe, ob im letzten Nachrichteninhalt ein #korrektur/#correction-Hashtag vorkommt
   const isCorrectionInLastMessage = hasKorrekturHashtag(messages);
-
   console.log("isCorrectionInLastMessage", isCorrectionInLastMessage);
 
-  let useThisSystemPrompt = isCorrectionInLastMessage ? chatContent[lang].correctionSystemPrompt : chatContent[lang].systemPrompt;
+  let useThisSystemPrompt = isCorrectionInLastMessage
+    ? chatContent[lang].correctionSystemPrompt
+    : chatContent[lang].systemPrompt;
 
   if (systemPrompt != "") {
     useThisSystemPrompt = systemPrompt;
   }
 
+  // Füge Anweisungen hinzu, damit die KI, wenn möglich, die strukturierte JSON-Antwort generiert
+  const jsonInstruction = `
+If you have additional structured data to provide (such as search results or graph data), please include a JSON object in your response with one of the following structures:
+
+For search results (webResults):
+{
+  "type": "webResults",
+  "results": [
+    {
+      "title": "string",
+      "url": "string",
+      "description": "string"
+    }
+  ]
+}
+
+For graph data:
+{
+  "type": "graph",
+  "items": [
+    {
+      "item": "string",
+      "childItems": ["string"],
+      "connections": [{"from": "string", "to": "string"}]
+    }
+  ]
+}
+`;
+  useThisSystemPrompt += "\n\n" + jsonInstruction;
+
   console.log(useThisSystemPrompt);
 
+  // Setze den System-Prompt an den Anfang der Nachrichtenliste
   messages.unshift({
     role: "system",
     content: useThisSystemPrompt,
   });
 
-  // looks for messages with array content that contains objects with a 'type' property set to 'image_url'
-
+  // Prüfe, ob Bildinhalte in den Nachrichten vorkommen
   const isImageInMessages = messages.some((message) => {
     if (Array.isArray(message.content)) {
-      // Check if any item in the array has type "image_url"
       return message.content.some((item) => item.type === "image_url");
-    } else if (
-      typeof message.content === "object" && message.content !== null
-    ) {
-      // Check if single object has type "image_url"
+    } else if (typeof message.content === "object" && message.content !== null) {
       return (message.content as { type?: string }).type === "image_url";
     }
     return false;
   });
-
 
   let api_url = "";
   let api_key = "";
@@ -83,26 +125,26 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
     api_model = "";
   }
 
-  if (universalApiKey != '' && universalApiKey.startsWith("sbe-")) {
-    api_url = llmApiUrl != '' ? llmApiUrl : API_URL;
-    api_key = llmApiKey != '' ? llmApiKey : API_KEY;
-    api_model = llmApiModel != '' ? llmApiModel : API_MODEL;
+  if (universalApiKey != "" && universalApiKey.startsWith("sbe-")) {
+    api_url = llmApiUrl != "" ? llmApiUrl : API_URL;
+    api_key = llmApiKey != "" ? llmApiKey : API_KEY;
+    api_model = llmApiModel != "" ? llmApiModel : API_MODEL;
     if (isImageInMessages) {
-      api_url = vlmApiUrl != '' ? vlmApiUrl : API_IMAGE_URL;
-      api_key = vlmApiKey != '' ? vlmApiKey : API_IMAGE_KEY;
-      api_model = vlmApiModel != '' ? vlmApiModel : API_IMAGE_MODEL;
+      api_url = vlmApiUrl != "" ? vlmApiUrl : API_IMAGE_URL;
+      api_key = vlmApiKey != "" ? vlmApiKey : API_IMAGE_KEY;
+      api_model = vlmApiModel != "" ? vlmApiModel : API_IMAGE_MODEL;
     }
     if (isCorrectionInLastMessage) {
-      api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
+      api_model = vlmCorrectionModel != "" ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
     }
   } else {
-    api_url = llmApiUrl != '' ? llmApiUrl : '';
-    api_key = llmApiKey != '' ? llmApiKey : '';
-    api_model = llmApiModel != '' ? llmApiModel : '';
+    api_url = llmApiUrl != "" ? llmApiUrl : "";
+    api_key = llmApiKey != "" ? llmApiKey : "";
+    api_model = llmApiModel != "" ? llmApiModel : "";
     if (isImageInMessages) {
-      api_url = vlmApiUrl != '' ? vlmApiUrl : '';
-      api_key = vlmApiKey != '' ? vlmApiKey : '';
-      api_model = vlmApiModel != '' ? vlmApiModel : '';
+      api_url = vlmApiUrl != "" ? vlmApiUrl : "";
+      api_key = vlmApiKey != "" ? vlmApiKey : "";
+      api_model = vlmApiModel != "" ? vlmApiModel : "";
     }
   }
 
@@ -110,23 +152,18 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
   console.log("Using this API Key: ", api_key);
   console.log("Using this API Model: ", api_model);
 
-  if (api_url == '' || api_key == '' || api_model == '') {
-    const missingSettingsText = "The following settings are missing: " + (api_url == '' ? "api_url " : "") + (api_key == '' ? "api_key " : "") + (api_model == '' ? "api_model " : "") + ". The current generation mode is: " + (isImageInMessages ? "VLM" : "LLM") + ". The current correction mode is: " + (isCorrectionInLastMessage ? "Running with correction" : "Running without correction");
+  if (api_url == "" || api_key == "" || api_model == "") {
+    const missingSettingsText =
+      "The following settings are missing: " +
+      (api_url == "" ? "api_url " : "") +
+      (api_key == "" ? "api_key " : "") +
+      (api_model == "" ? "api_model " : "") +
+      ". The current generation mode is: " +
+      (isImageInMessages ? "VLM" : "LLM") +
+      ". The current correction mode is: " +
+      (isCorrectionInLastMessage ? "Running with correction" : "Running without correction");
     return new Response(missingSettingsText, { status: 400 });
   }
-
-  // let api_url = llmApiUrl != '' ? llmApiUrl : API_URL;
-  // let api_key = llmApiKey != '' ? llmApiKey : API_KEY;
-  // let api_model = llmApiModel != '' ? llmApiModel : API_MODEL;
-  // if (isImageInMessages) {
-  //   api_url = vlmApiUrl != '' ? vlmApiUrl : API_IMAGE_URL;
-  //   api_key = vlmApiKey != '' ? vlmApiKey : API_IMAGE_KEY;
-  //   api_model = vlmApiModel != '' ? vlmApiModel : API_IMAGE_MODEL;
-  // }
-  // if (isCorrectionInLastMessage) {
-  //   api_model = vlmCorrectionModel != '' ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
-  // }
-
 
   const fetchOptions: RequestInit = {
     method: "POST",
@@ -135,40 +172,20 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      "messages": messages,
-      "model": api_model,
-      "stream": true,
+      messages: messages,
+      model: api_model,
+      stream: true,
     }),
   };
 
-  // console.log("body", {
-  //   "messages": messages,
-  //   "model": API_MODEL,
-  //   "stream": true,
-  // });
   const response = await fetch(api_url, fetchOptions);
 
   console.log("response", response);
   console.log("response status", response.status);
 
   if (response.status !== 200) {
-    // const res = await response.json();
-    // console.log(res);
     return new Response(response.statusText, { status: response.status });
   }
-
-  // if (!response.body) {
-  //   return new Response("Failed to get response body from external API", {
-  //     status: 500,
-  //   });
-  // }
-
-  // if (response.status === 400) {
-  //   console.log("Bad request");
-  //   const res = await response.json();
-  //   console.log(res);
-  //   return new Response("Bad request", { status: 400 });
-  // }
 
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
@@ -188,9 +205,8 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
             buffer = lines.pop() || "";
 
             lines.forEach((line: string) => {
-              // console.log(line);
               if (line.startsWith("data: ") && line !== "data: [DONE]") {
-                const jsonStr = line.substring(5); // Adjust to correctly parse your API response
+                const jsonStr = line.substring(5); // Passe dies ggf. an die API-Antwort an
                 try {
                   const data = JSON.parse(jsonStr);
                   if (
@@ -202,15 +218,51 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
                       console.log("End of model response!");
                       controller.close();
                     } else {
-                      controller.enqueue(
-                        {
-                          data: JSON.stringify(
-                            data.choices[0].delta.content,
-                          ),
+                      let content = data.choices[0].delta.content;
+                      let structuredData: any = null;
+                      try {
+                        // Versuch, den Inhalt als vollständiges JSON zu parsen
+                        structuredData = JSON.parse(content);
+                      } catch (e) {
+                        // Falls das nicht klappt, versuche einen JSON-Teilstring zu extrahieren
+                        const possibleJSON = extractJSON(content);
+                        if (possibleJSON) {
+                          try {
+                            structuredData = JSON.parse(possibleJSON);
+                          } catch (e) {
+                            // Immer noch kein valides JSON – ignoriere strukturierte Daten
+                          }
+                        }
+                      }
+                      if (structuredData && structuredData.type === "webResults") {
+                        // Send web results as structured data
+                        controller.enqueue({
+                          data: JSON.stringify(structuredData),
+                          id: Date.now(),
+                          event: "structured_data",
+                        });
+                        return;
+                      } else if (structuredData && structuredData.type === "graph") {
+                        // Send graph data with a special event type
+                        controller.enqueue({
+                          data: JSON.stringify(structuredData),
+                          id: Date.now(),
+                          event: "graph_data",
+                        });
+                        // Send a message to show the loading state
+                        controller.enqueue({
+                          data: JSON.stringify("[Graph Generation Started]"),
                           id: Date.now(),
                           event: "message",
-                        },
-                      );
+                        });
+                        return;
+                      }
+                      // Sende den regulären Chattext
+                      controller.enqueue({
+                        data: JSON.stringify(content),
+                        id: Date.now(),
+                        event: "message",
+                      });
                     }
                   }
                 } catch (error: Error | unknown) {
@@ -224,13 +276,11 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
             });
           }
         } catch (_error) {
-          // console.error("Error reading the stream", error);
           controller.close();
         }
       },
       cancel(err) {
-        console.log("cancel", err);
-        console.log("cancel");
+        console.log("Stream cancelled", err);
       },
     }).pipeThrough(new ServerSentEventStream()),
     {
@@ -244,42 +294,43 @@ async function getModelResponseStream(messages: Message[], lang: string, univers
 // deno-lint-ignore no-explicit-any
 function hasKorrekturHashtag(messages: any[]): boolean {
   if (!messages || messages.length === 0) return false;
-  
+
   const lastMessage = messages[messages.length - 1];
   if (!lastMessage || !lastMessage.content) return false;
 
-  let content = '';
-  
-  // Handle different content formats
-  if (typeof lastMessage.content === 'string') {
+  let content = "";
+
+  // Unterstütze unterschiedliche Inhaltsformate
+  if (typeof lastMessage.content === "string") {
     content = lastMessage.content;
   } else if (Array.isArray(lastMessage.content)) {
-    // Handle array of content objects
     const textContent = lastMessage.content.find(
       // deno-lint-ignore no-explicit-any
-      (item: any) => item.type === 'text'
+      (item: any) => item.type === "text"
     );
-    content = textContent?.text || '';
+    content = textContent?.text || "";
   }
 
-  return content.toLowerCase().includes('#korrektur') || 
-         content.toLowerCase().includes('#correction');
+  return content.toLowerCase().includes("#korrektur") ||
+         content.toLowerCase().includes("#correction");
 }
 
 export const handler: Handlers = {
   async POST(req: Request) {
     const payload = await req.json();
 
-    // console.log(payload.lang);
-
-    // payload.messages.unshift({
-    //   role: "system",
-    //   content:
-    //     "You are an intelligent and empathetic learning assistant. Always respond empathetically, friendly, curiously and appropriately to the school context. Respond briefly and to the point. Your name is BUD-E and you would be created by LAION. LAION is a non-profit organization for the democratization of open source AI. Try to keep the conversation friendly, educational and entertaining and to keep it running while taking into account previously said information. Respond briefly, concisely and to the point.",
-    // });
-
-    // console.log("Model used: ", API_MODEL);
-    // console.log("payload messages", payload.messages);
-    return getModelResponseStream(payload.messages, payload.lang, payload.universalApiKey, payload.llmApiUrl, payload.llmApiKey, payload.llmApiModel, payload.systemPrompt, payload.vlmApiUrl, payload.vlmApiKey, payload.vlmApiModel, payload.vlmCorrectionModel);
+    return getModelResponseStream(
+      payload.messages,
+      payload.lang,
+      payload.universalApiKey,
+      payload.llmApiUrl,
+      payload.llmApiKey,
+      payload.llmApiModel,
+      payload.systemPrompt,
+      payload.vlmApiUrl,
+      payload.vlmApiKey,
+      payload.vlmApiModel,
+      payload.vlmCorrectionModel,
+    );
   },
 };

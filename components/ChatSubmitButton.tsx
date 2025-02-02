@@ -1,13 +1,13 @@
-// Button.tsx
 import { JSX } from "preact";
 import { IS_BROWSER } from "$fresh/runtime.ts";
+import { Button, type ButtonProps } from "./Button.tsx";
 
-export function ChatSubmitButton(props: JSX.HTMLAttributes<HTMLButtonElement>) {
+export function ChatSubmitButton(props: ButtonProps) {
   // Destructure `class` from props to apply alongside Tailwind classes
   const { class: className, ...buttonProps } = props;
 
   return (
-    <button
+    <Button
       {...buttonProps}
       // Spread the rest of the buttonProps here
       disabled={!IS_BROWSER || props.disabled}
@@ -33,6 +33,6 @@ export function ChatSubmitButton(props: JSX.HTMLAttributes<HTMLButtonElement>) {
         <path d="M12 5v14" />
         <path d="M16 9l-4 -4l-4 4" />
       </svg>
-    </button>
+    </Button>
   );
 }

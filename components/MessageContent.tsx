@@ -1,4 +1,5 @@
 import { renderTextWithLinksAndBold } from "../utils/textUtils.tsx";
+import { GraphLoadingState } from "./GraphLoadingState.tsx";
 
 interface MessageContentProps {
   content: Message["content"];
@@ -6,13 +7,20 @@ interface MessageContentProps {
 
 export function MessageContent({ content }: MessageContentProps) {
   if (typeof content === "string") {
+    if (content === "[Graph Generation Started]") {
+      return <GraphLoadingState isLoading={true} isComplete={false} />;
+    }
     return <span>{renderTextWithLinksAndBold(content)}</span>;
   }
 
   return (
     <span>
       {typeof content[0] === "string" ? (
-        renderTextWithLinksAndBold(content.join(""))
+        content[0] === "[Graph Generation Started]" ? (
+          <GraphLoadingState isLoading={true} isComplete={false} />
+        ) : (
+          renderTextWithLinksAndBold(content.join(""))
+        )
       ) : (
         <div>
           {(content as unknown as {

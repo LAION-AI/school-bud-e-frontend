@@ -5,18 +5,21 @@
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
 import * as $about from "./routes/about.tsx";
+import * as $api_audio_button from "./routes/api/audio-button.ts";
 import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
 import * as $api_papers from "./routes/api/papers.ts";
 import * as $api_stt from "./routes/api/stt.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_wikipedia from "./routes/api/wikipedia.ts";
+import * as $demo from "./routes/demo.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $Menu from "./islands/Menu.tsx";
+import * as $RightSidebar from "./islands/RightSidebar.tsx";
 import * as $Sidebar from "./islands/Sidebar.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
@@ -25,12 +28,14 @@ const manifest = {
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
     "./routes/about.tsx": $about,
+    "./routes/api/audio-button.ts": $api_audio_button,
     "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
     "./routes/api/papers.ts": $api_papers,
     "./routes/api/stt.ts": $api_stt,
     "./routes/api/tts.ts": $api_tts,
     "./routes/api/wikipedia.ts": $api_wikipedia,
+    "./routes/demo.tsx": $demo,
     "./routes/index.tsx": $index,
   },
   islands: {
@@ -39,6 +44,7 @@ const manifest = {
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/Header.tsx": $Header,
     "./islands/Menu.tsx": $Menu,
+    "./islands/RightSidebar.tsx": $RightSidebar,
     "./islands/Sidebar.tsx": $Sidebar,
   },
   baseUrl: import.meta.url,

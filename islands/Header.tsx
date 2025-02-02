@@ -17,7 +17,7 @@ import Menu from "./Menu.tsx";
  */
 function Header({ lang }: { lang: string }): JSX.Element {
   return (
-    <header class="flex justify-between items-center text-white w-full bg-gray-900">
+    <header class="flex justify-between items-center text-black w-full bg-savanna border-b-2 border-black">
       <div class="flex items-center px-4 py-1 gap-2">
         {/* Logo Image */}
         <img

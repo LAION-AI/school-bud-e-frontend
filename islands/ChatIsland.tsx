@@ -17,9 +17,9 @@ import { useEffect, useState } from "preact/hooks";
 import { chatIslandContent } from "../internalization/content.ts";
 
 // // Import necessary types from Preact
-// import { JSX } from 'preact';
 import Settings from "../components/Settings.tsx";
 import { ChatControls } from "../components/ChatControls.tsx";
+import { Button } from "../components/Button.tsx";
 
 // ###############
 // ## / IMPORTS ##
@@ -827,6 +827,19 @@ export default function ChatIsland({ lang }: { lang: string }) {
         onmessage(ev: EventSourceMessage) {
           const parsedData = JSON.parse(ev.data);
           console.debug("parsedData", parsedData);
+          
+          // Handle structured data events
+          if (ev.event === "structured_data") {
+            const structuredData = JSON.parse(parsedData);
+            // Update RightSidebar data
+            setMessages((prevMessagesRoundTwo) => {
+              const lastArray = prevMessagesRoundTwo[prevMessagesRoundTwo.length - 1];
+              lastArray.content = structuredData;
+              return [...prevMessagesRoundTwo.slice(0, -1), lastArray];
+            });
+            return;
+          }
+          
           ongoingStream.push(parsedData);
           if (ttsFromFirstSentence === false) {
             const combinedText = ongoingStream.join("");
@@ -1245,11 +1258,11 @@ export default function ChatIsland({ lang }: { lang: string }) {
   return (
     <div class="flex h-full">
       {/* Sidebar */}
-      <div class="w-64 bg-gray-800 text-white p-4 overflow-y-auto flex flex-col justify-between">
+      <div class="w-64 border-r border-black text-black p-4 overflow-y-auto flex flex-col justify-between">
         <div class="flex flex-col space-y-2">
           <button
             onClick={startNewChat}
-            class="w-full px-4 py-2 text-left hover:bg-gray-700 rounded transition-colors flex items-center gap-2"
+            class="w-full px-4 py-2 text-left hover:bg-gray-700/20 focus-visible:ring-black rounded transition-colors flex items-center gap-2"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
@@ -1260,7 +1273,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             <button
               key={key}
               onClick={() => setCurrentChatSuffix(key.slice(10))}
-              class={`w-full px-4 py-2 text-left rounded transition-colors flex items-center justify-between ${key === "bude-chat-" + currentChatSuffix ? "bg-gray-700" : "hover:bg-gray-700"}`}
+              class={`w-full px-4 py-2 text-left rounded transition-colors text-white flex items-center justify-between ${key === "bude-chat-" + currentChatSuffix ? "bg-gray-700" : "hover:bg-gray-700"}`}
             >
               <span class="truncate">{chatIslandContent[lang]["chat"]} {parseInt(key.slice(10)) + 1}</span>
 
@@ -1283,29 +1296,28 @@ export default function ChatIsland({ lang }: { lang: string }) {
           ))}
         </div>
 
-        <div class="flex items-center mb-4 flex-wrap">
+        <div class="flex flex-col items-stretch gap-2 flex-wrap">
           {Object.keys(localStorageKeys).length > 0 && (
-            <button
-              class="rounded-full bg-red-400 font-semibold px-4 py-2 mx-2 mb-2 flex gap-2"
-              onClick={() => deleteAllChats()}
-            >
+            <Button variant={"danger"} class={"flex gap-2"} onClick={deleteAllChats}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="inline-block"
                 height="24px"
                 viewBox="0 -960 960 960"
                 width="24px"
-                fill="#000000"
+                fill="currentColor"
               >
                 <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
               </svg>
               {chatIslandContent[lang]["deleteAllChats"]}
-            </button>
+
+            </Button>
           )}
           {Object.keys(localStorageKeys).length > 0 && (
-            <button
-              class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
-              onClick={() => saveChatsToLocalFile()}
+            <Button
+              class="rounded-full"
+              variant="primary"
+              onClick={saveChatsToLocalFile}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -1317,7 +1329,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
               >
                 <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
               </svg>
-            </button>
+            </Button>
           )}
           <input
             type="file"
@@ -1325,8 +1337,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             style="display: none;"
             onChange={(e) => restoreChatsFromLocalFile(e)}
           />
-          <button
-            class="rounded-full bg-green-200 font-bold px-4 py-2 mx-2 mb-2"
+          <Button
             onClick={() =>
               document.getElementById("restoreChatFromLocalFile")?.click()}
           >
@@ -1340,10 +1351,12 @@ export default function ChatIsland({ lang }: { lang: string }) {
             >
               <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
             </svg>
-          </button>
-          <button onClick={() => setShowSettings(true)}>
-            Settings
-          </button>
+          </Button>
+          <div class={"bg-gray-600 flex justify-between"}>
+            <button onClick={() => setShowSettings(true)}>
+              Settings
+            </button>
+          </div>
           <ChatControls autoScroll={autoScroll} lang={lang} onToggleAutoScrollAction={setAutoScroll} onToggleReadAlwaysAction={setReadAlways} readAlways={readAlways} />
         </div>
       </div>
