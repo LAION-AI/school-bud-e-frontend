@@ -12,7 +12,7 @@ export default function Home(req: Request) {
     <div class="flex h-screen overflow-hidden">
       {/* Main Chat Area */}
       <div class="flex-1 flex flex-col overflow-hidden">
-        <Header lang={lang as string} />
+        {/* <Header lang={lang as string} /> */}
         <div
           class="flex-1 overflow-auto"
           style={{

@@ -67,9 +67,10 @@ async function getModelResponseStream(
 
   // Füge Anweisungen hinzu, damit die KI, wenn möglich, die strukturierte JSON-Antwort generiert
   const jsonInstruction = `
-If you have additional structured data to provide (such as search results or graph data), please include a JSON object in your response with one of the following structures:
+If you have additional structured data to provide (such as search results, graph data, or game content), please include a JSON object in your response with one of the following structures:
 
-For search results (webResults):
+For search results (webResults) it's important to write the webresults type:
+\`\`\`webresultjson
 {
   "type": "webResults",
   "results": [
@@ -80,8 +81,10 @@ For search results (webResults):
     }
   ]
 }
+endwebresultjson\`\`\`
 
-For graph data:
+For graph data it's important to write the grapjson type:
+\`\`\`graphjson
 {
   "type": "graph",
   "items": [
@@ -92,6 +95,69 @@ For graph data:
     }
   ]
 }
+endgraphjson\`\`\`
+
+For game content it's important to write the gamejson type.
+Dieses Spiel ist muss in Phaser.js geschrieben sein.
+Wenn eine Antwort richtig ist sollte es immer globalThis initialisieren und incrementieren.
+Achte darauf das du den Text wieder entfernst wenn du zum beispiel richtig oder falsch ausgaben ausgibts.
+Am besten ist das spiel innerhalb vom behälter und nicht am ende vom body positioniert.
+The game should not have assets:
+\`\`\`gamejson
+{
+  "type": "game",
+  "content": {
+    "topic": "string",
+    "description": "string",
+    "explanation": "string",
+    "code": "string",
+  }
+}
+endgamejson\`\`\`
+Beispiel code:
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#fff',
+  scene: {
+    preload,
+    create,
+    update
+  }
+};
+
+const game = new Phaser.Game(config);
+
+function preload() {
+  // Ressourcen wie Bilder oder Sounds hier laden
+}
+
+function create() {
+  // Erste Szene initialisieren
+  this.add.text(10, 10, 'Willkommen zum Spiel!', { font: '32px Arial', fill: '#000' });
+}
+
+function update() {
+  // Spiel-Logik für jede Frame-Aktualisierung
+}
+
+// Hilfsfunktionen für die KI zur schnellen Erweiterung
+function createButton(scene, text, x, y, callback) {
+  let button = scene.add.text(x, y, text, { font: '24px Arial', fill: '#000', backgroundColor: '#444' })
+    .setPadding(10)
+    .setInteractive()
+    .on('pointerdown', callback);
+  return button;
+}
+
+function createRandomEntity(scene) {
+  let x = Phaser.Math.Between(50, 750);
+  let y = Phaser.Math.Between(50, 550);
+  let entity = scene.add.circle(x, y, 20, 0x000);
+  return entity;
+}
+
 `;
   useThisSystemPrompt += "\n\n" + jsonInstruction;
 
@@ -204,7 +270,7 @@ For graph data:
             const lines = buffer.split("\n");
             buffer = lines.pop() || "";
 
-            lines.forEach((line: string) => {
+            lines.forEach(async (line: string) => {
               if (line.startsWith("data: ") && line !== "data: [DONE]") {
                 const jsonStr = line.substring(5); // Passe dies ggf. an die API-Antwort an
                 try {
@@ -254,6 +320,34 @@ For graph data:
                           data: JSON.stringify("[Graph Generation Started]"),
                           id: Date.now(),
                           event: "message",
+                        });
+                        return;
+                      } else if (structuredData && structuredData.type === "game") {
+                        // Create the game file first
+                        const gameResponse = await fetch("/api/game", {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                          },
+                          body: JSON.stringify({
+                            type: "game",
+                            code: structuredData.content.code,
+                            filename: `game-${Date.now()}.js`
+                          })
+                        });
+
+                        if (!gameResponse.ok) {
+                          throw new Error(`Failed to create game file: ${gameResponse.statusText}`);
+                        }
+
+                        const gameResult = await gameResponse.json();
+                        structuredData.content.path = gameResult.path;
+
+                        // Send game data with a special event type
+                        controller.enqueue({
+                          data: JSON.stringify(structuredData),
+                          id: Date.now(),
+                          event: "game_data",
                         });
                         return;
                       }

@@ -13,7 +13,7 @@ function Warning({ lang }: { lang: string }) {
 
   return (
     <div
-      class="bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 mb-24"
+      class="bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 mb-2"
       role="alert"
     >
       <button
@@ -29,7 +29,7 @@ function Warning({ lang }: { lang: string }) {
       <div
         class={`px-4 pb-4 overflow-hidden transition-[max-height] duration-300 ease-in-out ${isExpanded ? 'max-h-[800px]' : 'max-h-0'}`}
       >
-        <p class="mb-4">
+        <p class={isExpanded ? "mb-4":""}>
           {warningContent[lang]["content"]}
         </p>
         <p 

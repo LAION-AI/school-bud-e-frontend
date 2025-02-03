@@ -17,9 +17,7 @@ import { useEffect, useState } from "preact/hooks";
 import { chatIslandContent } from "../internalization/content.ts";
 
 // // Import necessary types from Preact
-import Settings from "../components/Settings.tsx";
-import { ChatControls } from "../components/ChatControls.tsx";
-import { Button } from "../components/Button.tsx";
+import Sidebar from "./Sidebar.tsx";
 
 // ###############
 // ## / IMPORTS ##
@@ -61,6 +59,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const [currentEditIndex, setCurrentEditIndex] = useState(
     -1 as number | undefined,
   );
+  const [showSettings, setShowSettings] = useState(false);
 
   const [messages, setMessages] = useState([
     {
@@ -68,8 +67,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
       "content": [chatIslandContent[lang]["welcomeMessage"]],
     },
   ] as Message[]);
-
-  const [showSettings, setShowSettings] = useState(false);
 
   const [settings, setSettings] = useState({
     universalApiKey: localStorage.getItem("bud-e-universal-api-key") || "",
@@ -827,7 +824,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
         onmessage(ev: EventSourceMessage) {
           const parsedData = JSON.parse(ev.data);
           console.debug("parsedData", parsedData);
-          
+
           // Handle structured data events
           if (ev.event === "structured_data") {
             const structuredData = JSON.parse(parsedData);
@@ -839,7 +836,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             });
             return;
           }
-          
+
           ongoingStream.push(parsedData);
           if (ttsFromFirstSentence === false) {
             const combinedText = ongoingStream.join("");
@@ -1256,149 +1253,52 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // MAIN CONTENT THAT IS RENDERED
   return (
-    <div class="flex h-full">
-      {/* Sidebar */}
-      <div class="w-64 border-r border-black text-black p-4 overflow-y-auto flex flex-col justify-between">
-        <div class="flex flex-col space-y-2">
-          <button
-            onClick={startNewChat}
-            class="w-full px-4 py-2 text-left hover:bg-gray-700/20 focus-visible:ring-black rounded transition-colors flex items-center gap-2"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
-            </svg>
-            {chatIslandContent[lang]["newChat"]}
-          </button>
-          {localStorageKeys.sort().map((key) => (
-            <button
-              key={key}
-              onClick={() => setCurrentChatSuffix(key.slice(10))}
-              class={`w-full px-4 py-2 text-left rounded transition-colors text-white flex items-center justify-between ${key === "bude-chat-" + currentChatSuffix ? "bg-gray-700" : "hover:bg-gray-700"}`}
-            >
-              <span class="truncate">{chatIslandContent[lang]["chat"]} {parseInt(key.slice(10)) + 1}</span>
-
-              <button
-                class="rounded-full color-red-400 font-semibold py-1"
-                onClick={() => deleteCurrentChat()}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="inline-block"
-                  height="24px"
-                  viewBox="0 -960 960 960"
-                  width="24px"
-                  fill="currentColor"
-                >
-                  <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
-                </svg>
-              </button>
-            </button>
-          ))}
-        </div>
-
-        <div class="flex flex-col items-stretch gap-2 flex-wrap">
-          {Object.keys(localStorageKeys).length > 0 && (
-            <Button variant={"danger"} class={"flex gap-2"} onClick={deleteAllChats}>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="inline-block"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="currentColor"
-              >
-                <path d="M240-800v200-200 640-9.5 9.5-640Zm0 720q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v174q-19-7-39-10.5t-41-3.5v-120H520v-200H240v640h254q8 23 20 43t28 37H240Zm396-20-56-56 84-84-84-84 56-56 84 84 84-84 56 56-83 84 83 84-56 56-84-83-84 83Z" />
-              </svg>
-              {chatIslandContent[lang]["deleteAllChats"]}
-
-            </Button>
-          )}
-          {Object.keys(localStorageKeys).length > 0 && (
-            <Button
-              class="rounded-full"
-              variant="primary"
-              onClick={saveChatsToLocalFile}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="inline"
-                height="24px"
-                viewBox="0 -960 960 960"
-                width="24px"
-                fill="#000000"
-              >
-                <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
-              </svg>
-            </Button>
-          )}
-          <input
-            type="file"
-            id="restoreChatFromLocalFile"
-            style="display: none;"
-            onChange={(e) => restoreChatsFromLocalFile(e)}
-          />
-          <Button
-            onClick={() =>
-              document.getElementById("restoreChatFromLocalFile")?.click()}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="inline"
-              height="24px"
-              viewBox="0 -960 960 960"
-              width="24px"
-              fill="#000000"
-            >
-              <path d="M440-200h80v-167l64 64 56-57-160-160-160 160 57 56 63-63v167ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
-            </svg>
-          </Button>
-          <div class={"bg-gray-600 flex justify-between"}>
-            <button onClick={() => setShowSettings(true)}>
-              Settings
-            </button>
-          </div>
-          <ChatControls autoScroll={autoScroll} lang={lang} onToggleAutoScrollAction={setAutoScroll} onToggleReadAlwaysAction={setReadAlways} readAlways={readAlways} />
-        </div>
-      </div>
-
-
-      {/* Main Chat Area */}
-      <div class="flex-1 flex flex-col overflow-hidden flex-grow">
-        <div class="flex flex-col justify-between flex-1 flex-grow p-4">
-          <ChatTemplate
-            lang={lang}
-            parentImages={images}
-            messages={messages}
-            readAlways={readAlways}
-            autoScroll={autoScroll}
-            currentEditIndex={currentEditIndex}
-            audioFileDict={audioFileDict}
-            onRefreshAction={handleRefreshAction}
-            onEditAction={handleEditAction}
-            onSpeakAtGroupIndexAction={handleOnSpeakAtGroupIndexAction}
-            onImageChange={handleImageChange}
-            onToggleAutoScrollAction={() => setAutoScroll(!autoScroll)}
-            onToggleReadAlwaysAction={() => setReadAlways(!readAlways)}
-            handleImagesUploaded={handleImagesUploaded}
-            query={query}
-            setQuery={setQuery}
-            settings={settings}
-            startStream={startStream}
-            onUploadActionToMessages={handleUploadActionToMessages}
-            resetTranscript={resetTranscript}
-          >
-            <ChatWarning lang={lang} />
-          </ChatTemplate>
-        </div>
-      </div>
-      {showSettings && (
-        <Settings
-          settings={settings}
-          onSave={handleSaveSettings}
-          onClose={() => setShowSettings(false)}
-          lang={lang}
-        />
-      )}
+    <div class="grid grid-cols-[auto_2fr_1fr] w-full min-h-full">
+      <Sidebar
+        localStorageKeys={localStorageKeys}
+        currentChatSuffix={currentChatSuffix}
+        onChatSelect={(suffix) => setCurrentChatSuffix(suffix)}
+        onNewChat={() => {
+          const newSuffix = String(localStorageKeys.length);
+          setCurrentChatSuffix(newSuffix);
+          setMessages([
+            {
+              "role": "assistant",
+              "content": [chatIslandContent[lang]["welcomeMessage"]],
+            },
+          ]);
+        }}
+        settings={settings}
+        onSaveSettings={handleSaveSettings}
+        lang={lang}
+        onDeleteAllChats={deleteAllChats}
+        setShowSettings={setShowSettings}
+        showSettings={showSettings}
+      />
+      <ChatTemplate
+        lang={lang}
+        parentImages={images}
+        messages={messages}
+        readAlways={readAlways}
+        autoScroll={autoScroll}
+        currentEditIndex={currentEditIndex}
+        audioFileDict={audioFileDict}
+        onRefreshAction={handleRefreshAction}
+        onEditAction={handleEditAction}
+        onSpeakAtGroupIndexAction={handleOnSpeakAtGroupIndexAction}
+        onImageChange={handleImageChange}
+        onToggleAutoScrollAction={() => setAutoScroll(!autoScroll)}
+        onToggleReadAlwaysAction={() => setReadAlways(!readAlways)}
+        handleImagesUploaded={handleImagesUploaded}
+        query={query}
+        setQuery={setQuery}
+        settings={settings}
+        startStream={startStream}
+        onUploadActionToMessages={handleUploadActionToMessages}
+        resetTranscript={resetTranscript}
+      >
+        <ChatWarning lang={lang} />
+      </ChatTemplate>
     </div>
   );
 }

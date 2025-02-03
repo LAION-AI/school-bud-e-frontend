@@ -8,6 +8,7 @@ import * as $about from "./routes/about.tsx";
 import * as $api_audio_button from "./routes/api/audio-button.ts";
 import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
+import * as $api_game from "./routes/api/game.ts";
 import * as $api_papers from "./routes/api/papers.ts";
 import * as $api_stt from "./routes/api/stt.ts";
 import * as $api_tts from "./routes/api/tts.ts";
@@ -31,6 +32,7 @@ const manifest = {
     "./routes/api/audio-button.ts": $api_audio_button,
     "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
+    "./routes/api/game.ts": $api_game,
     "./routes/api/papers.ts": $api_papers,
     "./routes/api/stt.ts": $api_stt,
     "./routes/api/tts.ts": $api_tts,

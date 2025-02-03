@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import cytoscape from "cytoscape";
+import { Game } from "../components/Game.tsx";
 
 interface WebResult {
   title: string;
@@ -20,10 +21,11 @@ export interface GraphNode {
 
 type SidebarData =
   | { type: "webResults"; results?: WebResult[] }
-  | { type: "graph"; items?: GraphNode[] };
+  | { type: "graph"; items?: GraphNode[] }
+  | { type: "game"; gameUrl: string };
 
 interface RightSidebarProps {
-  data?: SidebarData;
+  data?: SidebarData[];
 }
 
 /**
@@ -82,6 +84,8 @@ function buildDrilldownGraph(
 }
 
 export default function RightSidebar({ data }: RightSidebarProps) {
+  console.log({data});
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
@@ -97,8 +101,9 @@ export default function RightSidebar({ data }: RightSidebarProps) {
 
   // When new full graph data is received, initialize graphElements.
   useEffect(() => {
-    if (data?.type === "graph" && data.items) {
-      const elements = convertGraphData(data.items);
+    const lastItem = data?.[data.length - 1];
+    if (lastItem?.type === "graph" && lastItem.items) {
+      const elements = convertGraphData(lastItem.items);
       setGraphElements(elements);
       setGraphStack([]);
       setCurrentDrilldown(null);
@@ -134,7 +139,7 @@ export default function RightSidebar({ data }: RightSidebarProps) {
           {
             selector: "node.selected",
             style: {
-              "border-width": "3px",
+              "border-width": "2px",
               "border-color": "#f00",
             },
           },
@@ -191,15 +196,17 @@ export default function RightSidebar({ data }: RightSidebarProps) {
     // Replace with your actual API call.
     console.log("Generating more details for", nodeId);
     // Simulate by returning additional child items.
-    return ["Detail 1", "Detail 2", "Detail 3"];
+    return [];
+    //return ["Detail 1", "Detail 2", "Detail 3"];
   };
 
   // Option 1: Open Detailed – drill down into the selected node.
   const openDetailed = async () => {
-    if (!selectedNodeId || !data || data.type !== "graph" || !data.items) return;
+    const lastItem = data?.[data.length - 1];
+    if (!selectedNodeId || !lastItem || lastItem.type !== "graph" || !lastItem.items) return;
 
     // Find the selected node in the original data.
-    const nodeData = data.items.find((n) => n.item === selectedNodeId);
+    const nodeData = lastItem.items.find((n) => n.item === selectedNodeId);
     if (!nodeData) return;
 
     // Optionally, generate more items with AI.
@@ -267,78 +274,98 @@ export default function RightSidebar({ data }: RightSidebarProps) {
   };
 
   return (
-    <div class="right-sidebar bg-neu-light rounded-lg shadow-lg h-full flex flex-col">
-      {/* Display web results if applicable */}
-      {data?.type === "webResults" && (
-        <div class="p-4 overflow-y-auto">
-          <div class="space-y-4">
-            {(data.results ?? []).map((result, index) => (
-              <div
-                key={index}
-                class="sidebar-item bg-white/50 p-4 rounded-lg shadow-sm"
-              >
-                <h3 class="font-medium mb-2">{result.title}</h3>
-                <a
-                  href={result.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-blue-500 hover:text-blue-600 block mb-2 text-sm break-all"
-                >
-                  {result.url}
-                </a>
-                {result.description && (
-                  <p class="text-gray-600 text-sm">{result.description}</p>
-                )}
+    <div class={"bg-savanna border-l border-gray-300 h-full flex flex-col max-w-[30vw]"}>
+      <h3 class={"p-4 font-semibold border-b border-gray-300"}>Informationen</h3>
+      {/* Display all data elements */}
+      {data?.map((item, dataIndex) => {
+        // Skip rendering if the item has no results/items
+        if ((item.type === "webResults" && (!item.results || item.results.length === 0)) ||
+            (item.type === "graph" && (!item.items || item.items.length === 0))) {
+          return null;
+        }
+        return (
+          <div key={dataIndex}>
+            {/* Display web results if applicable */}
+            {item.type === "webResults" && (
+              <div class="p-4 overflow-y-auto">
+                <div class="space-y-4">
+                  {(item.results ?? []).map((result, index) => (
+                    <div
+                      key={index}
+                      class="sidebar-item bg-white/50 p-4 rounded-lg border"
+                    >
+                      <h3 class="font-medium mb-2">{result.title}</h3>
+                      <a
+                        href={result.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="text-blue-500 hover:text-blue-600 block mb-2 text-sm break-all"
+                      >
+                        {result.url}
+                      </a>
+                      {result.description && (
+                        <p class="text-gray-600 text-sm">{result.description}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
 
-      {/* Display graph results */}
-      {data?.type === "graph" && (
-        <>
-          <div
-            class="m-4 h-full border"
-            ref={containerRef}
-            style={{ width: "100%", height: "400px" }}
-          ></div>
-          <div class="p-2 border-t flex justify-between items-center">
-            {/* Show Back button if there is drilldown history */}
-            {graphStack.length > 0 && (
-              <button
-                onClick={goBack}
-                class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
-              >
-                Back
-              </button>
-            )}
-            {/* If a node is selected (but not drilled down yet), show option buttons */}
-            {selectedNodeId && (
-              <div class="space-x-2">
-                <button
-                  onClick={openDetailed}
-                  class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded"
-                >
-                  Open Detailed
-                </button>
-                <button
-                  onClick={askQuestion}
-                  class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
-                >
-                  Ask Question
-                </button>
-                <button
-                  onClick={showTasks}
-                  class="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded"
-                >
-                  Explore Quests
-                </button>
+            {/* Display game */}
+            {item.type === "game" && (
+              <div class="m-4">
+                <Game gameUrl={item.gameUrl} />
               </div>
             )}
+
+            {/* Display graph results */}
+            {item.type === "graph" && (
+              <>
+                <div
+                  class="m-4 h-full border"
+                  ref={containerRef}
+                  style={{ width: "100%", height: "400px" }}
+                ></div>
+                <div class="p-2 border-t flex justify-between items-center">
+                  {/* Show Back button if there is drilldown history */}
+                  {graphStack.length > 0 && (
+                    <button
+                      onClick={goBack}
+                      class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
+                    >
+                      Back
+                    </button>
+                  )}
+                  {/* If a node is selected (but not drilled down yet), show option buttons */}
+                  {selectedNodeId && (
+                    <div class="space-x-2">
+                      <button
+                        onClick={openDetailed}
+                        class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded"
+                      >
+                        Open Detailed
+                      </button>
+                      <button
+                        onClick={askQuestion}
+                        class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
+                      >
+                        Ask Question
+                      </button>
+                      <button
+                        onClick={showTasks}
+                        class="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded"
+                      >
+                        Explore Quests
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
-        </>
-      )}
+        );
+      })}
     </div>
   );
 }

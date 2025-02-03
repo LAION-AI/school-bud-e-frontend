@@ -6,7 +6,7 @@ const variants = {
     secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-500",
     outline: "border border-gray-200 hover:bg-gray-100 focus-visible:ring-gray-500",
     ghost: "hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-gray-500",
-    danger: "bg-red-500 hover:bg-red-600 focus-visible:ring-red-600"
+    danger: "text-red-500 border border-red-500 bg-white focus-visible:ring-red-600"
 };
 
 const sizes = {
@@ -35,7 +35,7 @@ export function Button({
     children,
     ...props
 }: ButtonProps) {
-    const baseStyles = "inline-flex items-center justify-center rounded-full font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    const baseStyles = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
     const widthClass = isFullWidth ? "w-full" : "";
 
