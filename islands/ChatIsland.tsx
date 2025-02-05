@@ -18,6 +18,8 @@ import { chatIslandContent } from "../internalization/content.ts";
 
 // // Import necessary types from Preact
 import Sidebar from "./Sidebar.tsx";
+import { signal, effect } from "@preact/signals"
+import { chatSuffix } from "../utils/store.ts";
 
 // ###############
 // ## / IMPORTS ##
@@ -35,13 +37,13 @@ interface AudioItem {
 // Define the AudioFileDict type if not already defined
 type AudioFileDict = Record<number, Record<number, AudioItem>>;
 
+
 export default function ChatIsland({ lang }: { lang: string }) {
   // Necessary to load the chat messages from localStorage only once
   const [firstLoad, setFirstLoad] = useState(true);
 
   // Multiple chats can be stored in localStorage, each chat is identified by a unique suffix
   const [query, setQuery] = useState("");
-  const [currentChatSuffix, setCurrentChatSuffix] = useState("0");
   const [localStorageKeys, setLocalStorageKeys] = useState([] as string[]);
 
   // dictionary containg audio files for each groupIndex for the current chat
@@ -156,11 +158,8 @@ export default function ChatIsland({ lang }: { lang: string }) {
     localStorageKeys = localStorageKeys.length > 0
       ? localStorageKeys
       : ["bude-chat-0"];
-    const currentChatSuffix = localStorageKeys.length > 0
-      ? String(localStorageKeys.sort()[0].slice(10))
-      : "0";
     let localStorageMessages = JSON.parse(
-      String(localStorage.getItem("bude-chat-" + currentChatSuffix)),
+      String(localStorage.getItem("bude-chat-" + chatSuffix.value)),
     );
     localStorageMessages = localStorageMessages || [
       {
@@ -172,7 +171,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
     ];
     setLocalStorageKeys(localStorageKeys);
     setMessages(localStorageMessages);
-    setCurrentChatSuffix(currentChatSuffix);
   }, []);
 
   // 2. useEffect [isStreamComplete]
@@ -191,16 +189,16 @@ export default function ChatIsland({ lang }: { lang: string }) {
         if (lastMessageFromBuddy !== "" && messages.length > 1) {
           messages[messages.length - 1]["content"] = lastMessageFromBuddy;
 
-          console.log("IS_STREAM_COMPLETE", currentChatSuffix);
+          console.log("IS_STREAM_COMPLETE", chatSuffix.value);
           localStorage.setItem(
-            "bude-chat-" + currentChatSuffix,
+            "bude-chat-" + chatSuffix.value,
             JSON.stringify(messages),
           );
 
-          if (!localStorageKeys.includes("bude-chat-" + currentChatSuffix)) {
+          if (!localStorageKeys.includes("bude-chat-" + chatSuffix.value)) {
             setLocalStorageKeys([
               ...localStorageKeys,
-              "bude-chat-" + currentChatSuffix,
+              "bude-chat-" + chatSuffix.value,
             ]);
           }
         }
@@ -232,9 +230,9 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
 
     if (!firstLoad) {
-      // console.log("MESSAGES", currentChatSuffix);
+      // console.log("MESSAGES", chatSuffix.value);
       localStorage.setItem(
-        "bude-chat-" + currentChatSuffix,
+        "bude-chat-" + chatSuffix.value,
         JSON.stringify(messages),
       );
       setLocalStorageKeys(
@@ -247,11 +245,11 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, [messages, autoScroll]);
 
-  // 4. useEffect [currentChatSuffix]
+  // 4. useEffect [chatSuffix.value]
   useEffect(() => {
     // load messages from localStorage if they exist, else start with the default introductory message
     const localStorageMessages = JSON.parse(
-      String(localStorage.getItem("bude-chat-" + currentChatSuffix)),
+      String(localStorage.getItem("bude-chat-" + chatSuffix.value)),
     ) || [
         {
           "role": "assistant",
@@ -272,7 +270,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
     setMessages(localStorageMessages);
     stopAndResetAudio();
     setStopList([]);
-  }, [currentChatSuffix]);
+  }, [chatSuffix.value]);
 
   // 5. useEffect [audioFileDict, readAlways, stopList]
   useEffect(() => {
@@ -1152,10 +1150,10 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // 2. deleteCurrentChat
   const deleteCurrentChat = () => {
     if (localStorageKeys.length > 1) {
-      localStorage.removeItem("bude-chat-" + currentChatSuffix);
+      localStorage.removeItem("bude-chat-" + chatSuffix.value);
 
       const nextChatSuffix = localStorageKeys.filter((key: string) =>
-        key !== "bude-chat-" + currentChatSuffix
+        key !== "bude-chat-" + chatSuffix.value
       )[0].slice(10);
 
       setMessages(
@@ -1163,7 +1161,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
           String(localStorage.getItem("bude-chat-" + nextChatSuffix)),
         ),
       );
-      setCurrentChatSuffix(nextChatSuffix);
+      chatSuffix.value = (nextChatSuffix);
     } else {
       setMessages([
         {
@@ -1189,7 +1187,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
       },
     ]);
     setLocalStorageKeys([]);
-    setCurrentChatSuffix("0");
+    chatSuffix.value = ("0");
     stopAndResetAudio();
   };
 
@@ -1237,7 +1235,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
             key.startsWith("bude-chat-")
           ),
         );
-        setCurrentChatSuffix(newChatSuffix);
+        chatSuffix.value = (newChatSuffix);
         setMessages(chats["bude-chat-" + newChatSuffix]);
       } catch (error) {
         console.error("Error parsing JSON file:", error);
@@ -1256,11 +1254,11 @@ export default function ChatIsland({ lang }: { lang: string }) {
     <div class="grid grid-cols-[auto_2fr_1fr] w-full min-h-full">
       <Sidebar
         localStorageKeys={localStorageKeys}
-        currentChatSuffix={currentChatSuffix}
-        onChatSelect={(suffix) => setCurrentChatSuffix(suffix)}
+        currentChatSuffix={chatSuffix.value}
+        onChatSelect={(suffix) => chatSuffix.value = (suffix)}
         onNewChat={() => {
           const newSuffix = String(localStorageKeys.length);
-          setCurrentChatSuffix(newSuffix);
+          chatSuffix.value = (newSuffix);
           setMessages([
             {
               "role": "assistant",

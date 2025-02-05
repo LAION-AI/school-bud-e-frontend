@@ -26,7 +26,7 @@ export function GraphLoadingState({ isLoading, isComplete, type }: GraphLoadingS
       {isLoading && !isComplete && (
         <>
           <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-900 border-t-transparent"></div>
-          <span class="text-gray-700">Generating graph...</span>
+          <span class="text-gray-700">Generating {subject}...</span>
         </>
       )}
       {!isLoading && isComplete && (

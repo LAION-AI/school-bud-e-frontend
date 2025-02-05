@@ -8,6 +8,7 @@ import * as $about from "./routes/about.tsx";
 import * as $api_audio_button from "./routes/api/audio-button.ts";
 import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
+import * as $api_game_score from "./routes/api/game-score.ts";
 import * as $api_game from "./routes/api/game.ts";
 import * as $api_papers from "./routes/api/papers.ts";
 import * as $api_stt from "./routes/api/stt.ts";
@@ -15,6 +16,7 @@ import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_wikipedia from "./routes/api/wikipedia.ts";
 import * as $demo from "./routes/demo.tsx";
 import * as $index from "./routes/index.tsx";
+import * as $saved_games from "./routes/saved-games.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
@@ -22,6 +24,7 @@ import * as $Header from "./islands/Header.tsx";
 import * as $Menu from "./islands/Menu.tsx";
 import * as $RightSidebar from "./islands/RightSidebar.tsx";
 import * as $Sidebar from "./islands/Sidebar.tsx";
+import * as $saved_games_1 from "./islands/saved-games.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -32,6 +35,7 @@ const manifest = {
     "./routes/api/audio-button.ts": $api_audio_button,
     "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
+    "./routes/api/game-score.ts": $api_game_score,
     "./routes/api/game.ts": $api_game,
     "./routes/api/papers.ts": $api_papers,
     "./routes/api/stt.ts": $api_stt,
@@ -39,6 +43,7 @@ const manifest = {
     "./routes/api/wikipedia.ts": $api_wikipedia,
     "./routes/demo.tsx": $demo,
     "./routes/index.tsx": $index,
+    "./routes/saved-games.tsx": $saved_games,
   },
   islands: {
     "./islands/ChatAgreement.tsx": $ChatAgreement,
@@ -48,6 +53,7 @@ const manifest = {
     "./islands/Menu.tsx": $Menu,
     "./islands/RightSidebar.tsx": $RightSidebar,
     "./islands/Sidebar.tsx": $Sidebar,
+    "./islands/saved-games.tsx": $saved_games_1,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

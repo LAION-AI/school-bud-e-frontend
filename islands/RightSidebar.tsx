@@ -84,8 +84,6 @@ function buildDrilldownGraph(
 }
 
 export default function RightSidebar({ data }: RightSidebarProps) {
-  console.log({data});
-  
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
 
@@ -315,7 +313,7 @@ export default function RightSidebar({ data }: RightSidebarProps) {
             {/* Display game */}
             {item.type === "game" && (
               <div class="m-4">
-                <Game gameUrl={item.gameUrl} />
+                <Game gameUrl={item?.content} />
               </div>
             )}
 

@@ -1,16 +1,43 @@
 import { renderTextWithLinksAndBold } from "../utils/textUtils.tsx";
-import { Game } from "./Game.tsx";
 import { GraphLoadingState } from "./GraphLoadingState.tsx";
 
+// Define supported content types
+type ContentType = "text" | "image_url";
+type JsonBlockType = "graphjson" | "webresultjson" | "gamejson";
+type BlockStatus = "loading" | "completed";
+
+// Base content segment interface
+interface BaseSegment {
+  type: ContentType | JsonBlockType;
+}
+
+// Text segment interface
+interface TextSegment extends BaseSegment {
+  type: "text";
+  content: string;
+}
+
+// JSON block segment interface
+interface JsonBlockSegment extends BaseSegment {
+  type: JsonBlockType;
+  status: BlockStatus;
+  code?: string; // Optional code field for gamejson
+}
+
+// Combined type for all possible segments
+type GraphSegment = TextSegment | JsonBlockSegment;
+
+// Props interface for the component
 interface MessageContentProps {
   content: Message["content"];
 }
 
-type GraphSegment =
-  | { type: "text"; content: string }
-  | { type: "graphjson"; status: "loading" | "completed" }
-  | { type: "webresultjson"; status: "loading" | "completed" }
-  | { type: "gamejson"; status: "loading" | "completed" };
+// Content item interface for structured content
+interface ContentItem {
+  type: ContentType;
+  text?: string;
+  image_url?: { url: string };
+}
 
 
 /**
@@ -65,7 +92,7 @@ function processGraphJsonSegments(types: ('graphjson' | 'webresultjson' | 'gamej
     } else {
       if (matchedType === "gamejson") {
         const code = text.substring(earliestIndex + openMarker.length, closeIndex);
-        
+
         segments.push({ type: "gamejson", status: "completed", code });
         currentPosition = closeIndex + closeMarker.length;
       } else {
@@ -106,19 +133,15 @@ export function MessageContent({ content }: MessageContentProps) {
                 {renderTextWithLinksAndBold(seg.content)}
               </span>
             );
-          } else if (seg.type === "graphjson" || seg.type === "webresultjson") {
+          } else if (seg.type === "graphjson" || seg.type === "webresultjson" || seg.type === "gamejson") {
             return (
               <GraphLoadingState
                 key={idx}
+                type={seg.type}
                 isLoading={seg.status === "loading"}
                 isComplete={seg.status === "completed"}
               />
             );
-          } else if (seg.type === "gamejson") {
-            console.log('Exists!', seg)
-            return (<Game
-              gameUrl={seg.code}
-            />)
           }
           return null;
         })}
@@ -146,7 +169,7 @@ export function MessageContent({ content }: MessageContentProps) {
                         {renderTextWithLinksAndBold(seg.content)}
                       </span>
                     );
-                  } else if (["graphjson", "webresultjson"].includes(seg.type)) {
+                  } else if (["graphjson", "webresultjson", "gamejson"].includes(seg.type)) {
                     return (
                       <GraphLoadingState
                         key={idx}
@@ -155,13 +178,7 @@ export function MessageContent({ content }: MessageContentProps) {
                         type={seg.type}
                       />
                     );
-                  } else if (seg.type === "gamejson") {
-                    console.log('Exists!', seg)
-                    return (<Game
-                      gameUrl={seg.code}
-                    />)
-                  }
-                  return null;
+                  } return null;
                 })}
               </span>
             );

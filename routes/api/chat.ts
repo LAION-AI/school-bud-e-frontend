@@ -158,6 +158,10 @@ function createRandomEntity(scene) {
   return entity;
 }
 
+function gameScore(gameName, points) {
+  // This helper function will write the score to the db
+}
+
 `;
   useThisSystemPrompt += "\n\n" + jsonInstruction;
 
@@ -361,7 +365,7 @@ function createRandomEntity(scene) {
                   }
                 } catch (error: Error | unknown) {
                   console.error("Error parsing JSON:", error, jsonStr);
-                  controller.close();
+                  //controller.close();
                 }
               } else if (line === "data: [DONE]") {
                 console.log("Closing controller!");

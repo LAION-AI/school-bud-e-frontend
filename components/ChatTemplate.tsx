@@ -105,7 +105,7 @@ function ChatTemplate(
   const [imageFiles, setImageFiles] = useState<Image[]>([]);
 
   const [sidebarData, setSidebarData] = useState<{
-    type: "webResults" | "graph";
+    type: "webResults" | "graph" | "game";
     results: any[];
   }[]>([]);
 
@@ -139,12 +139,10 @@ function ChatTemplate(
             : lastMessage.content;
 
           // Find JSON substring between triple backticks
-          const jsonMatch = content.match(/```(graphjson|webresultjson)\n([\s\S]*?)\n(endgraphjson|endwebresultjson)```/);
-          console.log(jsonMatch)
+          const jsonMatch = content.match(/```(graphjson|webresultjson|gamejson)\n([\s\S]*?)\n(endgraphjson|endwebresultjson|endgamejson)```/);
           if (jsonMatch) {
-            console.log(jsonMatch[2])
             const jsonData = JSON.parse(jsonMatch[2]);
-            if (jsonData.type === "webResults" || jsonData.type === "graph") {
+            if (jsonData.type === "webResults" || jsonData.type === "graph" || jsonData.type === "game") {
               setSidebarData([jsonData]);
               return;
             }
@@ -159,7 +157,7 @@ function ChatTemplate(
 
   return (
     <>
-      <div class="flex-grow px-2 h-full grid grid-rows-[auto_1fr_auto]">
+      <div class="flex-grow h-full grid grid-rows-[auto_1fr_auto]">
         <LogoHeader lang={lang}/>
         <div
           class={messages?.length === 0
