@@ -1,0 +1,111 @@
+class QuizGame extends Phaser.Scene {
+  constructor() {
+    super('QuizGame');
+  }
+
+  create() {
+    this.background = this.add.rectangle(0, 0, 800, 600, 0xffffff);
+    this.background.setOrigin(0, 0);
+    this.score = 0;
+    this.questionIndex = 0;
+    this.questions = [
+      {
+        question: 'Was ist das Hauptmerkmal der von-Neumann-Architektur?',
+        options: ['Harvard-Architektur', 'Trennung von Befehlsspeicher und Datenspeicher', 'Einschränkung auf 8 Bit', 'Parallele Verarbeitung'],
+        correct: 1
+      },
+      {
+        question: 'Welche der folgenden Aussagen über Prozessmanagement in Betriebssystemen ist korrekt?',
+        options: ['Prozesse können nur in einem Zustand existieren', 'Der Zustand "Running" bedeutet, dass ein Prozess gerade ausgeführt wird', 'Prozesse teilen sich immer den gleichen Speicher', 'Prozesse können nicht priorisiert werden'],
+        correct: 1
+      },
+      {
+        question: 'Welcher Teil des Speichers ist am nächsten am Prozessor?',
+        options: ['Festplatte', 'Hauptspeicher', 'Cache-Speicher', 'Optischer Speicher'],
+        correct: 2
+      }
+    ];
+
+    this.displayQuestion();
+  }
+
+  displayQuestion() {
+    this.questionText = this.add.text(400, 200, this.questions[this.questionIndex].question, {
+      fontSize: '24px',
+      fill: '#000000'
+    }).setOrigin(0.5);
+
+    const options = this.questions[this.questionIndex].options;
+    this.buttons = [];
+    for (let i = 0; i < options.length; i++) {
+      const button = this.add.rectangle(400, 300 + i * 80, 400, 60, 0x87CEEB);
+      button.setOrigin(0.5);
+      button.setInteractive();
+      
+      const buttonText = this.add.text(400, 300 + i * 80, options[i], {
+        fontSize: '20px',
+        fill: '#000000'
+      }).setOrigin(0.5);
+
+      button.on('pointerdown', () => this.checkAnswer(i));
+
+      this.buttons.push({ button, text: buttonText });
+    }
+  }
+
+  checkAnswer(selectedIndex) {
+    if (selectedIndex === this.questions[this.questionIndex].correct) {
+      this.score++;
+      this.add.text(400, 250, 'Richtig!', {
+        fontSize: '24px',
+        fill: '#00ff00'
+      }).setOrigin(0.5);
+    } else {
+      this.add.text(400, 250, 'Falsch!', {
+        fontSize: '24px',
+        fill: '#ff0000'
+      }).setOrigin(0.5);
+    }
+
+    this.time.delayedCall(1000, () => {
+      this.clearDisplay();
+      this.questionIndex++;
+      if (this.questionIndex < this.questions.length) {
+        this.displayQuestion();
+      } else {
+        this.displayResults();
+      }
+    });
+  }
+
+  clearDisplay() {
+    this.questionText.destroy();
+    this.buttons.forEach(button => {
+      button.button.destroy();
+      button.text.destroy();
+    });
+    this.children.each(child => {
+      if (child instanceof Phaser.GameObjects.Text && child.y === 250) {
+        child.destroy();
+      }
+    });
+  }
+
+  displayResults() {
+    this.add.text(400, 300, `Quiz beendet! Punkte: ${this.score}/${this.questions.length}`,
+     {
+       fontSize: '24px',
+       fill: '#000000'
+     }).setOrigin(0.5);
+  }
+}
+
+const config = {
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#ffffff',
+  scene: [QuizGame]
+};
+
+const game = new Phaser.Game(config);

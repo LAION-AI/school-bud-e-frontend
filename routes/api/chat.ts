@@ -17,18 +17,6 @@ interface Message {
   content: string;
 }
 
-/**
- * Hilfsfunktion, die versucht, einen JSON-String aus einem Text zu extrahieren.
- */
-function extractJSON(text: string): string | null {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start !== -1 && end !== -1 && end > start) {
-    return text.substring(start, end + 1);
-  }
-  return null;
-}
-
 async function getModelResponseStream(
   messages: Message[],
   lang: string,
@@ -43,11 +31,16 @@ async function getModelResponseStream(
   vlmCorrectionModel: string,
 ) {
   if (universalApiKey != "" && !universalApiKey.startsWith("sbe-")) {
-    return new Response("Invalid Universal API Key. It needs to start with '**sbe-**'.", { status: 400 });
+    return new Response(
+      "Invalid Universal API Key. It needs to start with '**sbe-**'.",
+      { status: 400 },
+    );
   }
 
   // Entferne ggf. alte Assistant-Nachrichten am Ende der Konversation
-  let isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
+  let isLastMessageAssistant =
+    messages[messages.length - 1].role === "assistant";
+
   while (isLastMessageAssistant) {
     messages.pop();
     isLastMessageAssistant = messages[messages.length - 1].role === "assistant";
@@ -66,103 +59,18 @@ async function getModelResponseStream(
   }
 
   // Füge Anweisungen hinzu, damit die KI, wenn möglich, die strukturierte JSON-Antwort generiert
+  const { formatTemplates } = await import("../../types/formats.ts");
   const jsonInstruction = `
-If you have additional structured data to provide (such as search results, graph data, or game content), please include a JSON object in your response with one of the following structures:
+If you have additional structured data to provide (such as search results, graph data, flashcards, or game content), please include a JSON object in your response with one of the following structures:
 
-For search results (webResults) it's important to write the webresults type:
-\`\`\`webresultjson
-{
-  "type": "webResults",
-  "results": [
-    {
-      "title": "string",
-      "url": "string",
-      "description": "string"
-    }
-  ]
-}
-endwebresultjson\`\`\`
+${
+    Object.entries(formatTemplates).map(([key, value]) =>
+      `${value.description}:
+${value.template}
+${value.requirements.join("\n")}`
+    ).join("\n\n")
+  }`;
 
-For graph data it's important to write the grapjson type:
-\`\`\`graphjson
-{
-  "type": "graph",
-  "items": [
-    {
-      "item": "string",
-      "childItems": ["string"],
-      "connections": [{"from": "string", "to": "string"}]
-    }
-  ]
-}
-endgraphjson\`\`\`
-
-For game content it's important to write the gamejson type.
-Dieses Spiel ist muss in Phaser.js geschrieben sein.
-Wenn eine Antwort richtig ist sollte es immer globalThis initialisieren und incrementieren.
-Achte darauf das du den Text wieder entfernst wenn du zum beispiel richtig oder falsch ausgaben ausgibts.
-Am besten ist das spiel innerhalb vom behälter und nicht am ende vom body positioniert.
-The game should not have assets:
-\`\`\`gamejson
-{
-  "type": "game",
-  "content": {
-    "topic": "string",
-    "description": "string",
-    "explanation": "string",
-    "code": "string",
-  }
-}
-endgamejson\`\`\`
-Beispiel code:
-const config = {
-  type: Phaser.AUTO,
-  width: 800,
-  height: 600,
-  backgroundColor: '#fff',
-  scene: {
-    preload,
-    create,
-    update
-  }
-};
-
-const game = new Phaser.Game(config);
-
-function preload() {
-  // Ressourcen wie Bilder oder Sounds hier laden
-}
-
-function create() {
-  // Erste Szene initialisieren
-  this.add.text(10, 10, 'Willkommen zum Spiel!', { font: '32px Arial', fill: '#000' });
-}
-
-function update() {
-  // Spiel-Logik für jede Frame-Aktualisierung
-}
-
-// Hilfsfunktionen für die KI zur schnellen Erweiterung
-function createButton(scene, text, x, y, callback) {
-  let button = scene.add.text(x, y, text, { font: '24px Arial', fill: '#000', backgroundColor: '#444' })
-    .setPadding(10)
-    .setInteractive()
-    .on('pointerdown', callback);
-  return button;
-}
-
-function createRandomEntity(scene) {
-  let x = Phaser.Math.Between(50, 750);
-  let y = Phaser.Math.Between(50, 550);
-  let entity = scene.add.circle(x, y, 20, 0x000);
-  return entity;
-}
-
-function gameScore(gameName, points) {
-  // This helper function will write the score to the db
-}
-
-`;
   useThisSystemPrompt += "\n\n" + jsonInstruction;
 
   console.log(useThisSystemPrompt);
@@ -177,7 +85,9 @@ function gameScore(gameName, points) {
   const isImageInMessages = messages.some((message) => {
     if (Array.isArray(message.content)) {
       return message.content.some((item) => item.type === "image_url");
-    } else if (typeof message.content === "object" && message.content !== null) {
+    } else if (
+      typeof message.content === "object" && message.content !== null
+    ) {
       return (message.content as { type?: string }).type === "image_url";
     }
     return false;
@@ -205,7 +115,9 @@ function gameScore(gameName, points) {
       api_model = vlmApiModel != "" ? vlmApiModel : API_IMAGE_MODEL;
     }
     if (isCorrectionInLastMessage) {
-      api_model = vlmCorrectionModel != "" ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
+      api_model = vlmCorrectionModel != ""
+        ? vlmCorrectionModel
+        : API_IMAGE_CORRECTION_MODEL;
     }
   } else {
     api_url = llmApiUrl != "" ? llmApiUrl : "";
@@ -223,15 +135,16 @@ function gameScore(gameName, points) {
   console.log("Using this API Model: ", api_model);
 
   if (api_url == "" || api_key == "" || api_model == "") {
-    const missingSettingsText =
-      "The following settings are missing: " +
+    const missingSettingsText = "The following settings are missing: " +
       (api_url == "" ? "api_url " : "") +
       (api_key == "" ? "api_key " : "") +
       (api_model == "" ? "api_model " : "") +
       ". The current generation mode is: " +
       (isImageInMessages ? "VLM" : "LLM") +
       ". The current correction mode is: " +
-      (isCorrectionInLastMessage ? "Running with correction" : "Running without correction");
+      (isCorrectionInLastMessage
+        ? "Running with correction"
+        : "Running without correction");
     return new Response(missingSettingsText, { status: 400 });
   }
 
@@ -288,73 +201,8 @@ function gameScore(gameName, points) {
                       console.log("End of model response!");
                       controller.close();
                     } else {
-                      let content = data.choices[0].delta.content;
-                      let structuredData: any = null;
-                      try {
-                        // Versuch, den Inhalt als vollständiges JSON zu parsen
-                        structuredData = JSON.parse(content);
-                      } catch (e) {
-                        // Falls das nicht klappt, versuche einen JSON-Teilstring zu extrahieren
-                        const possibleJSON = extractJSON(content);
-                        if (possibleJSON) {
-                          try {
-                            structuredData = JSON.parse(possibleJSON);
-                          } catch (e) {
-                            // Immer noch kein valides JSON – ignoriere strukturierte Daten
-                          }
-                        }
-                      }
-                      if (structuredData && structuredData.type === "webResults") {
-                        // Send web results as structured data
-                        controller.enqueue({
-                          data: JSON.stringify(structuredData),
-                          id: Date.now(),
-                          event: "structured_data",
-                        });
-                        return;
-                      } else if (structuredData && structuredData.type === "graph") {
-                        // Send graph data with a special event type
-                        controller.enqueue({
-                          data: JSON.stringify(structuredData),
-                          id: Date.now(),
-                          event: "graph_data",
-                        });
-                        // Send a message to show the loading state
-                        controller.enqueue({
-                          data: JSON.stringify("[Graph Generation Started]"),
-                          id: Date.now(),
-                          event: "message",
-                        });
-                        return;
-                      } else if (structuredData && structuredData.type === "game") {
-                        // Create the game file first
-                        const gameResponse = await fetch("/api/game", {
-                          method: "POST",
-                          headers: {
-                            "Content-Type": "application/json",
-                          },
-                          body: JSON.stringify({
-                            type: "game",
-                            code: structuredData.content.code,
-                            filename: `game-${Date.now()}.js`
-                          })
-                        });
+                      const content = data.choices[0].delta.content;
 
-                        if (!gameResponse.ok) {
-                          throw new Error(`Failed to create game file: ${gameResponse.statusText}`);
-                        }
-
-                        const gameResult = await gameResponse.json();
-                        structuredData.content.path = gameResult.path;
-
-                        // Send game data with a special event type
-                        controller.enqueue({
-                          data: JSON.stringify(structuredData),
-                          id: Date.now(),
-                          event: "game_data",
-                        });
-                        return;
-                      }
                       // Sende den regulären Chattext
                       controller.enqueue({
                         data: JSON.stringify(content),
@@ -365,7 +213,6 @@ function gameScore(gameName, points) {
                   }
                 } catch (error: Error | unknown) {
                   console.error("Error parsing JSON:", error, jsonStr);
-                  //controller.close();
                 }
               } else if (line === "data: [DONE]") {
                 console.log("Closing controller!");
@@ -404,13 +251,13 @@ function hasKorrekturHashtag(messages: any[]): boolean {
   } else if (Array.isArray(lastMessage.content)) {
     const textContent = lastMessage.content.find(
       // deno-lint-ignore no-explicit-any
-      (item: any) => item.type === "text"
+      (item: any) => item.type === "text",
     );
     content = textContent?.text || "";
   }
 
   return content.toLowerCase().includes("#korrektur") ||
-         content.toLowerCase().includes("#correction");
+    content.toLowerCase().includes("#correction");
 }
 
 export const handler: Handlers = {

@@ -77,10 +77,10 @@ export function Message({
           )}
       </span>
       <div
-        class={`message mt-1 whitespace-pre-wrap [overflow-wrap:anywhere] max-w-xl ${item.role === "user"
+        class={`message mt-1 rounded-3xl whitespace-pre-wrap [overflow-wrap:anywhere] max-w-xl ${item.role === "user"
           ? "bg-blue-100 ml-auto"
           : "bg-gray-50"
-          } p-4 w-full`}
+          } p-4`}
       >
         <MessageContent content={item.content} />
       </div>

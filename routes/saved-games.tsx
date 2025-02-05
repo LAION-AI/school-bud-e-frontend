@@ -1,4 +1,5 @@
 import type { PageProps } from "$fresh/server.ts";
+import Header from "../islands/Header.tsx";
 import SavedGames from "../islands/saved-games.tsx";
 
 export default function Home(req: Request, _ctx: PageProps) {
@@ -12,8 +13,8 @@ export default function Home(req: Request, _ctx: PageProps) {
     <div class="flex h-screen overflow-hidden">
       {/* Main Chat Area */}
       <div class="flex-1 flex flex-col overflow-hidden">
-        {/* <Header lang={lang as string} /> */}
-          <SavedGames  />
+        <Header lang={lang as string} />
+        <SavedGames />
       </div>
     </div>
   );

@@ -1,4 +1,3 @@
-import { JSX } from "preact";
 import { IS_BROWSER } from "$fresh/runtime.ts";
 import { Button, type ButtonProps } from "./Button.tsx";
 
@@ -11,7 +10,7 @@ export function ChatSubmitButton(props: ButtonProps) {
       {...buttonProps}
       // Spread the rest of the buttonProps here
       disabled={!IS_BROWSER || props.disabled}
-      class={`absolute right-3 bottom-3 disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 ${
+      class={`disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 ${
         props.disabled ? "bg-gray-100" : "bg-gray-400"
       } ${className}`} // Apply external class here
     >

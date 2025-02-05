@@ -104,7 +104,17 @@
       "gameName": "Binary Multiplication Game",
       "points": 10,
       "timestamp": "2025-02-03T18:12:14.074Z"
+    },
+    {
+      "gameName": "Binary Multiplication Game",
+      "points": 10,
+      "timestamp": "2025-02-03T20:13:52.293Z"
+    },
+    {
+      "gameName": "Binary Multiplication Game",
+      "points": 10,
+      "timestamp": "2025-02-04T11:43:08.216Z"
     }
   ],
-  "totalPoints": 610
+  "totalPoints": 630
 }

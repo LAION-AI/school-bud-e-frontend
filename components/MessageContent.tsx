@@ -3,7 +3,7 @@ import { GraphLoadingState } from "./GraphLoadingState.tsx";
 
 // Define supported content types
 type ContentType = "text" | "image_url";
-type JsonBlockType = "graphjson" | "webresultjson" | "gamejson";
+type JsonBlockType = "json";
 type BlockStatus = "loading" | "completed";
 
 // Base content segment interface
@@ -21,7 +21,7 @@ interface TextSegment extends BaseSegment {
 interface JsonBlockSegment extends BaseSegment {
   type: JsonBlockType;
   status: BlockStatus;
-  code?: string; // Optional code field for gamejson
+  code?: string; // Optional code field for game 
 }
 
 // Combined type for all possible segments
@@ -48,13 +48,13 @@ interface ContentItem {
  *   or "completed" if it has)
  * - (If complete) any text after the graph block.
  */
-function processGraphJsonSegments(types: ('graphjson' | 'webresultjson' | 'gamejson')[], text: string): GraphSegment[] {
+function processGraphSegments(types: ('graph' | 'webresult' | ' game')[], text: string): GraphSegment[] {
   const segments: GraphSegment[] = [];
   let currentPosition = 0;
 
   while (currentPosition < text.length) {
     let earliestIndex = -1;
-    let matchedType: ('graphjson' | 'webresultjson' | 'gamejson') | null = null;
+    let matchedType: ('graph' | 'webresult' | ' game') | null = null;
 
     // Find the earliest occurrence of any type's opening marker
     for (const type of types) {
@@ -81,7 +81,7 @@ function processGraphJsonSegments(types: ('graphjson' | 'webresultjson' | 'gamej
     }
 
     const openMarker = "```" + matchedType;
-    const closeMarker = "end" + matchedType + "```";
+    const closeMarker = "```";
     const closeIndex = text.indexOf(closeMarker, earliestIndex + openMarker.length);
 
 
@@ -90,10 +90,10 @@ function processGraphJsonSegments(types: ('graphjson' | 'webresultjson' | 'gamej
       segments.push({ type: matchedType, status: "loading" });
       break; // Stop processing as we hide everything after
     } else {
-      if (matchedType === "gamejson") {
+      if (matchedType === " game") {
         const code = text.substring(earliestIndex + openMarker.length, closeIndex);
 
-        segments.push({ type: "gamejson", status: "completed", code });
+        segments.push({ type: " game", status: "completed", code });
         currentPosition = closeIndex + closeMarker.length;
       } else {
 
@@ -122,7 +122,7 @@ export function MessageContent({ content }: MessageContentProps) {
   if (typeof content === "string" || (Array.isArray(content) && typeof content[0] === "string")) {
     // If content is a single string or an array of strings, join them.
     const fullText = typeof content === "string" ? content : content.join("");
-    const segments = processGraphJsonSegments(["graphjson", "webresultjson", "gamejson"], fullText);
+    const segments = processGraphSegments(["json"], fullText);
 
     return (
       <span>
@@ -133,7 +133,7 @@ export function MessageContent({ content }: MessageContentProps) {
                 {renderTextWithLinksAndBold(seg.content)}
               </span>
             );
-          } else if (seg.type === "graphjson" || seg.type === "webresultjson" || seg.type === "gamejson") {
+          } else if (seg.type === "graph" || seg.type === "webresult" || seg.type === " game") {
             return (
               <GraphLoadingState
                 key={idx}
@@ -159,7 +159,7 @@ export function MessageContent({ content }: MessageContentProps) {
           image_url: { url: string };
         }[]).map((item, contentIndex) => {
           if (item.type === "text") {
-            const segments = processGraphJsonSegments(['graphjson', 'webresultjson', 'gamejson'], item.text);
+            const segments = processGraphSegments(['graph', 'webresult', 'game'], item.text);
             return (
               <span key={contentIndex}>
                 {segments.map((seg, idx) => {
@@ -169,13 +169,13 @@ export function MessageContent({ content }: MessageContentProps) {
                         {renderTextWithLinksAndBold(seg.content)}
                       </span>
                     );
-                  } else if (["graphjson", "webresultjson", "gamejson"].includes(seg.type)) {
+                  } else if (["json", "webresult", "game"].includes(seg.type)) {
                     return (
                       <GraphLoadingState
                         key={idx}
                         isLoading={seg.status === "loading"}
                         isComplete={seg.status === "completed"}
-                        type={seg.type}
+                        type={"game"}
                       />
                     );
                   } return null;

@@ -1,25 +1,21 @@
 import { useState } from "preact/hooks";
 import { settingsContent } from "../internalization/content.ts";
-import { Settings as SettingsType } from "../types/settings.ts";
 import BasicSettings from "./settings/BasicSettings.tsx";
 import ChatAPISettings from "./settings/ChatAPISettings.tsx";
 import TTSSettings from "./settings/TTSSettings.tsx";
 import STTSettings from "./settings/STTSettings.tsx";
 import VLMSettings from "./settings/VLMSettings.tsx";
+import { settings } from "./chat/store.ts";
 
 export default function Settings({
-  settings,
-  onSave,
   onClose,
   lang = "en",
 }: {
-  settings: SettingsType;
-  onSave: (newSettings: SettingsType) => void;
   onClose: () => void;
   lang?: string;
 }) {
   const [newSettings, setNewSettings] = useState({
-    ...settings,
+    ...settings.value,
   });
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -112,8 +108,8 @@ export default function Settings({
     if (key !== "universalApiKey") {
       if (key.endsWith("Key") && value !== "") {
         const serviceType = key.slice(0, -3);
-        const urlKey = `${serviceType}Url` as keyof typeof settings;
-        const modelKey = `${serviceType}Model` as keyof typeof settings;
+        const urlKey = `${serviceType}Url` as keyof typeof settings.value;
+        const modelKey = `${serviceType}Model` as keyof typeof settings.value;
 
         // Find matching provider based on key characteristics
         const provider = Object.values(providerConfigs).find((provider) => {
@@ -138,7 +134,7 @@ export default function Settings({
       }
     }
 
-    updatedSettings[key as keyof typeof settings] = value;
+    updatedSettings[key as keyof typeof settings.value] = value;
     setNewSettings(updatedSettings);
   }
 
@@ -205,7 +201,7 @@ export default function Settings({
             {settingsContent[lang].cancel}
           </button>
           <button
-            onClick={() => onSave(newSettings)}
+            onClick={() => settings.value = newSettings}
             class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {settingsContent[lang].save}

@@ -1,55 +1,10 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 
-interface GameProps {
-  gameUrl: {
-    code: string
-  }
-}
-
-export function Game({ gameUrl: gameData }: GameProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const shadowRootRef = useRef<ShadowRoot | null>(null);
-  const phaserScriptRef = useRef<HTMLScriptElement>(null);
-  const scriptRef = useRef<HTMLScriptElement>(null);
-  const [showRaw, setShowRaw] = useState(false);
-  const [gameName, setGameName] = useState('');
-
-  let code = ''
-  try {
-    code = gameData.code;
-  } catch (e) { console.error(e); }
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    // Create Shadow DOM if it doesn't exist
-    if (!shadowRootRef.current) {
-      shadowRootRef.current = containerRef.current.attachShadow({ mode: 'open' });
-
-      // Create container for the game
-      const gameContainer = document.createElement('div');
-      gameContainer.className = 'phaser-game';
-      gameContainer.style.cssText = 'width: 100%; height: 400px; border: 1px solid #ccc; border-radius: 0.5rem; overflow: hidden;';
-
-      // Create and append scripts to shadow DOM
-      const phaserScript = document.createElement('script');
-      phaserScript.src = 'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js';
-      phaserScriptRef.current = phaserScript;
-
-      const gameScript = document.createElement('script');
-      gameScript.type = 'module';
-      scriptRef.current = gameScript;
-
-      shadowRootRef.current.appendChild(phaserScript);
-      shadowRootRef.current.appendChild(gameScript);
-      shadowRootRef.current.appendChild(gameContainer);
-
-      // Set up script loading sequence
-      phaserScript.onload = () => {
-        if (scriptRef.current) {
-          let finalCode = '';
-          if (!code.includes("function createButton")) {
-            finalCode += `// Hilfsfunktionen für die KI zur schnellen Erweiterung
+const buildCode = (scriptRef:any, code: string) => {
+  let finalCode = '';
+  if (scriptRef.current) {
+    if (!code.includes("function createButton")) {
+      finalCode += `// Hilfsfunktionen für die KI zur schnellen Erweiterung
 function createButton(scene, text, x, y, callback) {
   let button = scene.add.text(x, y, text, { font: '24px Arial', fill: '#000', backgroundColor: '#444' })
     .setPadding(10)
@@ -57,17 +12,17 @@ function createButton(scene, text, x, y, callback) {
     .on('pointerdown', callback);
   return button;
 }`;
-          } else if (!code.includes("function createRandomEntity")) {
-            finalCode += `
+    } else if (!code.includes("function createRandomEntity")) {
+      finalCode += `
 function createRandomEntity(scene) {
   let x = Phaser.Math.Between(50, 750);
   let y = Phaser.Math.Between(50, 550);
   let entity = scene.add.circle(x, y, 20, 0x000);
   return entity;
 }`;
-          } 
-          if (!code.includes("function gameScore")) {
-            finalCode += `function gameScore(gameName, points) {
+    }
+    if (!code.includes("function gameScore")) {
+      finalCode += `function gameScore(gameName, points) {
   fetch('/api/game-score', {
     method: 'POST',
     headers: {
@@ -88,10 +43,83 @@ function createRandomEntity(scene) {
     return null;
   });
 }`;
-          }
+    }
 
-          finalCode += code;
-          gameScript.innerHTML = finalCode;
+    finalCode += code;
+  }
+  return finalCode;
+}
+interface GameProps {
+  gameUrl: {
+    code: string
+  }
+}
+
+export function Game({ gameUrl: gameData }: GameProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const shadowRootRef = useRef<ShadowRoot | null>(null);
+  const phaserScriptRef = useRef<HTMLScriptElement>(null);
+  const phaserRexScriptRef = useRef<HTMLScriptElement>(null);
+  const scriptRef = useRef<HTMLScriptElement>(null);
+  const [showRaw, setShowRaw] = useState(false);
+  const [gameName, setGameName] = useState('');
+  let code = ''
+  try {
+    code = gameData.code;
+  } catch (e) { console.error(e); }
+  const [editableCode, setEditableCode] = useState(code);
+
+
+  useEffect(() => {
+    if(code === "") return;
+    if (!containerRef.current) return;
+    setEditableCode(code);
+
+    // Create Shadow DOM if it doesn't exist
+    if (!shadowRootRef.current) {
+      // shadowRootRef.current = containerRef.current.attachShadow({ mode: 'open' });
+
+      // Create container for the game
+      const gameContainer = document.createElement('div');
+      gameContainer.id = 'phaser-game';
+      gameContainer.style.cssText = 'width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 0.5rem; overflow: hidden;';
+
+      // Create and append scripts to shadow DOM
+      const phaserScript = document.createElement('script');
+      phaserScript.src = 'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js';
+      phaserScriptRef.current = phaserScript;
+
+      const phaserRexScript = document.createElement('script');
+      phaserRexScript.src = '/games/rexuiplugin.min.js';
+      phaserRexScriptRef.current = phaserRexScript;
+
+      const gameScript = document.createElement('script');
+      gameScript.type = 'module';
+      scriptRef.current = gameScript;
+
+      containerRef.current.appendChild(phaserScript);
+      containerRef.current.appendChild(phaserRexScript);
+      containerRef.current.appendChild(gameScript);
+      containerRef.current.appendChild(gameContainer);
+
+
+
+      let rexLoaded = false;
+      phaserRexScript.onload = () => {
+        rexLoaded = true;
+      }
+      // Set up script loading sequence
+      phaserScript.onload = () => {
+        console.log("Phaser Script loaded")
+        if (rexLoaded) {
+          console.log("Rex loaded before phaser")
+          gameScript.innerHTML = buildCode(scriptRef, code);
+        } else {
+          console.log("Waiting for Rex to Load")
+          phaserRexScript.addEventListener('load', () => {
+            console.log("Rex loaded after phaser")
+            gameScript.innerHTML = buildCode(scriptRef, code);
+          });
         }
       };
     }
@@ -122,15 +150,18 @@ function createRandomEntity(scene) {
         />
         <button
           onClick={async () => {
-            if (!gameName) {
+            const codeToSave = showRaw ? editableCode : code;
+            const name = gameName || gameData.name;
+
+            if (!name) {
               alert('Please enter a game name');
               return;
             }
             try {
-              const response = await fetch('/api/saved-games', {
+              const response = await fetch('/api/game', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: gameName, code: code })
+                body: JSON.stringify({ name, code: codeToSave})
               });
               const data = await response.json();
               if (data.success) {
@@ -156,9 +187,11 @@ function createRandomEntity(scene) {
         </button>
       </div>
       {showRaw ? (
-        <pre class="w-full h-[400px] border rounded-lg overflow-auto bg-gray-50 p-4 font-mono text-sm">
-          {code}
-        </pre>
+        <textarea
+          class="w-full h-[400px] border rounded-lg overflow-auto bg-gray-50 p-4 font-mono text-sm"
+          value={editableCode}
+          onChange={(e) => setEditableCode((e.target as HTMLTextAreaElement).value)}
+        />
       ) : (
         <div ref={containerRef} class="w-full h-[400px]" />
       )}

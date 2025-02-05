@@ -31,9 +31,9 @@ function ImageUploadButton({
     const newPreviewImages: any[] = [];
     const promises = files.map((file) => {
       return new Promise<void>((resolve) => {
-        const FR = new FileReader();
+        const fileReader = new FileReader();
 
-        FR.addEventListener("load", (e) => {
+        fileReader.addEventListener("load", (e) => {
           const data_url = e.target!.result;
           // const type = data_url.split(";")[0].split(":")[1];
           const imageObject = {
@@ -48,7 +48,7 @@ function ImageUploadButton({
           resolve();
         });
 
-        FR.readAsDataURL(file as Blob);
+        fileReader.readAsDataURL(file as Blob);
       });
     });
 
@@ -73,7 +73,7 @@ function ImageUploadButton({
       <button
         onClick={onButtonClick}
         disabled={!IS_BROWSER}
-        class="absolute right-3 bottom-[6.7rem] disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 bg-gray-100 text-blue-600/50"
+        class="disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 bg-gray-100 text-blue-600/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

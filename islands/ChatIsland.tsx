@@ -7,26 +7,17 @@ import ChatTemplate from "../components/ChatTemplate.tsx";
 import ChatWarning from "../components/Warning.tsx";
 
 // Necessary for streaming service
-import {
-  EventSourceMessage,
-  fetchEventSource,
-} from "https://esm.sh/@microsoft/fetch-event-source@2.0.1";
 import { useEffect, useState } from "preact/hooks";
-
-// Internalization
-import { chatIslandContent } from "../internalization/content.ts";
 
 // // Import necessary types from Preact
 import Sidebar from "./Sidebar.tsx";
-import { signal, effect } from "@preact/signals"
-import { chatSuffix } from "../utils/store.ts";
+import { getTTS, readAlways, stopList } from "../components/chat/speech.ts";
+import { autoScroll, chatSuffix, currentEditIndex, deleteAllChats, handleRefreshAction, messages, saveChatsToLocalFile, startNewChat } from "../components/chat/store.ts";
 
 // ###############
 // ## / IMPORTS ##
 // ###############
 
-class RetriableError extends Error { }
-class FatalError extends Error { }
 
 // Define the AudioItem interface if not already defined
 interface AudioItem {
@@ -37,14 +28,8 @@ interface AudioItem {
 // Define the AudioFileDict type if not already defined
 type AudioFileDict = Record<number, Record<number, AudioItem>>;
 
-
 export default function ChatIsland({ lang }: { lang: string }) {
   // Necessary to load the chat messages from localStorage only once
-  const [firstLoad, setFirstLoad] = useState(true);
-
-  // Multiple chats can be stored in localStorage, each chat is identified by a unique suffix
-  const [query, setQuery] = useState("");
-  const [localStorageKeys, setLocalStorageKeys] = useState([] as string[]);
 
   // dictionary containg audio files for each groupIndex for the current chat
   const [audioFileDict, setAudioFileDict] = useState<AudioFileDict>({});
@@ -53,132 +38,29 @@ export default function ChatIsland({ lang }: { lang: string }) {
   const [resetTranscript, setResetTranscript] = useState(0);
 
   // General settings
-  const [readAlways, setReadAlways] = useState(false);
-  const [autoScroll, setAutoScroll] = useState(false);
-  const [images, setImages] = useState([] as Image[]);
   const [isStreamComplete, setIsStreamComplete] = useState(true);
-  const [stopList, setStopList] = useState([] as number[]);
-  const [currentEditIndex, setCurrentEditIndex] = useState(
-    -1 as number | undefined,
-  );
-  const [showSettings, setShowSettings] = useState(false);
 
-  const [messages, setMessages] = useState([
-    {
-      "role": "assistant",
-      "content": [chatIslandContent[lang]["welcomeMessage"]],
-    },
-  ] as Message[]);
-
-  const [settings, setSettings] = useState({
-    universalApiKey: localStorage.getItem("bud-e-universal-api-key") || "",
-    apiUrl: localStorage.getItem("bud-e-api-url") || "",
-    apiKey: localStorage.getItem("bud-e-api-key") || "",
-    apiModel: localStorage.getItem("bud-e-model") || "",
-    ttsUrl: localStorage.getItem("bud-e-tts-url") || "",
-    ttsKey: localStorage.getItem("bud-e-tts-key") || "",
-    ttsModel: localStorage.getItem("bud-e-tts-model") || "",
-    sttUrl: localStorage.getItem("bud-e-stt-url") || "",
-    sttKey: localStorage.getItem("bud-e-stt-key") || "",
-    sttModel: localStorage.getItem("bud-e-stt-model") || "",
-    systemPrompt: localStorage.getItem("bud-e-system-prompt") || "",
-    vlmUrl: localStorage.getItem("bud-e-vlm-url") || "",
-    vlmKey: localStorage.getItem("bud-e-vlm-key") || "",
-    vlmModel: localStorage.getItem("bud-e-vlm-model") || "",
-    vlmCorrectionModel: localStorage.getItem("bud-e-vlm-correction-model") ||
-      "",
-  });
 
   // Add useEffect for loading settings
-  useEffect(() => {
-    const savedSettings = {
-      universalApiKey: localStorage.getItem("bud-e-universal-api-key") || "",
-      apiUrl: localStorage.getItem("bud-e-api-url") || "",
-      apiKey: localStorage.getItem("bud-e-api-key") || "",
-      apiModel: localStorage.getItem("bud-e-model") || "",
-      ttsUrl: localStorage.getItem("bud-e-tts-url") || "",
-      ttsKey: localStorage.getItem("bud-e-tts-key") || "",
-      ttsModel: localStorage.getItem("bud-e-tts-model") || "",
-      sttUrl: localStorage.getItem("bud-e-stt-url") || "",
-      sttKey: localStorage.getItem("bud-e-stt-key") || "",
-      sttModel: localStorage.getItem("bud-e-stt-model") || "",
-      systemPrompt: localStorage.getItem("bud-e-system-prompt") || "",
-      vlmUrl: localStorage.getItem("bud-e-vlm-url") || "",
-      vlmKey: localStorage.getItem("bud-e-vlm-key") || "",
-      vlmModel: localStorage.getItem("bud-e-vlm-model") || "",
-      vlmCorrectionModel: localStorage.getItem("bud-e-vlm-correction-model") ||
-        "",
-    };
-    setSettings(savedSettings);
-  }, []);
-
-  const handleSaveSettings = (newSettings: typeof settings) => {
-    setSettings(newSettings);
-    localStorage.setItem(
-      "bud-e-universal-api-key",
-      newSettings.universalApiKey,
-    );
-    localStorage.setItem("bud-e-api-url", newSettings.apiUrl);
-    localStorage.setItem("bud-e-api-key", newSettings.apiKey);
-    localStorage.setItem("bud-e-model", newSettings.apiModel);
-    localStorage.setItem("bud-e-tts-url", newSettings.ttsUrl);
-    localStorage.setItem("bud-e-tts-key", newSettings.ttsKey);
-    localStorage.setItem("bud-e-tts-model", newSettings.ttsModel);
-    localStorage.setItem("bud-e-stt-url", newSettings.sttUrl);
-    localStorage.setItem("bud-e-stt-key", newSettings.sttKey);
-    localStorage.setItem("bud-e-stt-model", newSettings.sttModel);
-    localStorage.setItem("bud-e-system-prompt", newSettings.systemPrompt);
-    localStorage.setItem("bud-e-vlm-url", newSettings.vlmUrl);
-    localStorage.setItem("bud-e-vlm-key", newSettings.vlmKey);
-    localStorage.setItem("bud-e-vlm-model", newSettings.vlmModel);
-    localStorage.setItem(
-      "bud-e-vlm-correction-model",
-      newSettings.vlmCorrectionModel,
-    );
-    setShowSettings(false);
-  };
 
   // #################
   // ### useEffect ###
   // #################
   // Explanation: If a value changes, the useEffect hook is called. This is useful for side effects like fetching data or updating the DOM.
 
-  // 1. useEffect []: Load chat messages from localStorage on first load
   // 2. useEffect [isStreamComplete]: Save chat messages to localStorage when the stream is complete
   // 3. useEffect [messages]: Automatic scrolling to last message on incoming messages
   // 4. useEffect [currentChatSuffix]: Load messages from localStorage when the chat suffix changes
-  // 5. useEffect [audioFileDict, readAlways, stopList]: Play incoming audio files when readAlways is true
+  // 5. useEffect [audioFileDict, readAlways, stopList.value]: Play incoming audio files when readAlways is true
 
-  // 1. useEffect
-  // Runs once on startup to load the chat messages from localStorage
-  useEffect(() => {
-    let localStorageKeys: string[] = Object.keys(localStorage).filter((key) =>
-      key.startsWith("bude-chat-")
-    );
-    localStorageKeys = localStorageKeys.length > 0
-      ? localStorageKeys
-      : ["bude-chat-0"];
-    let localStorageMessages = JSON.parse(
-      String(localStorage.getItem("bude-chat-" + chatSuffix.value)),
-    );
-    localStorageMessages = localStorageMessages || [
-      {
-        "role": "assistant",
-        "content": [
-          chatIslandContent[lang]["welcomeMessage"],
-        ],
-      },
-    ];
-    setLocalStorageKeys(localStorageKeys);
-    setMessages(localStorageMessages);
-  }, []);
 
   // 2. useEffect [isStreamComplete]
   useEffect(() => {
-    if (isStreamComplete) {
-      if ("content" in messages[messages.length - 1]) {
+    const lastMessage = messages.value[messages.value.length - 1];
+    if (isStreamComplete && lastMessage) {
+      if ("content" in messages.value[messages.value.length - 1]) {
         let lastMessageFromBuddy: string;
-        const lastMessageContent = messages[messages.length - 1]["content"];
+        const lastMessageContent = messages.value[messages.value.length - 1]["content"];
 
         if (typeof lastMessageContent === "string") {
           lastMessageFromBuddy = lastMessageContent;
@@ -186,25 +68,15 @@ export default function ChatIsland({ lang }: { lang: string }) {
           lastMessageFromBuddy = (lastMessageContent as string[]).join("");
         }
 
-        if (lastMessageFromBuddy !== "" && messages.length > 1) {
-          messages[messages.length - 1]["content"] = lastMessageFromBuddy;
+        if (lastMessageFromBuddy !== "" && messages.value.length > 1) {
+          messages.value[messages.value.length - 1]["content"] = lastMessageFromBuddy;
 
           console.log("IS_STREAM_COMPLETE", chatSuffix.value);
-          localStorage.setItem(
-            "bude-chat-" + chatSuffix.value,
-            JSON.stringify(messages),
-          );
-
-          if (!localStorageKeys.includes("bude-chat-" + chatSuffix.value)) {
-            setLocalStorageKeys([
-              ...localStorageKeys,
-              "bude-chat-" + chatSuffix.value,
-            ]);
-          }
         }
         if (lastMessageFromBuddy !== "") {
-          const groupIndex = messages.length - 1;
+          const groupIndex = messages.value.length - 1;
           if (groupIndex === 0) {
+            // TODO: Enable TTS
             getTTS(lastMessageFromBuddy, groupIndex, "stream");
           }
         }
@@ -228,51 +100,10 @@ export default function ChatIsland({ lang }: { lang: string }) {
         });
       }
     }
-
-    if (!firstLoad) {
-      // console.log("MESSAGES", chatSuffix.value);
-      localStorage.setItem(
-        "bude-chat-" + chatSuffix.value,
-        JSON.stringify(messages),
-      );
-      setLocalStorageKeys(
-        Object.keys(localStorage).filter((key) => key.startsWith("bude-chat-")),
-      );
-    }
-
-    if (firstLoad) {
-      setFirstLoad(false);
-    }
   }, [messages, autoScroll]);
 
-  // 4. useEffect [chatSuffix.value]
-  useEffect(() => {
-    // load messages from localStorage if they exist, else start with the default introductory message
-    const localStorageMessages = JSON.parse(
-      String(localStorage.getItem("bude-chat-" + chatSuffix.value)),
-    ) || [
-        {
-          "role": "assistant",
-          "content": [
-            chatIslandContent[lang]["welcomeMessage"],
-          ],
-        },
-      ];
-    if (localStorageMessages.length === 1) {
-      if (
-        localStorageMessages[0].content[0] !==
-        chatIslandContent[lang]["welcomeMessage"]
-      ) {
-        localStorageMessages[0].content[0] =
-          chatIslandContent[lang]["welcomeMessage"];
-      }
-    }
-    setMessages(localStorageMessages);
-    stopAndResetAudio();
-    setStopList([]);
-  }, [chatSuffix.value]);
 
-  // 5. useEffect [audioFileDict, readAlways, stopList]
+  // 5. useEffect [audioFileDict, readAlways, stopList.value]
   useEffect(() => {
     if (!readAlways) return;
 
@@ -291,7 +122,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
           Number(groupIndex),
           nextUnplayedIndex,
           groupAudios,
-          stopList,
+          stopList.value,
         )
       ) {
         playAudio(
@@ -303,7 +134,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
         );
       }
 
-      if (stopList.includes(Number(groupIndex))) {
+      if (stopList.value.includes(Number(groupIndex))) {
         (Object.values(groupAudios) as AudioItem[]).forEach((item) => {
           if (!(item as AudioItem).audio.paused) {
             (item as AudioItem).audio.pause();
@@ -312,7 +143,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
         });
       }
     });
-  }, [audioFileDict, readAlways, stopList]);
+  }, [audioFileDict, readAlways, stopList.value]);
 
   // Helper functions for audio playback
   const findNextUnplayedAudio = (
@@ -357,942 +188,27 @@ export default function ChatIsland({ lang }: { lang: string }) {
     setAudioFileDict({ ...audioFileDict });
   };
 
-  // Handle functions that interact with the chatTemplate
-  // 1. handleRefreshAction: repeats query at given groupIndex
-  // 2. handleEditAction: edits query at given groupIndex
-  // 3. handleOnSpeakAtGroupIndexAction: plays audio at given groupIndex
-  // 4. handleUploadActionToMessages: uploads from local file to messages
-
-  // 1. handleRefreshAction
-  const handleRefreshAction = (groupIndex: number) => {
-    if (groupIndex > 0 && groupIndex <= messages.length) {
-      const slicedMessages = messages.slice(0, groupIndex - 1) as Message[];
-      setMessages(slicedMessages);
-
-      // const lastMessage = isArray(messages[groupIndex - 1]["content"]) ;
-      const refreshMessage = Array.isArray(messages[groupIndex - 1]["content"])
-        ? messages[groupIndex - 1]["content"]
-        : messages[groupIndex - 1]["content"];
-
-      setStopList([]);
-      startStream(refreshMessage as string, slicedMessages);
-    }
-  };
-
-  // 2. handleEditAction
-  const handleEditAction = (groupIndex: number) => {
-    const message = messages[groupIndex];
-    let contentToEdit = "";
-
-    if (typeof message.content === "string") {
-      contentToEdit = message.content;
-    } else if (Array.isArray(message.content)) {
-      if (typeof message.content[0] === "string") {
-        contentToEdit = message.content.join("");
-      } else {
-        // Handle content array of objects with text and image_url
-        contentToEdit = message.content
-          // deno-lint-ignore no-explicit-any
-          .filter((item: any) => item.type === "text")
-          // deno-lint-ignore no-explicit-any
-          .map((item: any) => item.text)
-          .join("");
-      }
-    }
-
-    // setMessages((prevMessages) => prevMessages.slice(0, groupIndex));
-    setQuery(contentToEdit);
-    setStopList([]);
-    setCurrentEditIndex(groupIndex);
-
-    const textarea = document.querySelector("textarea");
-    textarea!.focus();
-  };
-
-  // 3. handleOnSpeakAtGroupIndexAction
-  const handleOnSpeakAtGroupIndexAction = (groupIndex: number) => {
-    console.log("[LOG] handleOnSpeakAtGroupIndexAction", groupIndex);
-    if (!audioFileDict[groupIndex]) {
-      console.log("No audio file found for groupIndex", groupIndex);
-      console.log("AudioFileDict", audioFileDict);
-      const lastMessage = Array.isArray(messages[groupIndex])
-        ? messages[groupIndex][0]
-        : messages[groupIndex];
-      console.log("lastMessage", lastMessage);
-      const parsedLastMessage = Array.isArray(lastMessage["content"])
-        ? lastMessage["content"].join("")
-        : lastMessage["content"];
-      if (parsedLastMessage === "") return;
-      getTTS(
-        parsedLastMessage as string,
-        groupIndex,
-        "handleOnSpeakAtGroupIndexAction",
-      );
-      return;
-    } else {
-      const indexThatIsPlaying = Object.entries(audioFileDict[groupIndex])
-        .findIndex(([_, item]) => !item.audio.paused);
-
-      if (indexThatIsPlaying !== -1) {
-        // Pause current audio
-        // audioFileDict[groupIndex][indexThatIsPlaying].audio.pause();
-        // audioFileDict[groupIndex][indexThatIsPlaying].audio.currentTime = 0;
-
-        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
-          (group) => {
-            (Object.values(group) as AudioItem[]).forEach((item) => {
-              if (!item.audio.paused) {
-                item.audio.pause();
-                item.audio.currentTime = 0;
-              }
-            });
-          },
-        );
-
-        setStopList([...stopList, groupIndex]);
-        // Force state update after pausing
-        setAudioFileDict({ ...audioFileDict });
-      } else {
-        setStopList(stopList.filter((item) => item !== groupIndex));
-        // Stop all other playing audio
-        (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
-          (group) => {
-            (Object.values(group) as AudioItem[]).forEach((item) => {
-              if (!item.audio.paused) {
-                item.audio.pause();
-                item.audio.currentTime = 0;
-              }
-            });
-          },
-        );
-
-        // Start playback of current group
-        const firstAudio = audioFileDict[groupIndex][0].audio;
-        firstAudio.play();
-
-        // Set up sequential playback
-        Object.keys(audioFileDict[groupIndex]).forEach((_, index) => {
-          const currentAudio = audioFileDict[groupIndex][index].audio;
-          currentAudio.onended = () => {
-            if (audioFileDict[groupIndex][index + 1]) {
-              audioFileDict[groupIndex][index + 1].audio.play();
-            }
-            // Update state after each audio finishes
-            setAudioFileDict({ ...audioFileDict });
-          };
-        });
-
-        // Force immediate state update when starting playback
-        setAudioFileDict({ ...audioFileDict });
-      }
-
-      setAudioFileDict({ ...audioFileDict });
-    }
-  };
-
-  // 4. handleUploadActionToMessages
-  const handleUploadActionToMessages = (uploadedMessages: Message[]) => {
-    console.log("From hanldeUploadActionToMessages");
-    console.log(uploadedMessages);
-    const newMessages = uploadedMessages.map((msg) => [msg]).flat();
-    newMessages[newMessages.length - 1] = newMessages[newMessages.length - 1];
-    setMessages(newMessages);
-    const textarea = document.querySelector("textarea");
-    textarea!.focus();
-  };
-
-  const handleImagesUploaded = (newImages: Image[]) => {
-    setImages((prevImages) => [...prevImages, ...newImages]);
-  };
-
-  const handleImageChange = (images: Image[]) => {
-    console.log("Images from ChatIsland: ", images);
-
-    setImages(images);
-  };
-
-  // BILDUNGSPLAN
-  const fetchBildungsplan = async (query: string, top_n: number) => {
-    try {
-      const response = await fetch("/api/bildungsplan", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: query,
-          top_n: top_n,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json() as BildungsplanResponse;
-
-      return data;
-    } catch (error) {
-      console.error("Error in bildungsplan API:", error);
-    }
-  };
-
-  // WIKIPEDIA
-  const fetchWikipedia = async (
-    text: string,
-    collection: string,
-    n: number,
-  ) => {
-    try {
-      const response = await fetch("/api/wikipedia", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: text,
-          collection: collection,
-          n: n,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json() as WikipediaResult[];
-
-      return data;
-    } catch (error) {
-      console.error("Error in wikipedia API:", error);
-    }
-  };
-
-  // PAPERS
-  const fetchPapers = async (query: string, limit: number) => {
-    try {
-      const response = await fetch("/api/papers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: query,
-          limit: limit,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json() as PapersResponse;
-
-      return data;
-    } catch (error) {
-      console.error("Error in papers API:", error);
-    }
-  };
-
-  // PRIMARY FUNCTIONS
-  // 1. startStream: getting LLM output and streams it to ChatTemplate through messages
-  // 2. getTTS: plays audio if
-  // 2.1 readAlways is true and new stream comes in or
-  // 2.2 the loudspeaker button is clicked in chatTemplate to play groupIndex
-  //     (handleOnSpeakAtGroupIndex)
-
-  // 1. startStream
-  const startStream = async (transcript: string, prevMessages?: Message[]) => {
-    // if currentEditIndex is set, we are editing a message instead of starting the stream
-    // except if the currentEditIndex is the last user message, then we do start the stream
-
-    if (currentEditIndex && currentEditIndex !== -1) {
-      // set the message at currentEditIndex to the transcript
-      const newMessages = [...messages];
-      newMessages[currentEditIndex]["content"] = query;
-      setMessages(newMessages);
-      setQuery("");
-      setCurrentEditIndex(-1);
-      return;
-    }
-
-    // pause all ongoing audio files first
-    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
-      (group) => {
-        (Object.values(group) as AudioItem[]).forEach((item) => {
-          if (!item.audio.paused) {
-            item.audio.pause();
-          }
-          item.audio.currentTime = 0;
-        });
-      },
-    );
-    setAudioFileDict({ ...audioFileDict });
-    const ongoingStream: string[] = [];
-    let currentAudioIndex = 1;
-    let ttsFromFirstSentence = false;
-    if (isStreamComplete) {
-      setIsStreamComplete(false);
-      setResetTranscript(resetTranscript + 1);
-
-      const currentQuerry = transcript !== "" ? transcript : query;
-      let previousMessages = prevMessages || messages;
-
-      previousMessages = previousMessages.map((msg) => {
-        if (typeof msg.content === "string") {
-          return msg;
-        }
-        if (typeof msg.content[0] === "string") {
-          return { "role": msg.role, "content": msg.content.join("") };
-        }
-        return msg;
-      });
-
-      const queryWithImages = [];
-      if (images.length !== 0) {
-        queryWithImages.push({ "type": "text", "text": currentQuerry });
-        for (const img of images) {
-          queryWithImages.push(img);
-        }
-      }
-
-      const newMessages = [...previousMessages, {
-        "role": "user",
-        "content": images.length === 0 ? currentQuerry : queryWithImages,
-      }];
-
-      setImages([]);
-
-      setMessages(newMessages as Message[]);
-
-      setQuery("");
-
-      // check if the last message has #bildungsplan in the content (case insensitive)
-      // #bildungsplan: wofür braucht man eigentlich trigonometrie:5
-      const isBildungsplanInLastMessage = currentQuerry.toLowerCase().includes(
-        "#bildungsplan",
-      );
-
-      const isWikipediaInLastMessage = currentQuerry.toLowerCase().includes(
-        "#wikipedia",
-      );
-
-      const isPapersInLastMessage = currentQuerry.toLowerCase().includes(
-        "#papers",
-      );
-
-      if (isWikipediaInLastMessage) {
-        let collection = lang === "en"
-          ? "English-ConcatX-Abstract"
-          : "German-ConcatX-Abstract";
-        if (currentQuerry.toLowerCase().includes("#wikipedia_de")) {
-          collection = "German-ConcatX-Abstract";
-        }
-        if (currentQuerry.toLowerCase().includes("#wikipedia_en")) {
-          collection = "English-ConcatX-Abstract";
-        }
-
-        const currentQuerrySplit = currentQuerry.split(":");
-        const query = currentQuerrySplit[1].trim();
-        let n = 5;
-        if (currentQuerrySplit.length > 2) {
-          n = parseInt(currentQuerry.split(":")[2].trim(), 10);
-        }
-
-        const res = await fetchWikipedia(query, collection, n);
-
-        // console.log("[API] wikipedia response", res);
-
-        const beautifulWikipedia = res!.map(
-          (result: WikipediaResult, index: number) => {
-            const content = Object.values(result)[0];
-            return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
-              } ${res!.length}**\n**${chatIslandContent[lang].wikipediaTitle
-              }**: ${content.Title}\n**${chatIslandContent[lang].wikipediaURL
-              }**: ${content.URL}\n**${chatIslandContent[lang].wikipediaContent
-              }**: ${content["Concat Abstract"]}\n**${chatIslandContent[lang].wikipediaScore
-              }**: ${content.score}\n`;
-          },
-        ).join("\n\n");
-
-        setMessages((messages) => {
-          messages.push({ "role": "assistant", "content": [] });
-          const lastArray = messages[messages.length - 1];
-          (lastArray.content as string[]).push(beautifulWikipedia);
-          return [
-            ...messages.slice(0, -1),
-            lastArray,
-          ];
-        });
-        setIsStreamComplete(true);
-        setQuery("");
-        return;
-      }
-
-      if (isPapersInLastMessage) {
-        const currentQuerrySplit = currentQuerry.split(":");
-        const query = currentQuerrySplit[1].trim();
-        let limit = 5;
-        if (currentQuerrySplit.length > 2) {
-          limit = parseInt(currentQuerry.split(":")[2].trim(), 10);
-        }
-
-        const response = await fetchPapers(query, limit);
-
-        // console.log("[API] papers response", response);
-
-        const beautifulPapers = response!.payload.items.map(
-          (result: PapersItem, index: number) => {
-            return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
-              } ${response!.payload.items.length}**\n**${chatIslandContent[lang].papersDOI
-              }**: ${result.doi}\n**${chatIslandContent[lang].papersDate}**: ${result.date_published.substring(0, 10)
-              }\n**${chatIslandContent[lang].papersSubjects}**: ${result.subjects.join(", ")
-              }\n**${chatIslandContent[lang].papersTitle}**: ${result.title}\n**${chatIslandContent[lang].papersAuthors
-              }**: ${result.authors.join(", ")}\n**${chatIslandContent[lang].papersAbstract
-              }**: ${result.abstract}\n`;
-          },
-        ).join("\n\n");
-
-        setMessages((messages) => {
-          messages.push({ "role": "assistant", "content": [] });
-          const lastArray = messages[messages.length - 1];
-          (lastArray.content as string[]).push(beautifulPapers);
-          return [
-            ...messages.slice(0, -1),
-            lastArray,
-          ];
-        });
-        setIsStreamComplete(true);
-        setQuery("");
-        return;
-      }
-
-      if (isBildungsplanInLastMessage) {
-        const currentQuerrySplit = currentQuerry.split(":");
-        const query = currentQuerrySplit[1].trim();
-        let top_n = 5;
-        if (currentQuerrySplit.length > 2) {
-          top_n = parseInt(currentQuerry.split(":")[2].trim(), 10);
-        }
-
-        // console.log("query", query);
-        // console.log("top_n", top_n);
-
-        const res = await fetchBildungsplan(query, top_n);
-
-        // console.log("[API] bildungsplan response", res);
-        const beautifulBildungsplan = res!.results.map((result, index) => {
-          return `**${chatIslandContent[lang].result} ${index + 1} ${chatIslandContent[lang].of
-            } ${res!.results.length
-            }**\n${result.text}\n\n**Score**: ${result.score}`;
-        }).join("\n\n");
-
-        setMessages((messages) => {
-          messages.push({ "role": "assistant", "content": [] });
-          const lastArray = messages[messages.length - 1];
-          (lastArray.content as string[]).push(beautifulBildungsplan);
-          return [
-            ...messages.slice(0, -1),
-            lastArray,
-          ];
-        });
-        setIsStreamComplete(true);
-        setQuery("");
-        return;
-      }
-
-      fetchEventSource("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lang: lang,
-          messages: newMessages,
-          universalApiKey: settings.universalApiKey,
-          llmApiUrl: settings.apiUrl,
-          llmApiKey: settings.apiKey,
-          llmApiModel: settings.apiModel,
-          vlmApiUrl: settings.vlmUrl,
-          vlmApiKey: settings.vlmKey,
-          vlmApiModel: settings.vlmModel,
-          vlmCorrectionModel: settings.vlmCorrectionModel,
-          systemPrompt: settings.systemPrompt,
-        }),
-        onmessage(ev: EventSourceMessage) {
-          const parsedData = JSON.parse(ev.data);
-          console.debug("parsedData", parsedData);
-
-          // Handle structured data events
-          if (ev.event === "structured_data") {
-            const structuredData = JSON.parse(parsedData);
-            // Update RightSidebar data
-            setMessages((prevMessagesRoundTwo) => {
-              const lastArray = prevMessagesRoundTwo[prevMessagesRoundTwo.length - 1];
-              lastArray.content = structuredData;
-              return [...prevMessagesRoundTwo.slice(0, -1), lastArray];
-            });
-            return;
-          }
-
-          ongoingStream.push(parsedData);
-          if (ttsFromFirstSentence === false) {
-            const combinedText = ongoingStream.join("");
-            // Find last occurrence of .!? that's not after a digit
-            const match = combinedText.match(/(?<!\d)[.!?][^.!?]*$/);
-
-            if (match && combinedText.length > 20) {
-              const splitIndex = match.index! + 1; // Include the punctuation
-              const textToSpeak = combinedText.slice(0, splitIndex);
-              const remaining = combinedText.slice(splitIndex);
-
-              if (textToSpeak.trim() !== "") {
-                getTTS(
-                  textToSpeak,
-                  newMessages.length - 1,
-                  `stream${currentAudioIndex}`,
-                );
-
-                currentAudioIndex++;
-                ongoingStream.length = 0; // Clear array
-                if (remaining.trim()) {
-                  ongoingStream.push(remaining); // Push remaining text
-                }
-                ttsFromFirstSentence = true;
-              }
-            }
-          } else {
-            // check for \n\n in the parsedData, e.g., ' \n\n', or '\n\n ' etc.
-            const combinedText = ongoingStream.join("");
-            if (
-              /\n\n/.test(combinedText.slice(5)) && combinedText.length > 15
-            ) {
-              console.log(JSON.stringify(combinedText));
-              const paragraphSplit = combinedText.split(/\n\n/);
-              // console.warn("paragraphSplit", paragraphSplit)
-              const textToSpeak = paragraphSplit.slice(0, -1).join("\n\n");
-
-              const remaining = paragraphSplit[paragraphSplit.length - 1];
-
-              getTTS(
-                textToSpeak,
-                newMessages.length - 1,
-                `stream${currentAudioIndex}`,
-              );
-
-              currentAudioIndex++;
-              ongoingStream.length = 0;
-              if (remaining.trim()) {
-                ongoingStream.push(remaining);
-              }
-            }
-          }
-          setMessages((prevMessagesRoundTwo) => {
-            const lastArray =
-              prevMessagesRoundTwo[prevMessagesRoundTwo.length - 1];
-            (lastArray.content as string[]).push(parsedData);
-            return [
-              ...prevMessagesRoundTwo.slice(0, -1),
-              lastArray,
-            ];
-          });
-        },
-        async onopen(response: Response) {
-          const prevMessagesRoundTwo = newMessages;
-          prevMessagesRoundTwo.push({ "role": "assistant", "content": [] });
-          setMessages((prevMessagesRoundTwo) => prevMessagesRoundTwo);
-          await true;
-          if (response.ok) {
-            return; // everything's good
-          } else if (
-            response.status != 200
-          ) {
-            // client-side errors are usually non-retriable:
-            const errorText = await response.text();
-            throw new FatalError(
-              `**BACKEND ERROR**\nStatuscode: ${response.status}\nMessage: ${errorText}`,
-            );
-          } else {
-            throw new RetriableError();
-          }
-        },
-        onerror(err: FatalError) {
-          setIsStreamComplete(true);
-          /// add err.message to messages
-          setMessages((prevMessagesRoundTwo) => {
-            const lastArray =
-              prevMessagesRoundTwo[prevMessagesRoundTwo.length - 1];
-            (lastArray.content as string[]).push(err.message);
-            return [
-              ...prevMessagesRoundTwo.slice(0, -1),
-              lastArray,
-            ];
-          });
-          throw err;
-        },
-        onclose() {
-          console.log("Stream closed");
-          setIsStreamComplete(true);
-          setQuery("");
-          getTTS(
-            ongoingStream.join(""),
-            newMessages.length - 1,
-            `stream${currentAudioIndex}`,
-          );
-          console.log("ONGOING STREAM: ", ongoingStream);
-        },
-      });
-    }
-  };
-
-  // 2. getTTS
-  const getTTS = async (
-    text: string,
-    groupIndex: number,
-    sourceFunction: string,
-  ) => {
-    // Only return early if readAlways is false AND this is a streaming request
-    if (!readAlways && sourceFunction.startsWith("stream")) return;
-
-    console.log("[LOG] getTTS");
-    // console.log("text", text);
-    // console.log("chatIslandContent[lang][welcomeMessage]", chatIslandContent[lang]["welcomeMessage"]);
-    if (
-      text === chatIslandContent[lang]["welcomeMessage"]
-    ) {
-      const audioFile = text === chatIslandContent["de"]["welcomeMessage"]
-        ? "./intro.mp3"
-        : "./intro-en.mp3";
-      const audio = new Audio(audioFile);
-      // audioFileDict[groupIndex] = {
-      //   0: audio,
-      // };
-      const sourceFunctionIndex = Number(sourceFunction.replace("stream", "")) -
-        1 || 0;
-      if (audioFileDict[groupIndex]) {
-        audioFileDict[groupIndex][sourceFunctionIndex] = {
-          audio: audio,
-          played: false,
-        };
-      } else {
-        audioFileDict[groupIndex] = {};
-        audioFileDict[groupIndex][sourceFunctionIndex] = {
-          audio: audio,
-          played: false,
-        };
-      }
-
-      // all indices < groupIndex should be put to pause and added to stopList
-      const newStopList = stopList;
-      for (let i = 0; i < groupIndex; i++) {
-        if (audioFileDict[i]) {
-          (Object.values(audioFileDict[i]) as AudioItem[]).forEach((item) => {
-            if (!item.audio.paused) {
-              item.audio.pause();
-              item.audio.currentTime = 0;
-              newStopList.push(i);
-            }
-          });
-        }
-      }
-
-      setStopList(newStopList);
-
-      // // // TRYING DIFFERENT SETTER
-      setAudioFileDict({ ...audioFileDict });
-
-      // // // WORKING SETTER
-      // setAudioFileDict((prev) => ({
-      //   ...prev,
-      //   [groupIndex]: audioFileDict[groupIndex],
-      // }));
-      // setAudioFileDict((prev) => ({ ...prev, [groupIndex]: audio }));
-      console.log(
-        "[LOG] Audio file loaded into audioQueue with groupIndex:",
-        groupIndex,
-      );
-      if (sourceFunction === "handleOnSpeakAtGroupIndexAction") {
-        handleOnSpeakAtGroupIndexAction(groupIndex);
-      }
-      return;
-    }
-
-    try {
-      // // FOR PRODUCTION WHEN TTS SERVER IS WORKING
-      console.log("text for /api/tts", sourceFunction, text);
-      const response = await fetch("/api/tts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: text,
-          textPosition: sourceFunction,
-          voice: lang === "en" ? "Stefanie" : "Florian",
-          ttsKey: settings.ttsKey,
-          ttsUrl: settings.ttsUrl,
-          ttsModel: settings.ttsModel,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const audioData = await response.arrayBuffer();
-      const audioBlob = new Blob([audioData], { type: "audio/wav" });
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-
-      const startsWithStream = sourceFunction.startsWith("stream");
-
-      if (!audioFileDict[groupIndex]) {
-        audioFileDict[groupIndex] = {};
-      }
-
-      if (startsWithStream) {
-        const sourceFunctionIndex =
-          Number(sourceFunction.replace("stream", "")) - 1;
-        audioFileDict[groupIndex][sourceFunctionIndex] = {
-          audio: audio,
-          played: false,
-        };
-      } else {
-        audioFileDict[groupIndex] = {
-          0: { audio: audio, played: true },
-        };
-      }
-
-      setAudioFileDict((prev) => ({
-        ...prev,
-        [groupIndex]: audioFileDict[groupIndex],
-      }));
-
-      if (sourceFunction === "handleOnSpeakAtGroupIndexAction") {
-        handleOnSpeakAtGroupIndexAction(groupIndex);
-      }
-    } catch (error) {
-      console.error("Error fetching TTS:", error);
-    }
-  };
-
-  // General functions
-  // 0. toggleAutoScroll
-  // 1. toggleReadAlways
-  // 2. stopAndResetAudio
-
-  // 0. toggleAutoScroll
-  const toggleAutoScroll = (value: boolean) => {
-    setAutoScroll(value);
-  };
-
-  // 1. toggleReadAlways
-  // - toggles readAlways state
-  // - stops all audio playback if readAlways is set to false
-  // - add all groupIndices to stopList if readAlways is set to false
-  const toggleReadAlways = (value: boolean) => {
-    setReadAlways(value);
-    if (!value) {
-      (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
-        (group) => {
-          (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => {
-            if (!item.audio.paused) {
-              item.audio.pause();
-              item.audio.currentTime = 0;
-            }
-          });
-        },
-      );
-      setStopList(Object.keys(audioFileDict).map(Number));
-    }
-  };
-
-  // 2. stopAndResetAudio
-  const stopAndResetAudio = () => {
-    (Object.values(audioFileDict) as Record<number, AudioItem>[]).forEach(
-      (group) => {
-        (Object.values(group) as AudioItem[]).forEach((item: AudioItem) => { // Changed from (audio)
-          if (!item.audio.paused) { // Changed from !audio.paused
-            item.audio.pause(); // Changed from audio.pause()
-            item.audio.currentTime = 0; // Changed from audio.currentTime
-          }
-        });
-      },
-    );
-    setAudioFileDict({});
-  };
-
-  // Chat functions overview
-  // 1. startNewChat
-  // 2. deleteCurrentChat
-  // 3. deleteAllChats
-  // 4. saveChatsToLocalFile
-  // 5. restoreChatsFromLocalFile
-
-  // 1. startNewChat
-  const startNewChat = () => {
-    const maxValueInChatSuffix = Math.max(
-      ...localStorageKeys.map((key) => Number(key.slice(10))),
-    );
-    const newChatSuffix = String(Number(maxValueInChatSuffix) + 1);
-    // console.log([...localStorageKeys, "bude-chat-" + newChatSuffix]);
-    setMessages([
-      {
-        "role": "assistant",
-        "content": [
-          chatIslandContent[lang]["welcomeMessage"],
-        ],
-      },
-    ]);
-    setCurrentChatSuffix(newChatSuffix);
-  };
-
-  // 2. deleteCurrentChat
-  const deleteCurrentChat = () => {
-    if (localStorageKeys.length > 1) {
-      localStorage.removeItem("bude-chat-" + chatSuffix.value);
-
-      const nextChatSuffix = localStorageKeys.filter((key: string) =>
-        key !== "bude-chat-" + chatSuffix.value
-      )[0].slice(10);
-
-      setMessages(
-        JSON.parse(
-          String(localStorage.getItem("bude-chat-" + nextChatSuffix)),
-        ),
-      );
-      chatSuffix.value = (nextChatSuffix);
-    } else {
-      setMessages([
-        {
-          "role": "assistant",
-          "content": [
-            chatIslandContent[lang]["welcomeMessage"],
-          ],
-        },
-      ]);
-    }
-    stopAndResetAudio();
-  };
-
-  // 3. deleteAllChats
-  const deleteAllChats = () => {
-    localStorage.clear();
-    setMessages([
-      {
-        "role": "assistant",
-        "content": [
-          chatIslandContent[lang]["welcomeMessage"],
-        ],
-      },
-    ]);
-    setLocalStorageKeys([]);
-    chatSuffix.value = ("0");
-    stopAndResetAudio();
-  };
-
-  // 4. saveChatsToLocalFile
-  const saveChatsToLocalFile = () => {
-    // deno-lint-ignore no-explicit-any
-    const chats = {} as any;
-    for (const key of localStorageKeys) {
-      chats[key] = JSON.parse(String(localStorage.getItem(key)));
-    }
-    const chatsString = JSON.stringify(chats);
-    const blob = new Blob([chatsString], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    const currentDate = new Date();
-    a.download = `chats-${currentDate.toISOString()}.json`;
-    a.click();
-  };
-
-  // 5. restoreChatsFromLocalFile
-  // deno-lint-ignore no-explicit-any
-  const restoreChatsFromLocalFile = (e: any) => {
-    const file = e.target.files[0];
-    if (!file) {
-      console.error("No file selected");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const chats = JSON.parse(event.target?.result as string);
-
-        // Restore chats to localStorage
-        for (const [key, value] of Object.entries(chats)) {
-          localStorage.setItem(key, JSON.stringify(value));
-        }
-
-        const newChatSuffix = chats
-          ? Object.keys(chats).sort()[0].slice(10)
-          : "0";
-        setLocalStorageKeys(
-          Object.keys(localStorage).filter((key) =>
-            key.startsWith("bude-chat-")
-          ),
-        );
-        chatSuffix.value = (newChatSuffix);
-        setMessages(chats["bude-chat-" + newChatSuffix]);
-      } catch (error) {
-        console.error("Error parsing JSON file:", error);
-      }
-    };
-
-    reader.onerror = (error) => {
-      console.error("Error reading file:", error);
-    };
-
-    reader.readAsText(file);
-  };
-
   // MAIN CONTENT THAT IS RENDERED
   return (
-    <div class="grid grid-cols-[auto_2fr_1fr] w-full min-h-full">
+    <div class="grid grid-cols-[auto_1fr_auto] w-full min-h-full">
       <Sidebar
-        localStorageKeys={localStorageKeys}
         currentChatSuffix={chatSuffix.value}
         onChatSelect={(suffix) => chatSuffix.value = (suffix)}
-        onNewChat={() => {
-          const newSuffix = String(localStorageKeys.length);
-          chatSuffix.value = (newSuffix);
-          setMessages([
-            {
-              "role": "assistant",
-              "content": [chatIslandContent[lang]["welcomeMessage"]],
-            },
-          ]);
-        }}
-        settings={settings}
-        onSaveSettings={handleSaveSettings}
+        onDownloadChat={saveChatsToLocalFile}
+        onNewChat={startNewChat}
         lang={lang}
         onDeleteAllChats={deleteAllChats}
-        setShowSettings={setShowSettings}
-        showSettings={showSettings}
       />
       <ChatTemplate
-        lang={lang}
-        parentImages={images}
-        messages={messages}
-        readAlways={readAlways}
-        autoScroll={autoScroll}
-        currentEditIndex={currentEditIndex}
+        messages={messages.value}
+        currentEditIndex={currentEditIndex.value}
         audioFileDict={audioFileDict}
         onRefreshAction={handleRefreshAction}
-        onEditAction={handleEditAction}
-        onSpeakAtGroupIndexAction={handleOnSpeakAtGroupIndexAction}
-        onImageChange={handleImageChange}
-        onToggleAutoScrollAction={() => setAutoScroll(!autoScroll)}
-        onToggleReadAlwaysAction={() => setReadAlways(!readAlways)}
-        handleImagesUploaded={handleImagesUploaded}
-        query={query}
-        setQuery={setQuery}
-        settings={settings}
-        startStream={startStream}
-        onUploadActionToMessages={handleUploadActionToMessages}
+        onEditAction={() => { }}
+        onSpeakAtGroupIndexAction={() => { }}
+        onImageChange={() => { }}
+        handleImagesUploaded={() => { }}
+        onUploadActionToMessages={() => { }}
         resetTranscript={resetTranscript}
       >
         <ChatWarning lang={lang} />

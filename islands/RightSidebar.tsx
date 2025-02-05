@@ -22,7 +22,8 @@ export interface GraphNode {
 type SidebarData =
   | { type: "webResults"; results?: WebResult[] }
   | { type: "graph"; items?: GraphNode[] }
-  | { type: "game"; gameUrl: string };
+  | { type: "game"; gameUrl: string }
+  | { type: string; };
 
 interface RightSidebarProps {
   data?: SidebarData[];
@@ -86,6 +87,7 @@ function buildDrilldownGraph(
 export default function RightSidebar({ data }: RightSidebarProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<cytoscape.Core | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Graph state: current graph elements, drilldown stack, and currently selected node ID.
   const [graphElements, setGraphElements] = useState<
@@ -272,98 +274,118 @@ export default function RightSidebar({ data }: RightSidebarProps) {
   };
 
   return (
-    <div class={"bg-savanna border-l border-gray-300 h-full flex flex-col max-w-[30vw]"}>
-      <h3 class={"p-4 font-semibold border-b border-gray-300"}>Informationen</h3>
-      {/* Display all data elements */}
-      {data?.map((item, dataIndex) => {
-        // Skip rendering if the item has no results/items
-        if ((item.type === "webResults" && (!item.results || item.results.length === 0)) ||
+    <>
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        class="absolute right-4 top-4 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? '' : 'rotate-180'}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
+        >
+          <path
+            fillRule="evenodd"
+            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
+      <div class={`bg-savanna border-l h-full flex flex-col  ${isCollapsed  ? 'w-0 overflow-hidden hidden': 'max-w-[30vw]'}`}>
+        <h3 class={"p-4 font-semibold border-b"}>Informationen</h3>
+        {/* Display all data elements */}
+        {data?.map((item, dataIndex) => {
+          // Skip rendering if the item has no results/items
+          if ((item.type === "webResults" && (!item.results || item.results.length === 0)) ||
             (item.type === "graph" && (!item.items || item.items.length === 0))) {
-          return null;
-        }
-        return (
-          <div key={dataIndex}>
-            {/* Display web results if applicable */}
-            {item.type === "webResults" && (
-              <div class="p-4 overflow-y-auto">
-                <div class="space-y-4">
-                  {(item.results ?? []).map((result, index) => (
-                    <div
-                      key={index}
-                      class="sidebar-item bg-white/50 p-4 rounded-lg border"
-                    >
-                      <h3 class="font-medium mb-2">{result.title}</h3>
-                      <a
-                        href={result.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="text-blue-500 hover:text-blue-600 block mb-2 text-sm break-all"
+            return null;
+          }
+          return (
+            <div key={dataIndex}>
+              {/* Display web results if applicable */}
+              {item.type === "webResults" && (
+                <div class="p-4 overflow-y-auto">
+                  <div class="space-y-4">
+                    {(item.results ?? []).map((result, index) => (
+                      <div
+                        key={index}
+                        class="sidebar-item bg-white/50 p-4 rounded-lg border"
                       >
-                        {result.url}
-                      </a>
-                      {result.description && (
-                        <p class="text-gray-600 text-sm">{result.description}</p>
-                      )}
-                    </div>
-                  ))}
+                        <h3 class="font-medium mb-2">{result.title}</h3>
+                        <a
+                          href={result.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          class="text-blue-500 hover:text-blue-600 block mb-2 text-sm break-all"
+                        >
+                          {result.url}
+                        </a>
+                        {result.description && (
+                          <p class="text-gray-600 text-sm">{result.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Display game */}
-            {item.type === "game" && (
-              <div class="m-4">
-                <Game gameUrl={item?.content} />
-              </div>
-            )}
-
-            {/* Display graph results */}
-            {item.type === "graph" && (
-              <>
-                <div
-                  class="m-4 h-full border"
-                  ref={containerRef}
-                  style={{ width: "100%", height: "400px" }}
-                ></div>
-                <div class="p-2 border-t flex justify-between items-center">
-                  {/* Show Back button if there is drilldown history */}
-                  {graphStack.length > 0 && (
-                    <button
-                      onClick={goBack}
-                      class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
-                    >
-                      Back
-                    </button>
-                  )}
-                  {/* If a node is selected (but not drilled down yet), show option buttons */}
-                  {selectedNodeId && (
-                    <div class="space-x-2">
-                      <button
-                        onClick={openDetailed}
-                        class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded"
-                      >
-                        Open Detailed
-                      </button>
-                      <button
-                        onClick={askQuestion}
-                        class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
-                      >
-                        Ask Question
-                      </button>
-                      <button
-                        onClick={showTasks}
-                        class="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded"
-                      >
-                        Explore Quests
-                      </button>
-                    </div>
-                  )}
+              {/* Display game */}
+              {item.type === "game" && (
+                <div class="m-4">
+                  <Game gameUrl={item?.content} />
                 </div>
-              </>
-            )}
-          </div>
-        );
-      })}
-    </div>
+              )}
+
+              {/* Display graph results */}
+              {item.type === "graph" && (
+                <>
+                  <div
+                    class="m-4 h-full border"
+                    ref={containerRef}
+                    style={{ width: "100%", height: "400px" }}
+                  ></div>
+                  <div class="p-2 border-t flex justify-between items-center">
+                    {/* Show Back button if there is drilldown history */}
+                    {graphStack.length > 0 && (
+                      <button
+                        onClick={goBack}
+                        class="bg-blue-500 hover:bg-blue-600 text-white py-1 px-3 rounded"
+                      >
+                        Back
+                      </button>
+                    )}
+                    {/* If a node is selected (but not drilled down yet), show option buttons */}
+                    {selectedNodeId && (
+                      <div class="space-x-2">
+                        <button
+                          onClick={openDetailed}
+                          class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded"
+                        >
+                          Open Detailed
+                        </button>
+                        <button
+                          onClick={askQuestion}
+                          class="bg-yellow-500 hover:bg-yellow-600 text-white py-1 px-3 rounded"
+                        >
+                          Ask Question
+                        </button>
+                        <button
+                          onClick={showTasks}
+                          class="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded"
+                        >
+                          Explore Quests
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </>
   );
 }

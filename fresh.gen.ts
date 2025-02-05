@@ -15,11 +15,13 @@ import * as $api_stt from "./routes/api/stt.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_wikipedia from "./routes/api/wikipedia.ts";
 import * as $demo from "./routes/demo.tsx";
+import * as $games_id_ from "./routes/games/[id].tsx";
 import * as $index from "./routes/index.tsx";
 import * as $saved_games from "./routes/saved-games.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
+import * as $GameDetail from "./islands/GameDetail.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $Menu from "./islands/Menu.tsx";
 import * as $RightSidebar from "./islands/RightSidebar.tsx";
@@ -42,6 +44,7 @@ const manifest = {
     "./routes/api/tts.ts": $api_tts,
     "./routes/api/wikipedia.ts": $api_wikipedia,
     "./routes/demo.tsx": $demo,
+    "./routes/games/[id].tsx": $games_id_,
     "./routes/index.tsx": $index,
     "./routes/saved-games.tsx": $saved_games,
   },
@@ -49,6 +52,7 @@ const manifest = {
     "./islands/ChatAgreement.tsx": $ChatAgreement,
     "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
+    "./islands/GameDetail.tsx": $GameDetail,
     "./islands/Header.tsx": $Header,
     "./islands/Menu.tsx": $Menu,
     "./islands/RightSidebar.tsx": $RightSidebar,

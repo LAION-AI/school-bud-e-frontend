@@ -3,20 +3,20 @@ import { JSX } from "preact";
 interface GraphLoadingStateProps {
   isLoading: boolean;
   isComplete: boolean;
-  type: 'graphjson' | 'webresultjson' | 'gamejson';
+  type: 'graph' | 'webresult' | 'game';
 }
 
 export function GraphLoadingState({ isLoading, isComplete, type }: GraphLoadingStateProps): JSX.Element {
   let subject = '';
 
   switch (type) {
-    case 'graphjson':
+    case 'graph':
       subject = 'Graph';
       break;
-    case 'webresultjson':
+    case 'webresult':
       subject = 'Web results';
       break;
-    case 'gamejson':
+    case 'game':
       subject = 'Game';
       break;
   }

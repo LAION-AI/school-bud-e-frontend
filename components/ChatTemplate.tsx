@@ -1,12 +1,11 @@
 import { useEffect, useState } from "preact/hooks";
-import { chatIslandContent, headerContent } from "../internalization/content.ts";
+import { chatIslandContent } from "../internalization/content.ts";
 import type { JSX } from 'preact';
-import { ChatSubmitButton } from "./ChatSubmitButton.tsx";
-import VoiceRecordButton from "./VoiceRecordButton.tsx";
-import ImageUploadButton from "./ImageUploadButton.tsx";
 import RightSidebar from "../islands/RightSidebar.tsx";
 import { Message } from "./Message.tsx";
-import LogoHeader from "./chat/LogoHeader.tsx";
+import LogoHeader from "./core/LogoHeader.tsx";
+import { lang, messages, settings } from "./chat/store.ts";
+import ChatInput from "./chat/ChatInput.tsx";
 
 interface AudioItem {
   audio: HTMLAudioElement;
@@ -16,11 +15,7 @@ interface AudioItem {
 type AudioFileDict = Record<number, Record<number, AudioItem>>;
 
 interface ChatTemplateProps {
-  settings: any;
-  lang: string;
-  parentImages: Image[];
   messages: Message[];
-  isComplete: boolean;
   currentEditIndex: number;
   audioFileDict: AudioFileDict;
   onSpeakAtGroupIndexAction: (groupIndex: number) => void;
@@ -28,10 +23,6 @@ interface ChatTemplateProps {
   onEditAction: (groupIndex: number) => void;
   onUploadActionToMessages: (uploadedMessages: Message[]) => void;
   onImageChange: (images: Image[]) => void;
-  onTrashAction: () => void;
-  startStream: (transcript: string) => void;
-  query: string;
-  setQuery: (value: string) => void;
   handleImagesUploaded: (images: Image[]) => void;
   children: JSX.Element | JSX.Element[];
   resetTranscript: number;
@@ -83,55 +74,28 @@ function downloadAudioFiles(
 
 function ChatTemplate(
   {
-    settings,
-    lang,
-    parentImages,
-    messages,
     currentEditIndex,
     audioFileDict,
     onRefreshAction,
     onEditAction,
     onSpeakAtGroupIndexAction,
-    onImageChange,
-    startStream,
-    query,
-    setQuery,
-    handleImagesUploaded,
     children,
-    resetTranscript,
   }: ChatTemplateProps
 ) {
-  const [images, setImages] = useState<Image[]>([]);
-  const [imageFiles, setImageFiles] = useState<Image[]>([]);
 
   const [sidebarData, setSidebarData] = useState<{
-    type: "webResults" | "graph" | "game";
+    type: string;
     results: any[];
   }[]>([]);
 
-  const isApiConfigured = settings.universalApiKey ||
-    (settings.apiKey && settings.apiModel && settings.apiUrl)
+  const isApiConfigured = settings.value.universalApiKey ||
+    (settings.value.apiKey && settings.value.apiModel && settings.value.apiUrl)
 
-  const deleteImage = (event: MouseEvent) => {
-    const target = event.target as HTMLImageElement;
-    const index = images.findIndex((image) => image.image_url.url === target.src);
-    const newImages = [...images];
-    const newImageFiles = [...imageFiles];
-    newImages.splice(index, 1);
-    newImageFiles.splice(index, 1);
-    setImages(newImages);
-    setImageFiles(newImageFiles);
-    onImageChange(newImageFiles);
-  };
-
-  useEffect(() => {
-    setImages(parentImages);
-  }, [parentImages]);
 
   useEffect(() => {
     // Try to parse JSON data from the last message if it's from the assistant
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
+    if (messages.value.length > 0) {
+      const lastMessage = messages.value[messages.value.length - 1];
       if (lastMessage.role === "assistant") {
         try {
           const content = Array.isArray(lastMessage.content)
@@ -139,7 +103,7 @@ function ChatTemplate(
             : lastMessage.content;
 
           // Find JSON substring between triple backticks
-          const jsonMatch = content.match(/```(graphjson|webresultjson|gamejson)\n([\s\S]*?)\n(endgraphjson|endwebresultjson|endgamejson)```/);
+          const jsonMatch = content.match(/```(json)\n([\s\S]*?)\n```/);
           if (jsonMatch) {
             const jsonData = JSON.parse(jsonMatch[2]);
             if (jsonData.type === "webResults" || jsonData.type === "graph" || jsonData.type === "game") {
@@ -157,42 +121,30 @@ function ChatTemplate(
 
   return (
     <>
-      <div class="flex-grow h-full grid grid-rows-[auto_1fr_auto]">
-        <LogoHeader lang={lang}/>
+      <div class="flex-grow h-screen flex flex-col max-w-xl mx-auto">
+        <LogoHeader lang={lang.value} />
         <div
-          class={messages?.length === 0
+          class={messages.value?.length === 0
             ? `bg-transparent`
-            : `chat-history flex flex-col w-full mx-auto overflow-auto flex-grow-0 max-h-[74vh]`}
+            : `chat-history flex flex-col w-full mx-auto overflow-auto flex-grow`}
         >
-          {messages?.map((item, groupIndex) => (
-            <Message
-              key={groupIndex}
-              item={item}
-              groupIndex={groupIndex}
-              currentEditIndex={currentEditIndex}
-              audioFileDict={audioFileDict}
-              onEditAction={onEditAction}
-              onRefreshAction={onRefreshAction}
-              onSpeakAtGroupIndexAction={onSpeakAtGroupIndexAction}
-              onDownloadAudio={downloadAudioFiles}
-            />
-          ))}
-          {images.length > 0 && (
-            <div class="w-full flex justify-center">
-              <div class="p-2 flex flex-wrap max-w-xs gap-8">
-                {images.map((image, index) => (
-                  <img
-                    key={index}
-                    src={image.image_url.url}
-                    onClick={deleteImage}
-                    alt={`Thumbnail ${index + 1}`}
-                    class="w-32 h-32 object-cover rounded-lg shadow-xl bg-white/50 cursor-pointer hover:bg-red-500/50"
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          {children}
+          <div class="overflow-auto h-full px-4">
+
+            {messages.value?.map((item, groupIndex) => (
+              <Message
+                key={groupIndex}
+                item={item}
+                groupIndex={groupIndex}
+                currentEditIndex={currentEditIndex}
+                audioFileDict={audioFileDict}
+                onEditAction={onEditAction}
+                onRefreshAction={onRefreshAction}
+                onSpeakAtGroupIndexAction={onSpeakAtGroupIndexAction}
+                onDownloadAudio={downloadAudioFiles}
+              />
+            ))}
+            {children}
+          </div>
 
         </div>
 
@@ -200,59 +152,14 @@ function ChatTemplate(
           && (
             <div className="relative bg-gray-700 rounded-md">
               <div className="text-center text-md p-4 text-white">
-                {chatIslandContent[lang]["noSettings"]}
+                {chatIslandContent[lang.value]["noSettings"]}
               </div>
             </div>
           )}
 
-        <div className="relative">
-          <textarea
-            disabled={!isApiConfigured}
-            type="text"
-            value={query}
-            placeholder={chatIslandContent[lang]["placeholderText"]}
-            onInput={(e) => {
-              const textarea = e.currentTarget;
-              textarea.style.height = "auto"; // Reset height to auto to get the correct new height
-              textarea.style.height = textarea.scrollHeight + "px"; // Set new height
-              setQuery(textarea.value); // Update query and possibly the messages array
-            }}
-            onKeyPress={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault(); // Prevents adding a new line in the textarea
-                startStream("");
-              }
-            }}
-            class="h-auto w-full min-h-[10rem] py-4 pl-4 pr-16 border border-gray-300 rounded-lg focus:outline-none cursor-text focus:border-orange-200 focus:ring-1 focus:ring-orange-300 shadow-sm resize-none placeholder-gray-400 text-base font-medium overflow-hidden bg-white disabled:cursor-not-allowed"
-          />
-
-          <ImageUploadButton
-            onImagesUploaded={handleImagesUploaded}
-            disabled={!isApiConfigured}
-          />
-
-          <VoiceRecordButton
-            disabled={!isApiConfigured}
-            resetTranscript={resetTranscript}
-            sttUrl={settings.sttUrl}
-            sttKey={settings.sttKey}
-            sttModel={settings.sttModel}
-            onFinishRecording={(finalTranscript) => {
-              startStream(finalTranscript);
-            }}
-            onInterimTranscript={(interimTranscript) => {
-              setQuery(query + " " + interimTranscript);
-            }}
-          />
-
-          <ChatSubmitButton
-            onMouseDown={() => startStream("")}
-            disabled={!query}
-            disabled={!isApiConfigured}
-          />
-        </div>
+        <ChatInput />
       </div>
-      <RightSidebar data={sidebarData}  />
+      <RightSidebar data={sidebarData} />
     </>
   );
 }

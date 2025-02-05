@@ -1,53 +1,32 @@
 import { useState } from "preact/hooks";
 import Settings from "../components/Settings.tsx";
+import { chats } from "../components/chat/store.ts";
 
 interface SidebarProps {
-  localStorageKeys: string[];
   currentChatSuffix: string;
   onChatSelect: (suffix: string) => void;
   onNewChat: () => void;
   onDeleteAllChats: () => void;
-  settings: {
-    universalApiKey: string;
-    apiUrl: string;
-    apiKey: string;
-    apiModel: string;
-    ttsUrl: string;
-    ttsKey: string;
-    ttsModel: string;
-    sttUrl: string;
-    sttKey: string;
-    sttModel: string;
-    systemPrompt: string;
-    vlmUrl: string;
-    vlmKey: string;
-    vlmModel: string;
-    vlmCorrectionModel: string;
-  };
-  onSaveSettings: (newSettings: any) => void;
+  onDownloadChat: () => void;
   lang?: string;
 }
 
 export default function Sidebar({
-  localStorageKeys,
   currentChatSuffix,
   onChatSelect,
   onNewChat,
   onDeleteAllChats,
-  settings,
-  onSaveSettings,
   lang = "en",
-  setShowSettings,
-  showSettings,
+  onDownloadChat,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <>
-      <div class={`sidebar bg-savanna rounded-lg shadow-lg h-full flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'}`}>
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          class="absolute left-4 top-4 p-2 rounded-full hover:bg-gray-200 transition-colors"
+          class="absolute left-4 top-4 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
           aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           <svg
@@ -63,22 +42,23 @@ export default function Sidebar({
             />
           </svg>
         </button>
+      <div class={`sidebar bg-savanna rounded-lg shadow-lg h-full flex flex-col transition-all duration-300 ${isCollapsed ? 'w-0 overflow-hidden' : 'w-64'}`}>
 
         <div class="p-4 flex-1 overflow-y-auto mt-12">
           <button
             onClick={onNewChat}
-            class={`w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 mb-4 flex items-center justify-center ${isCollapsed ? 'px-2' : 'px-4'}`}
+            class={`w-full border p-2 rounded mb-4 flex items-center justify-center ${isCollapsed ? 'px-2' : 'px-4'}`}
           >
             {isCollapsed ? '+' : 'New Chat'}
           </button>
           <div class="space-y-2">
-            {localStorageKeys.sort().map((key) => {
+            {Object.keys(chats.value).sort().map((key) => {
               const suffix = key.slice(10);
               return (
                 <button
                   key={suffix}
                   onClick={() => onChatSelect(suffix)}
-                  class={`sidebar-button w-full text-left truncate ${suffix === currentChatSuffix ? 'active' : ''}`}
+                  class={`sidebar-button w-full border px-3 py-2 rounded-md text-left truncate ${suffix === currentChatSuffix ? '' : 'border-transparent '}`}
                 >
                   {isCollapsed ? `#${parseInt(suffix) + 1}` : `Chat ${parseInt(suffix) + 1}`}
                 </button>
@@ -107,20 +87,19 @@ export default function Sidebar({
             {!isCollapsed && 'Delete All'}
           </button>
           <button
-            onClick={() => setShowSettings(true)}
-            class="w-full text-white p-2 rounded hover:bg-gray-700 bg-gray-600 flex items-center justify-center"
+            onClick={onDownloadChat}
+            class="w-full text-white p-2 rounded hover:bg-green-700 bg-green-600 flex items-center justify-center"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class={`h-5 w-5 ${isCollapsed ? '' : 'mr-2'}`}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z"
-                clipRule="evenodd"
-              />
+            {!isCollapsed && 'Download Chat'}
+          </button>
+          <button
+            onClick={() => setShowSettings(true)}
+            class="w-full rounded flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`${isCollapsed ? '' : 'mr-2'}`}>
+              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+              <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+              <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
             </svg>
             {!isCollapsed && 'Settings'}
           </button>
@@ -128,8 +107,6 @@ export default function Sidebar({
       </div>
       {showSettings && (
         <Settings
-          settings={settings}
-          onSave={onSaveSettings}
           onClose={() => setShowSettings(false)}
           lang={lang}
         />

@@ -1,5 +1,6 @@
 import { JSX } from "preact/jsx-runtime";
 import { menuContent } from "../internalization/content.ts";
+import { ProfileDropdownItem } from "../components/core/ProfileDropdownItem.tsx";
 
 /**
  * Menu Component
@@ -25,33 +26,33 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
   ];
 
   return (
-    <div class="">
+    <>
       {/* Language Selector */}
-      <select
-        class="bg-transparent"
-        onChange={(e) =>
-          globalThis.location = (e.target as HTMLInputElement)
-            .value as unknown as Location}
-      >
-        {languages.map((language) => (
-          <option
-            selected={lang === language.code ? true : false}
-            value={`/?lang=` + language.code}
-          >
-            {language.symbol}
-          </option>
-        ))}
-      </select>
+      <ProfileDropdownItem>
+
+        <select
+          class="bg-transparent"
+          onChange={(e) =>
+            globalThis.location = (e.target as HTMLInputElement)
+              .value as unknown as Location}
+        >
+          {languages.map((language) => (
+            <option
+              selected={lang === language.code ? true : false}
+              value={`/?lang=` + language.code}
+            >
+              {language.symbol}
+            </option>
+          ))}
+        </select>
+      </ProfileDropdownItem>
 
       {/* Menu Items */}
       {menuItems.map((item) => (
-        <a
-          href={item.href}
-          class="hover:text-gray-900 hover:drop-shadow-md self-end px-2"
-        >
+        <ProfileDropdownItem href={item.href}>
           {item.name}
-        </a>
+        </ProfileDropdownItem>
       ))}
-    </div>
+    </>
   );
 }

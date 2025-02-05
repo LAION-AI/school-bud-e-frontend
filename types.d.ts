@@ -121,7 +121,7 @@ interface Window {
 }
 
 interface Image {
-  type: string;
+  type: 'image_url';
   image_url: {
     url: string;
     detail: string;
@@ -135,11 +135,11 @@ interface TextEvent {
 
 interface Message {
   role: string;
-  content: string | string[];
+  content: string | (string | Image)[];
 }
 
 interface Image {
-  type: string;
+  type: 'image_url';
   image_url: {
     url: string;
     detail: string;

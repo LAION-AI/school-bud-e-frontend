@@ -15,6 +15,9 @@ export default {
         "neu-gradient-from": "#e6e9ef",
         "neu-gradient-to": "#eef1f5"
       },
+      borderColor: {
+        DEFAULT: "rgb(214, 201, 161)",
+      },
       keyframes: {
         fadeIn: {
           "0%": { opacity: "0" },

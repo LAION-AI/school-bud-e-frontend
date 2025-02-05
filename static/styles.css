@@ -5,3 +5,7 @@
 html, body {
   background-color: #f4eecf;
 }
+
+#phaser-game > canvas {
+  height: 100%;
+}

@@ -1,6 +1,8 @@
 import { JSX } from "preact/jsx-runtime";
 import { headerContent } from "../internalization/content.ts";
+import { useState } from "preact/hooks";
 import Menu from "./Menu.tsx";
+import { ProfileDropdown } from "../components/core/ProfileDropdown.tsx";
 
 /**
  * Header Component
@@ -16,9 +18,10 @@ import Menu from "./Menu.tsx";
  * @returns {JSX.Element} The rendered header component.
  */
 function Header({ lang }: { lang: string }): JSX.Element {
+  const [isOpen, setIsOpen] = useState(false);
   return (
-    <header class="flex justify-between items-center text-black w-full bg-savanna border-b-2 border-black">
-      <div class="flex items-center px-4 py-1 gap-2">
+    <header class="flex justify-between items-center text-black w-full bg-savanna border-b">
+      <a class="flex items-center px-2 ml-2 my-1 gap-2 hover:bg-black hover:bg-opacity-10 rounded-md" href="/">
         {/* Logo Image */}
         <img
           src="/logo.png"
@@ -30,10 +33,34 @@ function Header({ lang }: { lang: string }): JSX.Element {
         <span class="font-semibold">
           {headerContent[lang]["title"]}
         </span>
-      </div>
+      </a>
       {/* Render the navigation menu */}
-      <Menu lang={lang} />
 
+      {/* Profile Icon */}
+      <div class="relative px-4">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          class="flex items-center justify-center w-8 h-8 rounded-full border bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          <svg
+            class="w-5 h-5 text-gray-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+            />
+          </svg>
+        </button>
+        <ProfileDropdown isOpen={isOpen}>
+          <Menu lang={lang} />
+        </ProfileDropdown>
+      </div>
     </header>
   );
 }
