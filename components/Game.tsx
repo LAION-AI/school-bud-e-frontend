@@ -22,20 +22,20 @@ function createRandomEntity(scene) {
 }`;
     }
     if (!code.includes("function gameScore")) {
-      finalCode += `function gameScore(gameName, points) {
-  fetch('/api/game-score', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      gameName: gameName,
-      points: points
-    })
+      finalCode += `function gameScore(id, points) {
+  fetch('/api/game', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, points })
   })
   .then(response => response.json())
   .then(data => {
     console.log('Score updated:', data);
+    // Emit a custom event with the updated score data
+    const scoreUpdateEvent = new CustomEvent('gameScoreUpdate', {
+      detail: { id, points }
+    });
+    window.dispatchEvent(scoreUpdateEvent);
     return data.totalPoints;
   })
   .catch(error => {
@@ -82,11 +82,11 @@ export function Game({ gameUrl: gameData }: GameProps) {
       // Create container for the game
       const gameContainer = document.createElement('div');
       gameContainer.id = 'phaser-game';
-      gameContainer.style.cssText = 'width: 800px; height: 600px; border: 1px solid #ccc; border-radius: 0.5rem; overflow: hidden;';
+      gameContainer.style.cssText = 'width: 100%; aspect-ratio:800/ 600;  border: 1px solid #ccc; border-radius: 0.5rem; overflow: hidden;';
 
       // Create and append scripts to shadow DOM
       const phaserScript = document.createElement('script');
-      phaserScript.src = 'https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js';
+      phaserScript.src = '/games/phaser.min.js';
       phaserScriptRef.current = phaserScript;
 
       const phaserRexScript = document.createElement('script');
@@ -97,8 +97,8 @@ export function Game({ gameUrl: gameData }: GameProps) {
       gameScript.type = 'module';
       scriptRef.current = gameScript;
 
+      // containerRef.current.appendChild(phaserRexScript);
       containerRef.current.appendChild(phaserScript);
-      containerRef.current.appendChild(phaserRexScript);
       containerRef.current.appendChild(gameScript);
       containerRef.current.appendChild(gameContainer);
 
@@ -111,7 +111,7 @@ export function Game({ gameUrl: gameData }: GameProps) {
       // Set up script loading sequence
       phaserScript.onload = () => {
         console.log("Phaser Script loaded")
-        if (rexLoaded) {
+        if (true) {
           console.log("Rex loaded before phaser")
           gameScript.innerHTML = buildCode(scriptRef, code);
         } else {
@@ -139,8 +139,8 @@ export function Game({ gameUrl: gameData }: GameProps) {
   }, [code]);
 
   return (
-    <div class="relative">
-      <div class="absolute top-2 right-2 z-10 flex space-x-2">
+    <div>
+      <div class="z-10 flex space-x-2 pb-4">
         <input
           type="text"
           value={gameName}
@@ -188,12 +188,12 @@ export function Game({ gameUrl: gameData }: GameProps) {
       </div>
       {showRaw ? (
         <textarea
-          class="w-full h-[400px] border rounded-lg overflow-auto bg-gray-50 p-4 font-mono text-sm"
+          class="w-full border rounded-lg overflow-auto bg-gray-50 p-4 font-mono text-sm"
           value={editableCode}
           onChange={(e) => setEditableCode((e.target as HTMLTextAreaElement).value)}
         />
       ) : (
-        <div ref={containerRef} class="w-full h-[400px]" />
+        <div ref={containerRef} class="" />
       )}
     </div>
   );

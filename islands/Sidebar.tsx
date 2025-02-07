@@ -1,6 +1,6 @@
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 import Settings from "../components/Settings.tsx";
-import { chats } from "../components/chat/store.ts";
+import { chats, deleteChat } from "../components/chat/store.ts";
 
 interface SidebarProps {
   currentChatSuffix: string;
@@ -19,29 +19,43 @@ export default function Sidebar({
   lang = "en",
   onDownloadChat,
 }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const collapsed = urlParams.get("collapsed");
+    console.log(location.search)
+    return collapsed === "true";
+  });
   const [showSettings, setShowSettings] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(location.search);
+      urlParams.set("collapsed", "" + isCollapsed)
+      const newUrl = `${location.origin}${location.pathname}?${urlParams.toString()}`;
+      history.replaceState(null, "", newUrl);
+    }
+  }, [isCollapsed]);
 
   return (
     <>
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          class="absolute left-4 top-4 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
-          aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        class="absolute left-4 top-16 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
+        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+          viewBox="0 0 20 20"
+          fill="currentColor"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-          >
-            <path
-              fillRule="evenodd"
-              d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </button>
+          <path
+            fillRule="evenodd"
+            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+            clipRule="evenodd"
+          />
+        </svg>
+      </button>
       <div class={`sidebar bg-savanna rounded-lg shadow-lg h-full flex flex-col transition-all duration-300 ${isCollapsed ? 'w-0 overflow-hidden' : 'w-64'}`}>
 
         <div class="p-4 flex-1 overflow-y-auto mt-12">
@@ -55,19 +69,28 @@ export default function Sidebar({
             {Object.keys(chats.value).sort().map((key) => {
               const suffix = key.slice(10);
               return (
-                <button
-                  key={suffix}
-                  onClick={() => onChatSelect(suffix)}
-                  class={`sidebar-button w-full border px-3 py-2 rounded-md text-left truncate ${suffix === currentChatSuffix ? '' : 'border-transparent '}`}
-                >
-                  {isCollapsed ? `#${parseInt(suffix) + 1}` : `Chat ${parseInt(suffix) + 1}`}
-                </button>
+                <div class={`flex items-center rounded-md group border ${suffix === currentChatSuffix ? '' : 'border-transparent '}`}>
+
+                  <button
+                    key={suffix}
+                    onClick={() => onChatSelect(suffix)}
+                    class={`sidebar-button w-full px-3 py-2 text-left truncate`}
+                  >
+                    {isCollapsed ? `#${parseInt(suffix) + 1}` : `Chat ${parseInt(suffix) + 1}`}
+                  </button>
+                  <button type="button" onClick={() => deleteChat(suffix)} class="group-hover:text-gray-400 text-transparent">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
+                      <path d="M18 6l-12 12"></path>
+                      <path d="M6 6l12 12"></path>
+                    </svg>
+                  </button>
+                </div>
               );
             })}
           </div>
         </div>
 
-        <div class="p-4 border-t border-gray-200 space-y-2">
+        <div class="p-4 border-t space-y-2">
           <button
             onClick={onDeleteAllChats}
             class="w-full text-white p-2 rounded hover:bg-red-700 bg-red-600 flex items-center justify-center"
@@ -104,13 +127,14 @@ export default function Sidebar({
             {!isCollapsed && 'Settings'}
           </button>
         </div>
-      </div>
+      </div >
       {showSettings && (
         <Settings
           onClose={() => setShowSettings(false)}
           lang={lang}
         />
-      )}
+      )
+      }
     </>
   );
 }

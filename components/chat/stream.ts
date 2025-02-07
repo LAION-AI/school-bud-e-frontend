@@ -25,6 +25,7 @@ export const startStream = async (
     prevMessages?: Message[],
     images?: Image[],
 ) => {
+    console.log(settings.value);
     // if currentEditIndex is set, we are editing a message instead of starting the stream
     // except if the currentEditIndex is the last user message, then we do start the stream
 
@@ -39,7 +40,7 @@ export const startStream = async (
         streamComplete.value = false;
         resetTranscript.value++;
 
-        const currentQuery = transcript !== "" ? transcript : query.value;
+        const currentQuery = (transcript) ? transcript : query.value;
         let previousMessages = prevMessages || messages.value;
 
         previousMessages = previousMessages.map((msg) => {

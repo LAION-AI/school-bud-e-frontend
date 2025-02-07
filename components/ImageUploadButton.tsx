@@ -1,7 +1,7 @@
 import { useRef, useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
 
-function ImageUploadButton({
+export function ImageUploadButton({
   onImagesUploaded,
 }: {
   onImagesUploaded: (images: Image[]) => void;
@@ -35,16 +35,32 @@ function ImageUploadButton({
 
         fileReader.addEventListener("load", (e) => {
           const data_url = e.target!.result;
-          // const type = data_url.split(";")[0].split(":")[1];
-          const imageObject = {
+          const type = data_url?.split(";")[0].split(":")[1];
+
+          let fileObject;
+
+          console.log(type);
+          console.log(data_url);
+          if (type.startsWith("image/")) {
+
+          fileObject = {
             type: "image_url",
             image_url: {
               url: data_url,
               detail: "high",
             },
           };
+          } else {
+            fileObject = {
+              type: "pdf_url",
+              pdf_url: {
+                url: data_url,
+                detail: "high",
+              },
+            }
+          }
 
-          newPreviewImages.push(imageObject);
+          newPreviewImages.push(fileObject);
           resolve();
         });
 
@@ -66,14 +82,14 @@ function ImageUploadButton({
         type="file"
         ref={fileInputRef}
         onChange={handleImageUpload}
-        accept="image/*"
+        accept="image/*,application/pdf"
         multiple
         class="hidden"
       />
       <button
         onClick={onButtonClick}
         disabled={!IS_BROWSER}
-        class="disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 bg-gray-100 text-blue-600/50"
+        class="disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 bg-gray-100 text-blue-600/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

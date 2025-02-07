@@ -1,4 +1,5 @@
 import { aboutContent } from "../internalization/content.ts";
+import Header from "../islands/Header.tsx";
 
 export default function About(req: Request) {
   const url = new URL(req.url);
@@ -9,6 +10,7 @@ export default function About(req: Request) {
 
   return (
     <div>
+      <Header lang={lang}/>
       <div class="px-4 py-8 mx-auto max-w-4xl">
         <h1 class="text-3xl md:text-4xl font-bold text-center mb-6">
           {aboutContent[lang]["title"]}

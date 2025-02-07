@@ -4,6 +4,7 @@ import { join } from "https://deno.land/std@0.201.0/path/mod.ts";
 interface GameData {
   code: string;
   name?: string;
+  points?: number;
 }
 
 interface SavedGame {
@@ -22,10 +23,10 @@ export const handler: Handlers = {
   async PUT(req: Request) {
     try {
       const payload = await req.json();
-      if (!payload.id || !payload.code) {
+      if (!payload.id) {
         return new Response(JSON.stringify({
           success: false,
-          error: "Game ID and code are required"
+          error: "Game ID is required"
         }), { 
           status: 400,
           headers: { "Content-Type": "application/json" }
@@ -59,7 +60,15 @@ export const handler: Handlers = {
         });
       }
 
-      savedGames.games[gameIndex].code = payload.code;
+      // Update code if provided
+      if (payload.code) {
+        savedGames.games[gameIndex].code = payload.code;
+      }
+
+      // Update points if provided
+      if (typeof payload.points === 'number') {
+        savedGames.games[gameIndex].totalPoints += payload.points;
+      }
       await Deno.writeTextFile(savedGamesPath, JSON.stringify(savedGames, null, 2));
 
       return new Response(JSON.stringify({
@@ -71,7 +80,7 @@ export const handler: Handlers = {
       });
 
     } catch (error) {
-      console.error("Error updating game name:", error);
+      console.error("Error updating game:", error);
       return new Response(JSON.stringify({
         success: false,
         error: error instanceof Error ? error.message : String(error)
@@ -108,7 +117,7 @@ export const handler: Handlers = {
         name: payload.name,
         code: payload.code,
         timestamp: new Date().toISOString(),
-        totalPoints: 0
+        totalPoints: payload.points || 0
       };
 
       savedGames.games.push(newGame);

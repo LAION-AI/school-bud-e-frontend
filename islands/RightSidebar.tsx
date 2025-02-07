@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "preact/hooks";
-import cytoscape from "cytoscape";
+import { useEffect, useState } from "preact/hooks";
 import { Game } from "../components/Game.tsx";
+import { Graph } from "../components/Graph.tsx";
 
 interface WebResult {
   title: string;
@@ -85,9 +85,22 @@ function buildDrilldownGraph(
 }
 
 export default function RightSidebar({ data }: RightSidebarProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const cyRef = useRef<cytoscape.Core | null>(null);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const collapsed = urlParams.get("rcollapsed");
+    console.log(location.search)
+    return collapsed === "true";
+  });
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(location.search);
+      urlParams.set("rcollapsed", "" + isCollapsed)
+      const newUrl = `${location.origin}${location.pathname}?${urlParams.toString()}`;
+      history.replaceState(null, "", newUrl);
+    }
+  }, [isCollapsed]);
 
   // Graph state: current graph elements, drilldown stack, and currently selected node ID.
   const [graphElements, setGraphElements] = useState<
@@ -111,85 +124,7 @@ export default function RightSidebar({ data }: RightSidebarProps) {
     }
   }, [data]);
 
-  // Set up Cytoscape with current graphElements and attach node tap handler.
-  useEffect(() => {
-    if (graphElements && containerRef.current) {
-      // Create the Cytoscape instance.
-      const cy = cytoscape({
-        container: containerRef.current,
-        elements: graphElements,
-        style: [
-          {
-            selector: "node",
-            style: {
-              "background-color": "#aaa",
-              label: "data(label)",
-              color: "#000",
-              "text-valign": "center",
-              "text-halign": "center",
-              "font-size": "10px",
-              "text-wrap": "wrap",
-              "text-max-width": "80px",
-              // Default border style.
-              "border-width": "1px",
-              "border-color": "#555",
-            },
-          },
-          // Style for selected node (when clicked)
-          {
-            selector: "node.selected",
-            style: {
-              "border-width": "2px",
-              "border-color": "#f00",
-            },
-          },
-          // Style for drilldown root node.
-          {
-            selector: 'node[type="root"]',
-            style: {
-              "background-color": "#0a84ff",
-              "border-width": "3px",
-              "border-color": "#fff",
-            },
-          },
-          {
-            selector: "edge",
-            style: {
-              width: 2,
-              "line-color": "#ccc",
-              "target-arrow-color": "#ccc",
-              "target-arrow-shape": "triangle",
-              "curve-style": "bezier",
-            },
-          },
-        ],
-        layout: {
-          name: "cose",
-          animate: true,
-        },
-      });
 
-      // Save instance for later use.
-      cyRef.current = cy;
-
-      // When a node is tapped, mark it as selected (but do not drill down immediately).
-      cy.on("tap", "node", (event) => {
-        const node = event.target;
-        const nodeId = node.data("id");
-
-        // Remove the 'selected' class from all nodes.
-        cy.$("node").removeClass("selected");
-        // Add 'selected' class to the tapped node.
-        node.addClass("selected");
-        setSelectedNodeId(nodeId);
-      });
-
-      return () => {
-        cy.destroy();
-        cyRef.current = null;
-      };
-    }
-  }, [graphElements]);
 
   // Placeholder: simulate an AI call to generate more detailed items.
   const generateMoreDetails = async (nodeId: string) => {
@@ -277,7 +212,7 @@ export default function RightSidebar({ data }: RightSidebarProps) {
     <>
       <button
         onClick={() => setIsCollapsed(!isCollapsed)}
-        class="absolute right-4 top-4 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
+        class="absolute right-4 top-16 z-10 p-2 rounded-full transition-colors"
         aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
       >
         <svg
@@ -293,17 +228,17 @@ export default function RightSidebar({ data }: RightSidebarProps) {
           />
         </svg>
       </button>
-      <div class={`bg-savanna border-l h-full flex flex-col  ${isCollapsed  ? 'w-0 overflow-hidden hidden': 'max-w-[30vw]'}`}>
-        <h3 class={"p-4 font-semibold border-b"}>Informationen</h3>
+      <div class={`bg-savanna border-l h-full flex flex-col  transition-all ${isCollapsed  ? 'w-0 overflow-hidden': 'w-[40vw]'}`}>
+        <h3 class={"p-4 font-semibold border-b"}>Ergebnisse</h3>
         {/* Display all data elements */}
         {data?.map((item, dataIndex) => {
           // Skip rendering if the item has no results/items
           if ((item.type === "webResults" && (!item.results || item.results.length === 0)) ||
-            (item.type === "graph" && (!item.items || item.items.length === 0))) {
+            (item.type === "graph" && (!item.items|| item.items.length === 0))) {
             return null;
           }
           return (
-            <div key={dataIndex}>
+            <div key={dataIndex} class={"p-4"}>
               {/* Display web results if applicable */}
               {item.type === "webResults" && (
                 <div class="p-4 overflow-y-auto">
@@ -333,7 +268,7 @@ export default function RightSidebar({ data }: RightSidebarProps) {
 
               {/* Display game */}
               {item.type === "game" && (
-                <div class="m-4">
+                <div class="">
                   <Game gameUrl={item?.content} />
                 </div>
               )}
@@ -341,11 +276,12 @@ export default function RightSidebar({ data }: RightSidebarProps) {
               {/* Display graph results */}
               {item.type === "graph" && (
                 <>
-                  <div
-                    class="m-4 h-full border"
-                    ref={containerRef}
-                    style={{ width: "100%", height: "400px" }}
-                  ></div>
+                  <Graph
+                    graphData={item.items || []}
+                    selectedNodeId={selectedNodeId}
+                    onNodeSelect={setSelectedNodeId}
+                    isRoot={!!currentDrilldown}
+                  />
                   <div class="p-2 border-t flex justify-between items-center">
                     {/* Show Back button if there is drilldown history */}
                     {graphStack.length > 0 && (

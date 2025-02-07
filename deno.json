@@ -13,7 +13,7 @@
   "lint": { "rules": { "tags": ["fresh", "recommended"] } },
   "exclude": ["**/_fresh/*"],
   "imports": {
-    "$fresh/": "https://deno.land/x/fresh@1.7.2/",
+    "$fresh/": "https://deno.land/x/fresh@1.7.3/",
     "cytoscape": "npm:cytoscape@^3.31.0",
     "preact": "https://esm.sh/preact@10.22.0",
     "preact/": "https://esm.sh/preact@10.22.0/",

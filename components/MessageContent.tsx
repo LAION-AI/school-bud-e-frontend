@@ -2,7 +2,7 @@ import { renderTextWithLinksAndBold } from "../utils/textUtils.tsx";
 import { GraphLoadingState } from "./GraphLoadingState.tsx";
 
 // Define supported content types
-type ContentType = "text" | "image_url";
+type ContentType = "text" | "image_url" | "pdf_url";
 type JsonBlockType = "json";
 type BlockStatus = "loading" | "completed";
 
@@ -133,7 +133,7 @@ export function MessageContent({ content }: MessageContentProps) {
                 {renderTextWithLinksAndBold(seg.content)}
               </span>
             );
-          } else if (seg.type === "graph" || seg.type === "webresult" || seg.type === " game") {
+          } else if (seg.type === "json" || seg.type === "webresult" || seg.type === " game") {
             return (
               <GraphLoadingState
                 key={idx}
@@ -157,6 +157,7 @@ export function MessageContent({ content }: MessageContentProps) {
           type: string;
           text: string;
           image_url: { url: string };
+          pdf_url?: { url: string };
         }[]).map((item, contentIndex) => {
           if (item.type === "text") {
             const segments = processGraphSegments(['graph', 'webresult', 'game'], item.text);
@@ -190,6 +191,17 @@ export function MessageContent({ content }: MessageContentProps) {
                 alt="User uploaded image"
                 className="max-w-full h-auto rounded-lg shadow-sm"
               />
+            );
+          } else if (item.type === "pdf_url") {
+            return (
+              <object
+                key={contentIndex}
+                data={item.pdf_url.url}
+                type="application/pdf"
+                className="w-full h-[600px] rounded-lg shadow-sm"
+              >
+                <p>Your browser does not support PDFs. Please download the PDF to view it.</p>
+              </object>
             );
           }
           return null;

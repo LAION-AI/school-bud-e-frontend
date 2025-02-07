@@ -12,7 +12,7 @@ export default function Home(req: Request, _ctx: PageProps) {
   return (
     <div class="flex h-screen overflow-hidden">
       {/* Main Chat Area */}
-      <div class="flex-1 flex flex-col overflow-hidden">
+      <div class="flex-1 flex flex-col overflow-auto">
         <Header lang={lang as string} />
         <SavedGames />
       </div>

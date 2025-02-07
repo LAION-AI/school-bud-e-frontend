@@ -1,10 +1,10 @@
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { chatIslandContent } from "../internalization/content.ts";
 import type { JSX } from 'preact';
 import RightSidebar from "../islands/RightSidebar.tsx";
 import { Message } from "./Message.tsx";
 import LogoHeader from "./core/LogoHeader.tsx";
-import { lang, messages, settings } from "./chat/store.ts";
+import { autoScroll, lang, messages, settings } from "./chat/store.ts";
 import ChatInput from "./chat/ChatInput.tsx";
 
 interface AudioItem {
@@ -87,6 +87,7 @@ function ChatTemplate(
     type: string;
     results: any[];
   }[]>([]);
+  const chatRef = useRef<HTMLDivElement>(null)
 
   const isApiConfigured = settings.value.universalApiKey ||
     (settings.value.apiKey && settings.value.apiModel && settings.value.apiUrl)
@@ -117,18 +118,37 @@ function ChatTemplate(
         }
       }
     }
-  }, [messages]);
+  }, [messages.value]);
+
+  // 3. useEffect [messages]
+  useEffect(() => {
+    if (autoScroll.value && chatRef.current) {
+      // Only proceed if we're not already scrolling
+      const currentPosition = globalThis.innerHeight +
+        globalThis.scrollY;
+      const totalScrollHeight = chatRef.current.scrollHeight;
+
+      // Only scroll if the deviation is more than 100 pixels
+      if (totalScrollHeight - currentPosition > 500) {
+        chatRef.current.scrollTo({
+          top: totalScrollHeight,
+          behavior: "smooth",
+        });
+      }
+    }
+  }, [messages.value, autoScroll.value, chatRef]);
 
   return (
     <>
-      <div class="flex-grow h-screen flex flex-col max-w-xl mx-auto">
-        <LogoHeader lang={lang.value} />
+      <div class="flex-grow flex flex-col min-h-full ">
+        {/* <LogoHeader lang={lang.value} /> */}
         <div
           class={messages.value?.length === 0
             ? `bg-transparent`
-            : `chat-history flex flex-col w-full mx-auto overflow-auto flex-grow`}
+            : `chat-history flex flex-col w-full overflow-auto flex-grow pt-20`}
+            ref={chatRef}
         >
-          <div class="overflow-auto h-full px-4">
+          <div class="h-full px-4 max-w-xl mx-auto w-full">
 
             {messages.value?.map((item, groupIndex) => (
               <Message

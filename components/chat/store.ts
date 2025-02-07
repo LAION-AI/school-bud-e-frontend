@@ -98,19 +98,30 @@ export const isApiConfigured = computed(() => {
 
 // Update the URL when the chat suffix changes and reset the audio.
 effect(() => {
-  console.log("Effect 1");
   const suffix = chatSuffix.value;
   if (typeof window !== "undefined") {
-    // deno-lint-ignore no-window
-    window.history.replaceState({}, "", `?chat=${suffix}`);
+      const urlParams = new URLSearchParams(location.search);
+      urlParams.set("chat", "" + suffix)
+      const newUrl = `${location.origin}${location.pathname}?${urlParams.toString()}`;
+      history.replaceState(null, "", newUrl);
   }
-  stopAndResetAudio();
+  stopAndResetAudio?.();
 });
 
 // Sync all chats to localStorage whenever the chats signal changes.
 effect(() => {
-  for (const [key, msgs] of Object.entries(chats.value)) {
-    localStorage.setItem(key, JSON.stringify(msgs));
+  const storedChatKeys = Object.keys(localStorage).filter((key) => key.startsWith("bude-chat-"))
+  const savingChatKeys = Object.keys(chats.value)
+
+  // If a key is not included in savingChatKeys, remove it from localStorage.
+  for (const storedChatKey of storedChatKeys) {
+    if (!savingChatKeys.includes(storedChatKey)) {
+      localStorage.removeItem(storedChatKey)
+    }
+  }
+
+  for (const key of savingChatKeys) {
+    localStorage.setItem(key, JSON.stringify(chats.value[key]));
   }
 });
 
@@ -158,8 +169,9 @@ export const startNewChat = () => {
 // Delete the current chat.
 // If more than one chat exists, delete the current chat and switch to another.
 // Otherwise, clear the current chat.
-export const deleteCurrentChat = () => {
-  const currentKey = "bude-chat-" + chatSuffix.value;
+export const deleteChat = (suffix: string) => {
+  console.log('Trying to delete', {suffix})
+  const currentKey = "bude-chat-" + suffix;
   const chatKeys = Object.keys(chats.value);
   if (chatKeys.length > 1) {
     // Create a new object without the current chat.

@@ -1,8 +1,13 @@
 import { warningContent } from "../internalization/content.ts";
-import { useState } from "preact/hooks";
+import { useEffect, useState } from "preact/hooks";
 
 function Warning({ lang }: { lang: string }) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isHidden, setIsHidden] = useState(localStorage.getItem("warning") === "true");
+
+  useEffect(() => {
+    localStorage.setItem("warning", isHidden);
+  }, []);
 
   const formatBoldTextWhereDoubleAsterisk = (text: string) => {
     const parts = text.split('**');
@@ -13,9 +18,12 @@ function Warning({ lang }: { lang: string }) {
 
   return (
     <div
-      class="bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 mb-2"
+      class={"bg-yellow-200/75 border-l-4 border-yellow-500 rounded-md text-yellow-700 mb-2" + (isHidden) ? "hidden" : ""}
       role="alert"
     >
+      <button onClick={() => setIsHidden(!isHidden)}>
+        {isHidden ? "Show" : "Hide"}
+      </button>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         class="w-full p-4 flex justify-between items-center cursor-pointer hover:bg-yellow-200/90 transition-colors"

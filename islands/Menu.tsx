@@ -16,6 +16,9 @@ export default function Menu({ lang }: { lang: string }): JSX.Element {
   // Define menu items with localized names and URLs
   const menuItems = [
     { name: menuContent[lang]["about"], href: "/about?lang=" + lang },
+    { name: menuContent[lang]["lernpfade"], href: "/lernpfade?lang=" + lang },
+    { name: menuContent[lang]["profile"], href: "/profile?lang=" + lang },
+    { name: menuContent[lang]["games"], href: "/saved-games?lang=" + lang },
     { name: menuContent[lang]["imprint"], href: "https://laion.ai/impressum" },
   ];
 

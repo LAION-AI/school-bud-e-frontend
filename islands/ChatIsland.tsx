@@ -84,23 +84,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
     }
   }, [isStreamComplete]);
 
-  // 3. useEffect [messages]
-  useEffect(() => {
-    if (autoScroll) {
-      // Only proceed if we're not already scrolling
-      const currentPosition = globalThis.innerHeight +
-        globalThis.scrollY;
-      const totalScrollHeight = document.body.scrollHeight;
-
-      // Only scroll if the deviation is more than 100 pixels
-      if (totalScrollHeight - currentPosition > 500) {
-        globalThis.scrollTo({
-          top: totalScrollHeight,
-          behavior: "smooth",
-        });
-      }
-    }
-  }, [messages, autoScroll]);
 
 
   // 5. useEffect [audioFileDict, readAlways, stopList.value]
@@ -190,7 +173,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // MAIN CONTENT THAT IS RENDERED
   return (
-    <div class="grid grid-cols-[auto_1fr_auto] w-full min-h-full">
+    <div class="grid grid-cols-[auto_1fr_auto] w-full h-[calc(100vh-64px)]">
       <Sidebar
         currentChatSuffix={chatSuffix.value}
         onChatSelect={(suffix) => chatSuffix.value = (suffix)}

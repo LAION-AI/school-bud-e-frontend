@@ -17,10 +17,16 @@ export const menuContent: InternalizationContent = {
   en: {
     about: "About School Bud-E",
     imprint: "Imprint",
+    lernpfade: "Learning Paths",
+    profile: "Profile",
+    games: "Games",
   },
   de: {
     about: "Über School Bud-E",
     imprint: "Impressum",
+    lernpfade: "Lernpfade",
+    profile: "Profil",
+    games: "Spiele",
   },
 };
 

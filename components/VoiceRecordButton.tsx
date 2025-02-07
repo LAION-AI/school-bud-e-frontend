@@ -157,7 +157,7 @@ function VoiceRecordButton({
     <button
       onClick={toggleRecording}
       disabled={!IS_BROWSER}
-      class={`disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 bg-gray-100
+      class={`disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 bg-gray-100
         ${isRecording ? "animate-pulse bg-red-600" : ""}`}
     >
       <svg

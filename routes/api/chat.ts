@@ -1,7 +1,9 @@
 import { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
+import { decodeBase64 } from "https://deno.land/std/encoding/base64.ts";
 
 import { chatContent } from "../../internalization/content.ts";
+import replacePDFWithMarkdownInMessages from "../../utils/pdfToMarkdown.ts";
 
 const API_URL = Deno.env.get("LLM_URL") || "";
 const API_KEY = Deno.env.get("LLM_KEY") || "";
@@ -80,6 +82,10 @@ ${value.requirements.join("\n")}`
     role: "system",
     content: useThisSystemPrompt,
   });
+
+  // Searches for a PDF in the messages and converts it to markdown text.
+  const pdfConversionError = await replacePDFWithMarkdownInMessages(messages);
+
 
   // Prüfe, ob Bildinhalte in den Nachrichten vorkommen
   const isImageInMessages = messages.some((message) => {
@@ -178,6 +184,14 @@ ${value.requirements.join("\n")}`
     new ReadableStream({
       async start(controller) {
         try {
+          // if (pdfConversionError) {
+          //   // Let the user know something went wrong while converting the PDF
+          //   controller.enqueue({
+          //     data: JSON.stringify(pdfConversionError),
+          //     id: Date.now(),
+          //     event: "error",
+          //   });
+          // }
           while (true) {
             const { value, done } = await reader.read();
             if (done) break;

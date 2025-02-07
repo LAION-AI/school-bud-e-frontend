@@ -1,10 +1,7 @@
 import { useState } from "preact/hooks";
 import { settingsContent } from "../internalization/content.ts";
 import BasicSettings from "./settings/BasicSettings.tsx";
-import ChatAPISettings from "./settings/ChatAPISettings.tsx";
-import TTSSettings from "./settings/TTSSettings.tsx";
-import STTSettings from "./settings/STTSettings.tsx";
-import VLMSettings from "./settings/VLMSettings.tsx";
+import ConfigurationSelector from "./settings/ConfigurationSelector.tsx";
 import { settings } from "./chat/store.ts";
 
 export default function Settings({
@@ -103,39 +100,42 @@ export default function Settings({
   };
 
   function updateSettings(key: string, value: string) {
-    const updatedSettings = { ...newSettings };
+    setNewSettings((newSettings) => {
+      console.log("updateSettings", key, value)
+      const updatedSettings = { ...newSettings };
 
-    if (key !== "universalApiKey") {
-      if (key.endsWith("Key") && value !== "") {
-        const serviceType = key.slice(0, -3);
-        const urlKey = `${serviceType}Url` as keyof typeof settings.value;
-        const modelKey = `${serviceType}Model` as keyof typeof settings.value;
+      if (key !== "universalApiKey") {
+        if (key.endsWith("Key") && value !== "") {
+          const serviceType = key.slice(0, -3);
+          const urlKey = `${serviceType}Url` as keyof typeof settings.value;
+          const modelKey = `${serviceType}Model` as keyof typeof settings.value;
 
-        // Find matching provider based on key characteristics
-        const provider = Object.values(providerConfigs).find((provider) => {
-          const { keyCharacteristics } = provider;
-          return (
-            ("startsWith" in keyCharacteristics &&
-              value.startsWith(keyCharacteristics.startsWith)) ||
-            ("length" in keyCharacteristics &&
-              keyCharacteristics.length === value.length)
-          );
-        });
+          // Find matching provider based on key characteristics
+          const provider = Object.values(providerConfigs).find((provider) => {
+            const { keyCharacteristics } = provider;
+            return (
+              ("startsWith" in keyCharacteristics &&
+                value.startsWith(keyCharacteristics.startsWith)) ||
+              ("length" in keyCharacteristics &&
+                keyCharacteristics.length === value.length)
+            );
+          });
 
-        if (provider?.config[serviceType as keyof typeof provider.config]) {
-          const serviceConfig = provider
-            .config[serviceType as keyof typeof provider.config] as {
-              url: string;
-              model: string;
-            };
-          updatedSettings[urlKey] = serviceConfig.url;
-          updatedSettings[modelKey] = serviceConfig.model;
+          if (provider?.config[serviceType as keyof typeof provider.config]) {
+            const serviceConfig = provider
+              .config[serviceType as keyof typeof provider.config] as {
+                url: string;
+                model: string;
+              };
+            updatedSettings[urlKey] = serviceConfig.url;
+            updatedSettings[modelKey] = serviceConfig.model;
+          }
         }
       }
-    }
 
-    updatedSettings[key as keyof typeof settings.value] = value;
-    setNewSettings(updatedSettings);
+      updatedSettings[key as keyof typeof settings.value] = value;
+      return updatedSettings;
+    });
   }
 
   return (
@@ -170,25 +170,53 @@ export default function Settings({
         {/* Advanced Settings */}
         {showAdvanced && (
           <>
-            <ChatAPISettings
-              settings={newSettings}
+            <ConfigurationSelector
+              serviceType="api"
+              currentConfig={{
+                url: newSettings.apiUrl,
+                model: newSettings.apiModel,
+                key: newSettings.apiKey,
+              }}
               onUpdateSettings={updateSettings}
               lang={lang}
+              icon="💬"
+              title={settingsContent[lang].chatApiTitle}
             />
-            <TTSSettings
-              settings={newSettings}
+            <ConfigurationSelector
+              serviceType="tts"
+              currentConfig={{
+                url: newSettings.ttsUrl,
+                model: newSettings.ttsModel,
+                key: newSettings.ttsKey,
+              }}
               onUpdateSettings={updateSettings}
               lang={lang}
+              icon="🗣️"
+              title={settingsContent[lang].ttsTitle}
             />
-            <STTSettings
-              settings={newSettings}
+            <ConfigurationSelector
+              serviceType="stt"
+              currentConfig={{
+                url: newSettings.sttUrl,
+                model: newSettings.sttModel,
+                key: newSettings.sttKey,
+              }}
               onUpdateSettings={updateSettings}
               lang={lang}
+              icon="👂"
+              title={settingsContent[lang].sttTitle}
             />
-            <VLMSettings
-              settings={newSettings}
+            <ConfigurationSelector
+              serviceType="vlm"
+              currentConfig={{
+                url: newSettings.vlmUrl,
+                model: newSettings.vlmModel,
+                key: newSettings.vlmKey,
+              }}
               onUpdateSettings={updateSettings}
               lang={lang}
+              icon="👀"
+              title={settingsContent[lang].vlmTitle}
             />
           </>
         )}
@@ -201,7 +229,11 @@ export default function Settings({
             {settingsContent[lang].cancel}
           </button>
           <button
-            onClick={() => settings.value = newSettings}
+            onClick={() => {
+              console.log(newSettings);
+              settings.value = { ...newSettings };
+              onClose();
+            }}
             class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             {settingsContent[lang].save}

@@ -129,6 +129,15 @@ interface Image {
   preview: string;
 }
 
+interface File {
+  type: 'file_url';
+  file_url: {
+    url: string;
+    detail: string;
+  };
+  preview: string;
+}
+
 interface TextEvent {
   readonly data: string;
 }

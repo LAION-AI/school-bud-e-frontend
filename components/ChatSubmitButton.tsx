@@ -10,9 +10,7 @@ export function ChatSubmitButton(props: ButtonProps) {
       {...buttonProps}
       // Spread the rest of the buttonProps here
       disabled={!IS_BROWSER || props.disabled}
-      class={`disabled:opacity-50 disabled:cursor-not-allowed rounded-md p-2 ${
-        props.disabled ? "bg-gray-100" : "bg-gray-400"
-      } ${className}`} // Apply external class here
+      class={`disabled:opacity-75 disabled:cursor-not-allowed p-2 ${className}`} // Apply external class here
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -24,9 +22,7 @@ export function ChatSubmitButton(props: ButtonProps) {
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"
-        class={`icon icon-tabler icons-tabler-outline icon-tabler-arrow-narrow-up ${
-          props.disabled ? "text-gray-400" : "text-white"
-        }`}
+        class={`icon icon-tabler icons-tabler-outline icon-tabler-arrow-narrow-up text-white`}
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M12 5v14" />

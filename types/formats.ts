@@ -19,17 +19,10 @@ export interface GameJson extends BaseFormat {
 // Graph JSON format
 export interface GraphJson extends BaseFormat {
   type: 'graph';
-  nodes: Array<{
-    id: string;
-    label: string;
-    type?: string;
-    properties?: Record<string, unknown>;
-  }>;
-  edges: Array<{
-    source: string;
-    target: string;
-    label?: string;
-    properties?: Record<string, unknown>;
+  items: Array<{
+    item: string;
+    childItems?: string;
+    connections?: string;
   }>;
 }
 
@@ -69,7 +62,7 @@ export type SupportedFormat = GraphJson | WebResultJson | FlashcardsJson | GameJ
 // Format templates and metadata
 export const formatTemplates = {
   webresult: {
-    template: `\`\`\`webresultjson
+    template: `\`\`\`json
 {
   "type": "webResults",
   "results": [
@@ -80,7 +73,7 @@ export const formatTemplates = {
     }
   ]
 }
-endwebresultjson\`\`\``,
+json\`\`\``,
     description: 'For search results (webResults) it\'s important to write the webresults type',
     requirements: [],
   },
@@ -88,29 +81,23 @@ endwebresultjson\`\`\``,
     template: `\`\`\`json
 {
   "type": "graph",
-  "nodes": [
+  "items": [
     {
-      "id": "string",
-      "label": "string",
-      "type": "string",
-      "properties": {}
+      "item": "string",
+      "childItems": ["string"]
+      "connections": [{
+        "from": "string",
+        "to": "string"
+      }]
     }
   ],
-  "edges": [
-    {
-      "source": "string",
-      "target": "string",
-      "label": "string",
-      "properties": {}
-    }
-  ]
 }
 \`\`\``,
     description: 'For graph data it\'s important to write the grapjson type',
     requirements:[]
   },
   flashcards: {
-    template: `\`\`\`flashcardsjson
+    template: `\`\`\`json
 {
   "type": "flashcards",
   "cards": [
@@ -137,14 +124,14 @@ endwebresultjson\`\`\``,
 \`\`\``,
     description: 'For game content it\'s important to write the json type',
     requirements: [
-      'Game must use Phaser.js and JavaScript.',
+      'Game must use Phaser.js and JavaScript but written in the JSON format.',
       'The json must not have any comments or linebreaks.',
-      'Background should be white',
+      'Parent should be the div with id="phaser-game"',
       'Do not use HTML.',
-      'Should initialize and increment globalThis on correct answers',
+      `If you need assets you can use these small pixel art images and scale them up: /games/background.png, /games/currency.png, /games/dropzone.png /games/option_correct.png /games/option_wrong.png`,
+      'Should call the global function gameScore(gameName, points) if a user scored some points, it is essential to user experience',
       'Remove text when displaying right/wrong outputs',
       'Position game within container, not at end of body',
-      'Should not include external assets',
     ],
     defaultConfig: {
       type: 'Phaser.AUTO',
