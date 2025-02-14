@@ -237,6 +237,7 @@ export const startStream = async (
                 systemPrompt: settings.value.systemPrompt,
             }),
             onmessage(ev: EventSourceMessage) {
+                
                 const parsedData = JSON.parse(ev.data);
                 console.debug("parsedData", parsedData);
 

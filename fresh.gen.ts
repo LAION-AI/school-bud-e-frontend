@@ -4,27 +4,42 @@
 
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
+import * as $_middleware from "./routes/_middleware.ts";
 import * as $about from "./routes/about.tsx";
 import * as $api_audio_button from "./routes/api/audio-button.ts";
 import * as $api_bildungsplan from "./routes/api/bildungsplan.ts";
 import * as $api_chat from "./routes/api/chat.ts";
+import * as $api_chat_recent_graphs from "./routes/api/chat/recent-graphs.ts";
 import * as $api_game from "./routes/api/game.ts";
+import * as $api_google_colab from "./routes/api/google-colab.ts";
+import * as $api_images_pixelart from "./routes/api/images/pixelart.ts";
 import * as $api_papers from "./routes/api/papers.ts";
 import * as $api_stt from "./routes/api/stt.ts";
 import * as $api_tts from "./routes/api/tts.ts";
 import * as $api_wikipedia from "./routes/api/wikipedia.ts";
+import * as $articles_path_ from "./routes/articles/[...path].tsx";
+import * as $articles_index from "./routes/articles/index.tsx";
+import * as $chat_id_ from "./routes/chat/[id].tsx";
 import * as $demo from "./routes/demo.tsx";
 import * as $games_id_ from "./routes/games/[id].tsx";
+import * as $google_colab from "./routes/google-colab.tsx";
+import * as $google_drive_video from "./routes/google-drive-video.tsx";
+import * as $graph_name_ from "./routes/graph/[name].tsx";
 import * as $index from "./routes/index.tsx";
+import * as $lernpfade from "./routes/lernpfade.tsx";
+import * as $profile from "./routes/profile.tsx";
 import * as $saved_games from "./routes/saved-games.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $GameDetail from "./islands/GameDetail.tsx";
 import * as $Header from "./islands/Header.tsx";
+import * as $LearningPathsGraph from "./islands/LearningPathsGraph.tsx";
 import * as $Menu from "./islands/Menu.tsx";
+import * as $RelatedArticles from "./islands/RelatedArticles.tsx";
 import * as $RightSidebar from "./islands/RightSidebar.tsx";
 import * as $Sidebar from "./islands/Sidebar.tsx";
+import * as $UserProfile from "./islands/UserProfile.tsx";
 import * as $saved_games_1 from "./islands/saved-games.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
@@ -32,18 +47,30 @@ const manifest = {
   routes: {
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
+    "./routes/_middleware.ts": $_middleware,
     "./routes/about.tsx": $about,
     "./routes/api/audio-button.ts": $api_audio_button,
     "./routes/api/bildungsplan.ts": $api_bildungsplan,
     "./routes/api/chat.ts": $api_chat,
+    "./routes/api/chat/recent-graphs.ts": $api_chat_recent_graphs,
     "./routes/api/game.ts": $api_game,
+    "./routes/api/google-colab.ts": $api_google_colab,
+    "./routes/api/images/pixelart.ts": $api_images_pixelart,
     "./routes/api/papers.ts": $api_papers,
     "./routes/api/stt.ts": $api_stt,
     "./routes/api/tts.ts": $api_tts,
     "./routes/api/wikipedia.ts": $api_wikipedia,
+    "./routes/articles/[...path].tsx": $articles_path_,
+    "./routes/articles/index.tsx": $articles_index,
+    "./routes/chat/[id].tsx": $chat_id_,
     "./routes/demo.tsx": $demo,
     "./routes/games/[id].tsx": $games_id_,
+    "./routes/google-colab.tsx": $google_colab,
+    "./routes/google-drive-video.tsx": $google_drive_video,
+    "./routes/graph/[name].tsx": $graph_name_,
     "./routes/index.tsx": $index,
+    "./routes/lernpfade.tsx": $lernpfade,
+    "./routes/profile.tsx": $profile,
     "./routes/saved-games.tsx": $saved_games,
   },
   islands: {
@@ -52,9 +79,12 @@ const manifest = {
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/GameDetail.tsx": $GameDetail,
     "./islands/Header.tsx": $Header,
+    "./islands/LearningPathsGraph.tsx": $LearningPathsGraph,
     "./islands/Menu.tsx": $Menu,
+    "./islands/RelatedArticles.tsx": $RelatedArticles,
     "./islands/RightSidebar.tsx": $RightSidebar,
     "./islands/Sidebar.tsx": $Sidebar,
+    "./islands/UserProfile.tsx": $UserProfile,
     "./islands/saved-games.tsx": $saved_games_1,
   },
   baseUrl: import.meta.url,

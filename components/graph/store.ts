@@ -1,8 +1,12 @@
+// store.ts
 import { signal } from "@preact/signals";
 import { GraphJson } from "../../types/formats.ts";
 
-// Graph data signal
+// Graph management signals
+export const graphs = signal<Map<string, GraphJson>>(new Map());
+export const currentGraphId = signal<string | null>(null);
 export const graphData = signal<GraphJson | null>(null);
+export const recentGraphs = signal<GraphJson[]>([]);
 
 // Node selection signals
 export const selectedNode = signal<string | null>(null);
@@ -14,8 +18,65 @@ export const isAddingNode = signal<boolean>(false);
 export const isRenamingNode = signal<boolean>(false);
 export const newNodeName = signal<string>("");
 
-// Recent graphs signal
-export const recentGraphs = signal<GraphJson[]>([]);
+// Load saved graphs from localStorage
+export function loadSavedGraphs() {
+  if (typeof window === "undefined") return;
+  
+  const savedGraphsJson = localStorage.getItem("savedGraphs");
+  if (savedGraphsJson) {
+    try {
+      const savedGraphs = JSON.parse(savedGraphsJson);
+      graphs.value = new Map(Object.entries(savedGraphs));
+    } catch (e) {
+      console.error("Error loading saved graphs:", e);
+    }
+  }
+}
+
+// Save graphs to localStorage
+export function saveGraphs() {
+  if (typeof window === "undefined") return;
+  
+  const graphsObj = Object.fromEntries(graphs.value);
+  localStorage.setItem("savedGraphs", JSON.stringify(graphsObj));
+}
+
+// Create a new graph
+export function createGraph(name: string) {
+  const newGraph: GraphJson = {
+    type: "graph",
+    items: [],
+    name
+  };
+  const id = crypto.randomUUID();
+  graphs.value.set(id, newGraph);
+  saveGraphs();
+  return id;
+}
+
+// Load a specific graph
+export function loadGraph(id: string) {
+  const graph = graphs.value.get(id);
+  if (graph) {
+    currentGraphId.value = id;
+    graphData.value = graph;
+    
+    // Update recent graphs (move the loaded graph to the front)
+    const existingIndex = recentGraphs.value.findIndex(g => g === graph);
+    if (existingIndex !== -1) {
+      recentGraphs.value.splice(existingIndex, 1);
+    }
+    recentGraphs.value = [graph, ...recentGraphs.value.slice(0, 4)];
+  }
+}
+
+// Save current graph (update the graphs Map and persist it)
+export function saveCurrentGraph() {
+  if (currentGraphId.value && graphData.value) {
+    graphs.value.set(currentGraphId.value, graphData.value);
+    saveGraphs();
+  }
+}
 
 // Graph collapse state
 export const isGraphCollapsed = signal<boolean>(() => {
@@ -40,7 +101,7 @@ export function handleNodeSelect(nodeId: string, isAltPressed: boolean = false) 
 }
 
 export function handleConnectNodes() {
-    console.log('Connect')
+    console.log('Connect');
     if (!selectedNode.value || !secondarySelectedNode.value || !isConnectingNodes.value) return;
 
     const updatedGraph = { ...graphData.value || { type: "graph", items: [] } };
@@ -62,7 +123,6 @@ export function handleConnectNodes() {
         );
         
         if (!connectionExists) {
-            // Add connection to both nodes
             const newConnection = {
                 from: selectedNode.value,
                 to: secondarySelectedNode.value
@@ -70,7 +130,7 @@ export function handleConnectNodes() {
             sourceNode.connections.push(newConnection);
             
             graphData.value = updatedGraph;
-            localStorage.setItem("savedGraph", JSON.stringify(updatedGraph));
+            saveCurrentGraph();
             
             // Award points for creating a connection
             gameScore(2);
@@ -123,7 +183,7 @@ export function handleAddNode() {
         notes: "", // Initialize notes property as an empty string
     };
 
-    // Add the new node and connect it to the selected node
+    // Add the new node and connect it to the selected node.
     updatedGraph.items = [...(updatedGraph.items || []), newNode];
     const selectedNodeData = updatedGraph.items.find((item) =>
         item.item === selectedNode.value
@@ -131,12 +191,12 @@ export function handleAddNode() {
     if (selectedNodeData) {
         selectedNodeData.childItems = [
             ...(selectedNodeData.childItems || []),
-            newNodeName.value.trim(),
+            newNode.item,
         ];
     }
 
     graphData.value = updatedGraph;
-    localStorage.setItem("savedGraph", JSON.stringify(updatedGraph));
+    saveCurrentGraph();
     newNodeName.value = "";
     isAddingNode.value = false;
 
@@ -148,26 +208,26 @@ export function handleRenameNode() {
     if (!selectedNode.value || !newNodeName.value.trim()) return;
 
     const updatedGraph = { ...graphData.value || { type: "graph", items: [] } };
-    const newNodeNameValue = newNodeName.value.trim();
-    const oldNodeName = selectedNode.value;
+    const newName = newNodeName.value.trim();
+    const oldName = selectedNode.value;
 
     updatedGraph.items = updatedGraph.items.map((item) => {
         const updatedItem = { ...item };
 
-        if (item.item === oldNodeName) {
-            updatedItem.item = newNodeNameValue;
+        if (item.item === oldName) {
+            updatedItem.item = newName;
         }
 
         if (item.childItems) {
             updatedItem.childItems = item.childItems.map((child) =>
-                child === oldNodeName ? newNodeNameValue : child
+                child === oldName ? newName : child
             );
         }
 
         if (item.connections) {
             updatedItem.connections = item.connections.map((conn) => ({
-                from: conn.from === oldNodeName ? newNodeNameValue : conn.from,
-                to: conn.to === oldNodeName ? newNodeNameValue : conn.to,
+                from: conn.from === oldName ? newName : conn.from,
+                to: conn.to === oldName ? newName : conn.to,
             }));
         }
 
@@ -175,10 +235,10 @@ export function handleRenameNode() {
     });
 
     graphData.value = updatedGraph;
-    localStorage.setItem("savedGraph", JSON.stringify(updatedGraph));
+    saveCurrentGraph();
     newNodeName.value = "";
     isRenamingNode.value = false;
-    selectedNode.value = newNodeNameValue;
+    selectedNode.value = newName;
 
     // Award points for renaming a node
     gameScore(5);
@@ -214,21 +274,23 @@ export function handleDeleteNode() {
     });
 
     graphData.value = updatedGraph;
-    localStorage.setItem("savedGraph", JSON.stringify(updatedGraph));
+    saveCurrentGraph();
     selectedNode.value = null;
 
     // Award points for deleting a node
     gameScore(5);
 }
 
-// Load initial graph data
+// Load initial graphs data
 if (typeof window !== "undefined") {
-    const savedGraph = localStorage.getItem("savedGraph");
-    if (savedGraph) {
-        try {
-            graphData.value = JSON.parse(savedGraph);
-        } catch (error) {
-            console.error("Error loading saved graph:", error);
-        }
+    loadSavedGraphs();
+    if (graphs.value.size === 0) {
+        // Create a default graph if none exist.
+        const defaultGraphId = createGraph("Untitled Graph");
+        loadGraph(defaultGraphId);
+    } else if (!currentGraphId.value) {
+        // Optionally load the first graph from the Map.
+        const [firstGraphId] = graphs.value.keys();
+        loadGraph(firstGraphId);
     }
 }

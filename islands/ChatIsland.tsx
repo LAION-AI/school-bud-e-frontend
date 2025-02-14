@@ -173,15 +173,15 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // MAIN CONTENT THAT IS RENDERED
   return (
-    <div class="grid grid-cols-[auto_1fr_auto] w-full h-[calc(100vh-64px)]">
-      <Sidebar
+    <div class="grid grid-cols-[auto_1fr_auto] w-full h-screen">
+      {/* <Sidebar
         currentChatSuffix={chatSuffix.value}
         onChatSelect={(suffix) => chatSuffix.value = (suffix)}
         onDownloadChat={saveChatsToLocalFile}
         onNewChat={startNewChat}
         lang={lang}
         onDeleteAllChats={deleteAllChats}
-      />
+      /> */}
       <ChatTemplate
         messages={messages.value}
         currentEditIndex={currentEditIndex.value}

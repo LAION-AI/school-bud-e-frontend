@@ -1,140 +1,225 @@
 import { useEffect, useState } from "preact/hooks";
+import { useComputed } from "@preact/signals";
+import {
+	SidebarCloseIcon,
+	X,
+	Trash2,
+	Download,
+	Settings as SettingsIcon,
+	GamepadIcon,
+	BookOpen,
+	User,
+	ChevronDown,
+	Graph,
+} from "lucide-preact";
 import Settings from "../components/Settings.tsx";
 import { chats, deleteChat } from "../components/chat/store.ts";
+import { graphs, deleteGraph } from "../components/graph/store.ts";
+import EditIcon from "../components/icons/EditIcon.tsx";
+import Header from "./Header.tsx";
 
 interface SidebarProps {
-  currentChatSuffix: string;
-  onChatSelect: (suffix: string) => void;
-  onNewChat: () => void;
-  onDeleteAllChats: () => void;
-  onDownloadChat: () => void;
-  lang?: string;
+	currentChatSuffix: string;
+	onDownloadChat: () => void;
+	lang?: string;
 }
 
 export default function Sidebar({
-  currentChatSuffix,
-  onChatSelect,
-  onNewChat,
-  onDeleteAllChats,
-  lang = "en",
-  onDownloadChat,
+	currentChatSuffix,
+	lang = "en",
+	onDownloadChat,
 }: SidebarProps) {
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const collapsed = urlParams.get("collapsed");
-    console.log(location.search)
-    return collapsed === "true";
-  });
-  const [showSettings, setShowSettings] = useState(false);
+	const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+		const urlParams = new URLSearchParams(globalThis.location?.search);
+		const collapsed = urlParams.get("collapsed");
+		return collapsed === "true";
+	});
+	const [showSettings, setShowSettings] = useState(false);
+	const [gamesExpanded, setGamesExpanded] = useState(false);
+	const [graphsExpanded, setGraphsExpanded] = useState(false);
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(location.search);
-      urlParams.set("collapsed", "" + isCollapsed)
-      const newUrl = `${location.origin}${location.pathname}?${urlParams.toString()}`;
-      history.replaceState(null, "", newUrl);
-    }
-  }, [isCollapsed]);
+	useEffect(() => {
+		const urlParams = new URLSearchParams(globalThis.location?.search);
+		urlParams.set("collapsed", `${isCollapsed}`);
+		const newUrl = `${globalThis.location.origin}${globalThis.location?.pathname}?${urlParams.toString()}`;
+		globalThis.history?.replaceState(null, "", newUrl);
+	}, [isCollapsed]);
 
-  return (
-    <>
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        class="absolute left-4 top-16 z-10 p-2 rounded-full hover:bg-gray-200 transition-colors"
-        aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path
-            fillRule="evenodd"
-            d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-      <div class={`sidebar bg-savanna rounded-lg shadow-lg h-full flex flex-col transition-all duration-300 ${isCollapsed ? 'w-0 overflow-hidden' : 'w-64'}`}>
+	const lastThreeGraphs = useComputed(() => {
+		const value = (Array.from(graphs.value.keys()) as string[])
+			.sort((a, b) => b?.length - a?.length)
+			.slice(0, 59);
+		console.log(value);
+		return value;
+	});
+	
 
-        <div class="p-4 flex-1 overflow-y-auto mt-12">
-          <button
-            onClick={onNewChat}
-            class={`w-full border p-2 rounded mb-4 flex items-center justify-center ${isCollapsed ? 'px-2' : 'px-4'}`}
-          >
-            {isCollapsed ? '+' : 'New Chat'}
-          </button>
-          <div class="space-y-2">
-            {Object.keys(chats.value).sort().map((key) => {
-              const suffix = key.slice(10);
-              return (
-                <div class={`flex items-center rounded-md group border ${suffix === currentChatSuffix ? '' : 'border-transparent '}`}>
+	return (
+		<div
+			class={`sidebar bg-surface rounded-lg shadow-lg h-full flex flex-col transition-all duration-300 ${isCollapsed ? "w-0 overflow-hidden" : "w-[21rem]"}`}
+		>
+			<div class="flex justify-between py-4">
+				<img
+					src="/logo.png"
+					width="48"
+					height="48"
+					alt="A little lion wearing a graduation cap."
+				/>
+				<button
+					type="button"
+					onClick={() => setIsCollapsed(!isCollapsed)}
+					class={`p-4 rounded-full hover:bg-blue-100 text-gray-500 transition-colors ${isCollapsed ? "absolute left-4 z-10 " : ""}`}
+					aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+				>
+					<SidebarCloseIcon
+						class={`h-6 w-6 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+						aria-hidden="true"
+					/>
+				</button>
+			</div>
+			<div class="px-2 flex-1 overflow-y-auto">
+				<div class="flex justify-between items-center mb-4">
+					<a
+						href="/chat/new"
+						type="button"
+						class={`flex-1 border p-2 rounded flex items-center justify-center ${isCollapsed ? "px-2" : "px-4"}`}
+					>
+						<EditIcon />
+					</a>
+					<a href="/profile" class="ml-2 p-2 rounded hover:bg-blue-100">
+						<User size={20} />
+					</a>
+				</div>
 
-                  <button
-                    key={suffix}
-                    onClick={() => onChatSelect(suffix)}
-                    class={`sidebar-button w-full px-3 py-2 text-left truncate`}
-                  >
-                    {isCollapsed ? `#${parseInt(suffix) + 1}` : `Chat ${parseInt(suffix) + 1}`}
-                  </button>
-                  <button type="button" onClick={() => deleteChat(suffix)} class="group-hover:text-gray-400 text-transparent">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" width="24" height="24" stroke-width="2">
-                      <path d="M18 6l-12 12"></path>
-                      <path d="M6 6l12 12"></path>
-                    </svg>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+				<div class="space-y-2">
+					<div>
+						<button
+							onClick={() => setGamesExpanded(!gamesExpanded)}
+							class="w-full p-2 rounded hover:bg-blue-100 flex items-center justify-between"
+						>
+							<div class="flex items-center">
+								<GamepadIcon class={`h-5 w-5 ${isCollapsed ? "" : "mr-2"}`} />
+								{!isCollapsed && "Games"}
+							</div>
+							<ChevronDown
+								class={`h-4 w-4 transition-transform ${gamesExpanded ? "rotate-180" : ""}`}
+							/>
+						</button>
+						{gamesExpanded && !isCollapsed && (
+							<div class="space-y-1">
+								<a
+									href="/game/math"
+									class="block p-2 pl-8 hover:bg-blue-100 rounded"
+								>
+									Math Game
+								</a>
+								<a
+									href="/game/language"
+									class="block p-2 pl-8 hover:bg-blue-100 rounded"
+								>
+									Language Game
+								</a>
+								<a
+									href="/game/quiz"
+									class="block p-2 pl-8 hover:bg-blue-100 rounded"
+								>
+									Quiz Game
+								</a>
+							</div>
+						)}
+					</div>
+					<div>
+						<button
+							type="button"
+							onClick={() => setGraphsExpanded(!graphsExpanded)}
+							class="w-full p-2 rounded hover:bg-blue-100 flex items-center justify-between"
+						>
+							<div class="flex items-center">
+								<BookOpen class={`h-5 w-5 ${isCollapsed ? "" : "mr-2"}`} />
+								Learning Graphs
+							</div>
+							<ChevronDown
+								class={`h-4 w-4 transition-transform ${graphsExpanded ? "rotate-180" : ""}`}
+							/>
+						</button>
+						{graphsExpanded && !isCollapsed && (
+							<div class="space-y-1">
+								{lastThreeGraphs.value.map((graphId) => (
+									<div key={graphId} class="flex items-center">
+										<a
+											href={`/graph/${graphId}`}
+											class="flex-1 block p-2 pl-8 hover:bg-blue-100 rounded"
+										>
+											{console.log(graphs.value.get(graphId))}
+											{graphs.value.get(graphId)?.name || graphId}
+										</a>
+										<button
+											type="button"
+											onClick={() => deleteGraph(graphId)}
+											class="p-2 text-gray-400 hover:text-red-600"
+											aria-label="Delete graph"
+										>
+											<X size={16} />
+										</button>
+									</div>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
 
-        <div class="p-4 border-t space-y-2">
-          <button
-            onClick={onDeleteAllChats}
-            class="w-full text-white p-2 rounded hover:bg-red-700 bg-red-600 flex items-center justify-center"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class={`h-5 w-5 ${isCollapsed ? '' : 'mr-2'}`}
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            {!isCollapsed && 'Delete All'}
-          </button>
-          <button
-            onClick={onDownloadChat}
-            class="w-full text-white p-2 rounded hover:bg-green-700 bg-green-600 flex items-center justify-center"
-          >
-            {!isCollapsed && 'Download Chat'}
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            class="w-full rounded flex items-center justify-center"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class={`${isCollapsed ? '' : 'mr-2'}`}>
-              <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-              <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
-              <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
-            </svg>
-            {!isCollapsed && 'Settings'}
-          </button>
-        </div>
-      </div >
-      {showSettings && (
-        <Settings
-          onClose={() => setShowSettings(false)}
-          lang={lang}
-        />
-      )
-      }
-    </>
-  );
+				<div class="space-y-2 pt-4">
+					{Object.keys(chats.value)
+						.sort()
+						.map((key) => {
+							const suffix = key.slice(10);
+							return (
+								<div
+									key={suffix}
+									class={`flex items-center rounded-md group border ${suffix === currentChatSuffix ? "" : "border-transparent"}`}
+								>
+									<a
+										href={`/chat/${suffix}`}
+										class="sidebar-button w-full px-3 py-2 text-left truncate"
+									>
+										{isCollapsed
+											? `#${Number.parseInt(suffix) + 1}`
+											: `Chat ${Number.parseInt(suffix) + 1}`}
+									</a>
+									<button
+										type="button"
+										onClick={onDownloadChat}
+										class="group-hover:text-gray-400 text-transparent"
+									>
+										<Download class={`h-5 w-5`} />
+									</button>
+									<button
+										type="button"
+										onClick={() => deleteChat(suffix)}
+										class="group-hover:text-gray-400 text-transparent"
+									>
+										<X size={24} />
+									</button>
+								</div>
+							);
+						})}
+				</div>
+			</div>
+
+			<div class="p-4 border-t space-y-2">
+				<button
+					type="button"
+					onClick={() => setShowSettings(true)}
+					class="w-full rounded flex items-center justify-center"
+				>
+					<SettingsIcon class={isCollapsed ? "" : "mr-2"} />
+					{!isCollapsed && "Settings"}
+				</button>
+				<Header lang="en" />
+			</div>
+			{showSettings && (
+				<Settings onClose={() => setShowSettings(false)} lang={lang} />
+			)}
+		</div>
+	);
 }

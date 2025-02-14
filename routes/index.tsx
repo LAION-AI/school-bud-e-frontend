@@ -11,12 +11,12 @@ export default function Home(req: Request) {
   return (
     <>
       <Header lang={lang} />
-      <div class="flex h-[calc(100vh-64px)] overflow-hidden">
+      <div class="flex h-screen overflow-hidden">
         {/* Main Chat Area */}
-        <div class="flex-1 flex flex-col overflow-hidden h-[calc(100vh-64px)]">
+        <div class="flex-1 h-screen flex flex-col overflow-hidden">
           {/* <Header lang={lang as string} /> */}
           <div
-            class="flex-1 overflow-auto h-[calc(100vh-64px)]"
+            class="flex-1 h-screen overflow-auto"
             style={{
               backgroundImage: "url('/lines.svg')",
               backgroundPosition: "center",

@@ -1,6 +1,5 @@
-import { Handlers } from "$fresh/server.ts";
+import type { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
-import { decodeBase64 } from "https://deno.land/std/encoding/base64.ts";
 
 import { chatContent } from "../../internalization/content.ts";
 import replacePDFWithMarkdownInMessages from "../../utils/pdfToMarkdown.ts";
@@ -32,7 +31,8 @@ async function getModelResponseStream(
   vlmApiModel: string,
   vlmCorrectionModel: string,
 ) {
-  if (universalApiKey != "" && !universalApiKey.startsWith("sbe-")) {
+  console.log(systemPrompt);
+  if (universalApiKey !== "" && !universalApiKey.startsWith("sbe-")) {
     return new Response(
       "Invalid Universal API Key. It needs to start with '**sbe-**'.",
       { status: 400 },
@@ -56,7 +56,7 @@ async function getModelResponseStream(
     ? chatContent[lang].correctionSystemPrompt
     : chatContent[lang].systemPrompt;
 
-  if (systemPrompt != "") {
+  if (systemPrompt !== "") {
     useThisSystemPrompt = systemPrompt;
   }
 
@@ -73,7 +73,7 @@ ${value.requirements.join("\n")}`
     ).join("\n\n")
   }`;
 
-  useThisSystemPrompt += "\n\n" + jsonInstruction;
+  useThisSystemPrompt += `\n\n${jsonInstruction}`;
 
   console.log(useThisSystemPrompt);
 
@@ -91,7 +91,8 @@ ${value.requirements.join("\n")}`
   const isImageInMessages = messages.some((message) => {
     if (Array.isArray(message.content)) {
       return message.content.some((item) => item.type === "image_url");
-    } else if (
+    }
+    if (
       typeof message.content === "object" && message.content !== null
     ) {
       return (message.content as { type?: string }).type === "image_url";
@@ -111,28 +112,28 @@ ${value.requirements.join("\n")}`
     api_model = "";
   }
 
-  if (universalApiKey != "" && universalApiKey.startsWith("sbe-")) {
-    api_url = llmApiUrl != "" ? llmApiUrl : API_URL;
-    api_key = llmApiKey != "" ? llmApiKey : API_KEY;
-    api_model = llmApiModel != "" ? llmApiModel : API_MODEL;
+  if (universalApiKey !== "" && universalApiKey.startsWith("sbe-")) {
+    api_url = llmApiUrl !== "" ? llmApiUrl : API_URL;
+    api_key = llmApiKey !== "" ? llmApiKey : API_KEY;
+    api_model = llmApiModel !== "" ? llmApiModel : API_MODEL;
     if (isImageInMessages) {
-      api_url = vlmApiUrl != "" ? vlmApiUrl : API_IMAGE_URL;
-      api_key = vlmApiKey != "" ? vlmApiKey : API_IMAGE_KEY;
-      api_model = vlmApiModel != "" ? vlmApiModel : API_IMAGE_MODEL;
+      api_url = vlmApiUrl !== "" ? vlmApiUrl : API_IMAGE_URL;
+      api_key = vlmApiKey !== "" ? vlmApiKey : API_IMAGE_KEY;
+      api_model = vlmApiModel !== "" ? vlmApiModel : API_IMAGE_MODEL;
     }
     if (isCorrectionInLastMessage) {
-      api_model = vlmCorrectionModel != ""
+      api_model = vlmCorrectionModel !== ""
         ? vlmCorrectionModel
         : API_IMAGE_CORRECTION_MODEL;
     }
   } else {
-    api_url = llmApiUrl != "" ? llmApiUrl : "";
-    api_key = llmApiKey != "" ? llmApiKey : "";
-    api_model = llmApiModel != "" ? llmApiModel : "";
+    api_url = llmApiUrl !== "" ? llmApiUrl : "";
+    api_key = llmApiKey !== "" ? llmApiKey : "";
+    api_model = llmApiModel !== "" ? llmApiModel : "";
     if (isImageInMessages) {
-      api_url = vlmApiUrl != "" ? vlmApiUrl : "";
-      api_key = vlmApiKey != "" ? vlmApiKey : "";
-      api_model = vlmApiModel != "" ? vlmApiModel : "";
+      api_url = vlmApiUrl !== "" ? vlmApiUrl : "";
+      api_key = vlmApiKey !== "" ? vlmApiKey : "";
+      api_model = vlmApiModel !== "" ? vlmApiModel : "";
     }
   }
 
@@ -140,17 +141,10 @@ ${value.requirements.join("\n")}`
   console.log("Using this API Key: ", api_key);
   console.log("Using this API Model: ", api_model);
 
-  if (api_url == "" || api_key == "" || api_model == "") {
-    const missingSettingsText = "The following settings are missing: " +
-      (api_url == "" ? "api_url " : "") +
-      (api_key == "" ? "api_key " : "") +
-      (api_model == "" ? "api_model " : "") +
-      ". The current generation mode is: " +
-      (isImageInMessages ? "VLM" : "LLM") +
-      ". The current correction mode is: " +
-      (isCorrectionInLastMessage
+  if (api_url === "" || api_key === "" || api_model === "") {
+    const missingSettingsText = `The following settings are missing: ${api_url === "" ? "api_url " : ""}${api_key === "" ? "api_key " : ""}${api_model === "" ? "api_model " : ""}. The current generation mode is: ${isImageInMessages ? "VLM" : "LLM"}. The current correction mode is: ${isCorrectionInLastMessage
         ? "Running with correction"
-        : "Running without correction");
+        : "Running without correction"}`;
     return new Response(missingSettingsText, { status: 400 });
   }
 

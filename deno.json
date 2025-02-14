@@ -4,7 +4,7 @@
     "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
     "cli": "echo \"import '\\$fresh/src/dev/cli.ts'\" | deno run --unstable -A -",
     "manifest": "deno task cli manifest $(pwd)",
-    "start": "deno run -A  --watch=routes/ dev.ts",
+    "start": "deno run -A --watch=routes/ dev.ts",
     "build": "deno run -A dev.ts build",
     "build:audio-button": "deno run -A build-audio-button.ts",
     "preview": "deno run -A main.ts",
@@ -15,6 +15,9 @@
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
     "cytoscape": "npm:cytoscape@^3.31.0",
+    "cytoscape-automove": "npm:cytoscape-automove@^1.10.3",
+    "ioredis": "npm:ioredis@^5.5.0",
+    "keydb": "npm:keydb@^0.1.10",
     "preact": "https://esm.sh/preact@10.22.0",
     "preact/": "https://esm.sh/preact@10.22.0/",
     "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
@@ -23,8 +26,12 @@
     "tailwindcss": "npm:tailwindcss@3.4.1",
     "tailwindcss/": "npm:/tailwindcss@3.4.1/",
     "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
-    "$std/": "https://deno.land/std@0.216.0/"
+    "$std/": "https://deno.land/std@0.216.0/",
+    "zod": "npm:zod@^3.24.1"
   },
-  "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "preact" },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
   "nodeModulesDir": "auto"
 }

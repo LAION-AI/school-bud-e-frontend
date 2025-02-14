@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { Game } from "../components/Game.tsx";
 import { Graph } from "../components/Graph.tsx";
+import { createGraph, saveCurrentGraph, saveGraph } from "../components/graph/store.ts";
 
 interface WebResult {
   title: string;
@@ -17,6 +18,8 @@ export interface GraphNode {
   item: string;
   childItems?: string[];
   connections?: Connection[];
+  position?: { x: number; y: number };
+  image?: string;
 }
 
 type SidebarData =
@@ -87,10 +90,13 @@ function buildDrilldownGraph(
 export default function RightSidebar({ data }: RightSidebarProps) {
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const collapsed = urlParams.get("rcollapsed");
-    console.log(location.search)
-    return collapsed === "true";
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const collapsed = urlParams.get("rcollapsed");
+      console.log(window.location.search);
+      return collapsed === "true";
+    }
+    return false;
   });
 
   useEffect(() => {
@@ -208,6 +214,10 @@ export default function RightSidebar({ data }: RightSidebarProps) {
     }
   };
 
+  // Most significant node. Use for saving
+  const mostSignificantNode = graphElements?.[0]?.data?.label;
+  const lastGraph = data?.[data.length - 1];
+
   return (
     <>
       <button
@@ -228,22 +238,33 @@ export default function RightSidebar({ data }: RightSidebarProps) {
           />
         </svg>
       </button>
-      <div class={`bg-savanna border-l h-full flex flex-col  transition-all ${isCollapsed  ? 'w-0 overflow-hidden': 'w-[40vw]'}`}>
+      <div class={`bg-surface border-l h-full flex flex-col  transition-all ${isCollapsed  ? 'w-0 overflow-hidden': 'w-[40vw]'}`}>
         <h3 class={"p-4 font-semibold border-b"}>Ergebnisse</h3>
         {/* Display all data elements */}
         {data?.map((item, dataIndex) => {
           // Skip rendering if the item has no results/items
-          if ((item.type === "webResults" && (!item.results || item.results.length === 0)) ||
-            (item.type === "graph" && (!item.items|| item.items.length === 0))) {
+          if (item.type === "webResults" && (!(item as { results?: WebResult[] }).results?.length)) {
             return null;
           }
+          if (item.type === "graph" && (!(item as { items?: GraphNode[] }).items?.length)) {
+            return null;
+          }
+
+          if (item.type === "graph") {
+            const graphItem = item as { type: "graph"; items?: GraphNode[] };
+            if (!graphItem.items || graphItem.items.length === 0) {
+              return null;
+            }
+          }
+
+
           return (
             <div key={dataIndex} class={"p-4"}>
               {/* Display web results if applicable */}
-              {item.type === "webResults" && (
+              {item.type === "webResults" && (item as { results?: WebResult[] }).results?.length > 0 && (
                 <div class="p-4 overflow-y-auto">
                   <div class="space-y-4">
-                    {(item.results ?? []).map((result, index) => (
+                    {(item as { results?: WebResult[] }).results?.map((result, index) => (
                       <div
                         key={index}
                         class="sidebar-item bg-white/50 p-4 rounded-lg border"
@@ -267,17 +288,17 @@ export default function RightSidebar({ data }: RightSidebarProps) {
               )}
 
               {/* Display game */}
-              {item.type === "game" && (
+              {item.type === "game" && (item as { gameUrl: string }).gameUrl && (
                 <div class="">
-                  <Game gameUrl={item?.content} />
+                  <Game gameUrl={(item as { gameUrl: string }).gameUrl} />
                 </div>
               )}
 
               {/* Display graph results */}
-              {item.type === "graph" && (
+              {item.type === "graph" && (item as { items?: GraphNode[] }).items && (
                 <>
                   <Graph
-                    graphData={item.items || []}
+                    graphData={(item as { items?: GraphNode[] }).items ?? []}
                     selectedNodeId={selectedNodeId}
                     onNodeSelect={setSelectedNodeId}
                     isRoot={!!currentDrilldown}
@@ -313,6 +334,17 @@ export default function RightSidebar({ data }: RightSidebarProps) {
                         >
                           Explore Quests
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            debugger;
+                            saveGraph(mostSignificantNode, lastGraph.items)
+                          }}
+                          class="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded"
+                        >
+                          Save Graph
+                        </button>
+                        
                       </div>
                     )}
                   </div>

@@ -1,5 +1,6 @@
 import { Handlers } from "$fresh/server.ts";
 import { join } from "https://deno.land/std@0.201.0/path/mod.ts";
+import KvStorage from "../../utils/kv_storage.ts"; // Modified import
 
 interface GameData {
   code: string;
@@ -19,6 +20,10 @@ interface SavedGamesData {
   games: SavedGame[];
 }
 
+// const savedGamesPath = join(Deno.cwd(), "static", "saved-games.json"); // No longer needed
+// const kvStorage = new KvStorage<SavedGamesData>(savedGamesPath); // No longer needed
+const kvStorage = new KvStorage(); // Initialize KvStorage without path
+
 export const handler: Handlers = {
   async PUT(req: Request) {
     try {
@@ -27,19 +32,14 @@ export const handler: Handlers = {
         return new Response(JSON.stringify({
           success: false,
           error: "Game ID is required"
-        }), { 
+        }), {
           status: 400,
           headers: { "Content-Type": "application/json" }
         });
       }
 
-      const savedGamesPath = join(Deno.cwd(), "static", "saved-games.json");
-      let savedGames: SavedGamesData;
-
-      try {
-        const savedGamesContent = await Deno.readTextFile(savedGamesPath);
-        savedGames = JSON.parse(savedGamesContent);
-      } catch (error) {
+      let savedGames: SavedGamesData | null = await kvStorage.read();
+      if (!savedGames) {
         return new Response(JSON.stringify({
           success: false,
           error: "Could not read saved games file"
@@ -69,7 +69,7 @@ export const handler: Handlers = {
       if (typeof payload.points === 'number') {
         savedGames.games[gameIndex].totalPoints += payload.points;
       }
-      await Deno.writeTextFile(savedGamesPath, JSON.stringify(savedGames, null, 2));
+      await kvStorage.write(savedGames);
 
       return new Response(JSON.stringify({
         success: true,
@@ -98,18 +98,9 @@ export const handler: Handlers = {
         return new Response("Invalid game data", { status: 400 });
       }
 
-      const savedGamesPath = join(Deno.cwd(), "static", "saved-games.json");
-      let savedGames: SavedGamesData;
-
-      try {
-        const savedGamesContent = await Deno.readTextFile(savedGamesPath);
-        savedGames = JSON.parse(savedGamesContent);
-      } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
-          savedGames = { games: [] };
-        } else {
-          throw error;
-        }
+      let savedGames: SavedGamesData | null = await kvStorage.read();
+      if (!savedGames) {
+        savedGames = { games: [] }; // Initialize if file doesn't exist or is empty
       }
 
       const newGame: SavedGame = {
@@ -121,7 +112,7 @@ export const handler: Handlers = {
       };
 
       savedGames.games.push(newGame);
-      await Deno.writeTextFile(savedGamesPath, JSON.stringify(savedGames, null, 2));
+      await kvStorage.write(savedGames);
 
       return new Response(JSON.stringify({
         success: true,
@@ -144,10 +135,14 @@ export const handler: Handlers = {
   },
   async GET(_req) {
     try {
-      const games = await Deno.readFile("static/saved-games.json");
-      const list = JSON.parse(new TextDecoder().decode(games));
-
-      return new Response(JSON.stringify(Object.values(list.games)), {
+      const savedGames = await kvStorage.read();
+      if (!savedGames || !savedGames.games) {
+        return new Response(JSON.stringify([]), { // Return empty array if no games
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+      return new Response(JSON.stringify(Object.values(savedGames.games)), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
@@ -155,35 +150,33 @@ export const handler: Handlers = {
       console.error("Error listing games:", error);
       return new Response(JSON.stringify({
         success: false,
-        error: error instanceof Error? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error)
       }), {
         status: 500,
         headers: { "Content-Type": "application/json" }
       });
     }
   },
-   async DELETE(req) {
+  async DELETE(req) {
     try {
       const url = new URL(req.url);
       const gameId = url.searchParams.get("id");
       if (!gameId) {
         return new Response("Invalid game ID", { status: 400 });
       }
-      const savedGamesPath = join(Deno.cwd(), "static", "saved-games.json"); 
-      let savedGames: SavedGamesData;
-      try {
-        const savedGamesContent = await Deno.readTextFile(savedGamesPath);
-        savedGames = JSON.parse(savedGamesContent);
-      } catch (error) {
-        if (error instanceof Deno.errors.NotFound) {
-          savedGames = { games: [] };
-        } else {
-          throw error;
-        }
+
+      let savedGames: SavedGamesData | null = await kvStorage.read();
+      if (!savedGames) {
+        return new Response(JSON.stringify({ success: false, error: "No games data found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" }
+        });
       }
+
       const updatedGames = savedGames.games.filter(game => game.id !== gameId);
       savedGames.games = updatedGames;
-      await Deno.writeTextFile(savedGamesPath, JSON.stringify(savedGames, null, 2));
+      await kvStorage.write(savedGames);
+
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { "Content-Type": "application/json" }
@@ -192,7 +185,7 @@ export const handler: Handlers = {
       console.error("Error deleting game:", error);
       return new Response(JSON.stringify({
         success: false,
-        error: error instanceof Error? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error)
       }), {
         status: 500,
         headers: { "Content-Type": "application/json" }

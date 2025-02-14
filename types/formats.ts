@@ -24,6 +24,7 @@ export interface GraphJson extends BaseFormat {
     childItems?: string;
     connections?: string;
   }>;
+  name?: string;
 }
 
 // Web result JSON format
@@ -158,3 +159,12 @@ export const isFlashcardsJson = (format: BaseFormat): format is FlashcardsJson =
 export const isGameJson = (format: BaseFormat): format is GameJson => {
   return format.type === 'game';
 };
+
+// SavedGame interface for Deno KV storage
+export interface SavedGame {
+  id: string;
+  code: string;
+  name: string;
+  points: number;
+  timestamp: string;
+}

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html, body {
-  background-color: #f4eecf;
+  @apply bg-surface overscroll-none;
 }
 
 #phaser-game > canvas {
