@@ -3,7 +3,6 @@ import cytoscape from "cytoscape";
 import { GraphNode } from "../../islands/RightSidebar.tsx";
 import * as graphStore from "./store.ts";
 import automove from "cytoscape-automove";
-import { getGameProgress } from "../games/store.ts";
 
 interface InteractiveGraphProps {
   height?: string;
@@ -71,7 +70,6 @@ export function InteractiveGraph({
   useEffect(() => {
     if (containerRef.current && graphStore.graphData.value?.items) {
       const elements = createGraphElements(graphStore.graphData.value.items);
-      cytoscape.use(automove);
       const cy = cytoscape({
         container: containerRef.current,
         maxZoom: 3,
@@ -185,21 +183,6 @@ export function InteractiveGraph({
           // Save the updated current graph
           graphStore.saveCurrentGraph();
         }
-      });
-
-      // Event listener for node drag start (automove)
-      cy.on("grab", "node", function (evt) {
-        const node = evt.target;
-        cy.automove({
-          nodesMatching: node.neighborhood().nodes(),
-          reposition: "drag",
-          dragWith: node,
-        });
-      });
-
-      // Event listener for node drag end (destroy automove)
-      cy.on("free", "node", function (evt) {
-        cy.automove("destroy");
       });
 
       // Handle node selection and Alt key events

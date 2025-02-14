@@ -41,17 +41,46 @@ export function saveGraphs() {
   localStorage.setItem("savedGraphs", JSON.stringify(graphsObj));
 }
 
-// Create a new graph
-export function createGraph(name: string) {
+
+export function saveGraph(name: string, items = []) {
+  if (!name || typeof name !== 'string') {
+    throw new Error('Graph name must be a non-empty string');
+  }
+
+  if (!Array.isArray(items)) {
+    throw new Error('Items must be an array');
+  }
+
   const newGraph: GraphJson = {
     type: "graph",
-    items: [],
-    name
+    items: [...items], // Create a copy to prevent mutation
+    name,
   };
+
   const id = crypto.randomUUID();
   graphs.value.set(id, newGraph);
   saveGraphs();
   return id;
+}
+
+// Create a new graph
+export function createGraph(name: string) {
+    return saveGraph(name, [])
+}
+
+// Delete a graph
+export function deleteGraph(id: string) {
+  if (currentGraphId.value === id) {
+    currentGraphId.value = null;
+    graphData.value = null;
+  }
+  graphs.value.delete(id);
+  // Remove from recent graphs if present
+  const existingIndex = recentGraphs.value.findIndex(g => g === graphs.value.get(id));
+  if (existingIndex !== -1) {
+    recentGraphs.value.splice(existingIndex, 1);
+  }
+  saveGraphs();
 }
 
 // Load a specific graph
