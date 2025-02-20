@@ -28,6 +28,7 @@
     "tailwindcss/": "npm:/tailwindcss@3.4.1/",
     "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
     "$std/": "https://deno.land/std@0.216.0/",
+    "tiktoken": "npm:tiktoken@^1.0.20",
     "zod": "npm:zod@^3.24.1"
   },
   "compilerOptions": {

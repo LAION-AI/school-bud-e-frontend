@@ -227,6 +227,7 @@ export const startStream = async (
                 lang: lang.value,
                 messages: [...previousMessages, ...messagesToSend],
                 universalApiKey: settings.value.universalApiKey,
+                universalShopApiKey: settings.value.universalShopApiKey ?? "",
                 llmApiUrl: settings.value.apiUrl,
                 llmApiKey: settings.value.apiKey,
                 llmApiModel: settings.value.apiModel,

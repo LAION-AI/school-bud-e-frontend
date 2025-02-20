@@ -3,7 +3,6 @@ import { chatIslandContent } from "../internalization/content.ts";
 import type { JSX } from 'preact';
 import RightSidebar from "../islands/RightSidebar.tsx";
 import { Message } from "./Message.tsx";
-import LogoHeader from "./core/LogoHeader.tsx";
 import { autoScroll, lang, messages, settings } from "./chat/store.ts";
 import ChatInput from "./chat/ChatInput.tsx";
 
@@ -18,14 +17,9 @@ interface ChatTemplateProps {
   messages: Message[];
   currentEditIndex: number;
   audioFileDict: AudioFileDict;
-  onSpeakAtGroupIndexAction: (groupIndex: number) => void;
   onRefreshAction: (groupIndex: number) => void;
   onEditAction: (groupIndex: number) => void;
-  onUploadActionToMessages: (uploadedMessages: Message[]) => void;
-  onImageChange: (images: Image[]) => void;
-  handleImagesUploaded: (images: Image[]) => void;
   children: JSX.Element | JSX.Element[];
-  resetTranscript: number;
 }
 
 function downloadAudioFiles(
@@ -78,7 +72,6 @@ function ChatTemplate(
     audioFileDict,
     onRefreshAction,
     onEditAction,
-    onSpeakAtGroupIndexAction,
     children,
   }: ChatTemplateProps
 ) {
@@ -159,7 +152,7 @@ function ChatTemplate(
                 audioFileDict={audioFileDict}
                 onEditAction={onEditAction}
                 onRefreshAction={onRefreshAction}
-                onSpeakAtGroupIndexAction={onSpeakAtGroupIndexAction}
+                onSpeakAtGroupIndexAction={() => {}}
                 onDownloadAudio={downloadAudioFiles}
               />
             ))}

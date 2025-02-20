@@ -10,9 +10,8 @@ import ChatWarning from "../components/Warning.tsx";
 import { useEffect, useState } from "preact/hooks";
 
 // // Import necessary types from Preact
-import Sidebar from "./Sidebar.tsx";
 import { getTTS, readAlways, stopList } from "../components/chat/speech.ts";
-import { autoScroll, chatSuffix, currentEditIndex, deleteAllChats, handleRefreshAction, messages, saveChatsToLocalFile, startNewChat } from "../components/chat/store.ts";
+import { chatSuffix, currentEditIndex, handleRefreshAction, messages } from "../components/chat/store.ts";
 
 // ###############
 // ## / IMPORTS ##
@@ -33,9 +32,6 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // dictionary containg audio files for each groupIndex for the current chat
   const [audioFileDict, setAudioFileDict] = useState<AudioFileDict>({});
-
-  // used for STT in VoiceRecordButton
-  const [resetTranscript, setResetTranscript] = useState(0);
 
   // General settings
   const [isStreamComplete, setIsStreamComplete] = useState(true);
@@ -90,7 +86,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
   useEffect(() => {
     if (!readAlways) return;
 
-    Object.entries(audioFileDict).forEach(([groupIndex, groupAudios]) => {
+    for (const [groupIndex, groupAudios] of Object.entries(audioFileDict)) {
       const nextUnplayedIndex = findNextUnplayedAudio(groupAudios);
 
       if (nextUnplayedIndex === null) return;
@@ -118,14 +114,14 @@ export default function ChatIsland({ lang }: { lang: string }) {
       }
 
       if (stopList.value.includes(Number(groupIndex))) {
-        (Object.values(groupAudios) as AudioItem[]).forEach((item) => {
+        for (const item of Object.values(groupAudios) as AudioItem[]) {
           if (!(item as AudioItem).audio.paused) {
             (item as AudioItem).audio.pause();
             (item as AudioItem).audio.currentTime = 0;
           }
-        });
+        }
       }
-    });
+    };
   }, [audioFileDict, readAlways, stopList.value]);
 
   // Helper functions for audio playback
@@ -174,25 +170,12 @@ export default function ChatIsland({ lang }: { lang: string }) {
   // MAIN CONTENT THAT IS RENDERED
   return (
     <div class="grid grid-cols-[auto_1fr_auto] w-full h-screen">
-      {/* <Sidebar
-        currentChatSuffix={chatSuffix.value}
-        onChatSelect={(suffix) => chatSuffix.value = (suffix)}
-        onDownloadChat={saveChatsToLocalFile}
-        onNewChat={startNewChat}
-        lang={lang}
-        onDeleteAllChats={deleteAllChats}
-      /> */}
       <ChatTemplate
         messages={messages.value}
         currentEditIndex={currentEditIndex.value}
         audioFileDict={audioFileDict}
         onRefreshAction={handleRefreshAction}
         onEditAction={() => { }}
-        onSpeakAtGroupIndexAction={() => { }}
-        onImageChange={() => { }}
-        handleImagesUploaded={() => { }}
-        onUploadActionToMessages={() => { }}
-        resetTranscript={resetTranscript}
       >
         <ChatWarning lang={lang} />
       </ChatTemplate>

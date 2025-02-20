@@ -1,5 +1,6 @@
 import type { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
+import tiktoken from "tiktoken";
 
 import { chatContent } from "../../internalization/content.ts";
 import replacePDFWithMarkdownInMessages from "../../utils/pdfToMarkdown.ts";
@@ -11,6 +12,88 @@ const API_IMAGE_URL = Deno.env.get("VLM_URL") || "";
 const API_IMAGE_KEY = Deno.env.get("VLM_KEY") || "";
 const API_IMAGE_MODEL = Deno.env.get("VLM_MODEL") || "";
 const API_IMAGE_CORRECTION_MODEL = Deno.env.get("VLM_CORRECTION_MODEL") || "";
+const SHOP_API_URL = "http://localhost:3000";
+
+async function deductOutputTokens(
+  response: string,
+  universalShopApiKey: string,
+) {
+  const encoder = await tiktoken.get_encoding("cl100k_base");
+  const tokens = encoder.encode(response).length;
+  console.log("tokens", tokens);
+  try {
+    const res = await fetch(
+      `${SHOP_API_URL}/token-usage/deduct-output-token-usage`,
+      {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        key: universalShopApiKey,
+        tokens: tokens,
+        model: "gemini-1.5-flash",
+      }),
+    },
+    );
+  } catch (error) {
+    console.error("Error deducting output tokens:", error);
+  }
+}
+
+async function deductInputTokens(
+  messages: Message[],
+  universalShopApiKey: string,
+) {
+  const tokens = await countTokens(messages);
+  const response = await fetch(
+    `${SHOP_API_URL}/token-usage/deduct-input-token-usage`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        key: universalShopApiKey,
+        tokens: tokens,
+        model: "gemini-1.5-flash",
+      }),
+    },
+  );
+  console.log("response", response);
+
+  const data = await response.json();
+  console.log("data", data);
+  return {
+    endpoint: data.endpoint,
+    apiKey: data.apiKey,
+    model: data.model,
+  };
+}
+
+async function countTokens(messages: Message[]) {
+  const encoder = await tiktoken.get_encoding("cl100k_base");
+
+  const tokensPerMessage = 3; // Base tokens per message
+  const tokensPerName = 1; // Additional token if 'name' property exists
+  let totalTokens = 0;
+
+  for (const message of messages) {
+    totalTokens += tokensPerMessage;
+    if ("content" in message) {
+      totalTokens += encoder.encode(message.content).length;
+    }
+    if ("role" in message) {
+      totalTokens += encoder.encode(message.role).length;
+    }
+    if ("name" in message && typeof message.name === "string") {
+      totalTokens += encoder.encode(message.name).length;
+      totalTokens += tokensPerName;
+    }
+  }
+  totalTokens += 3; // Every reply is primed with <|start|>assistant<|message|>
+  return totalTokens;
+}
 
 // Definiere das Message-Interface
 interface Message {
@@ -19,17 +102,33 @@ interface Message {
 }
 
 async function getModelResponseStream(
-  messages: Message[],
-  lang: string,
-  universalApiKey: string,
-  llmApiUrl: string,
-  llmApiKey: string,
-  llmApiModel: string,
-  systemPrompt: string,
-  vlmApiUrl: string,
-  vlmApiKey: string,
-  vlmApiModel: string,
-  vlmCorrectionModel: string,
+  {
+    messages,
+    lang,
+    universalShopApiKey,
+    universalApiKey,
+    llmApiUrl,
+    llmApiKey,
+    llmApiModel,
+    systemPrompt,
+    vlmApiUrl,
+    vlmApiKey,
+    vlmApiModel,
+    vlmCorrectionModel,
+  }: {
+    messages: Message[];
+    lang: string;
+    universalShopApiKey: string;
+    universalApiKey: string;
+    llmApiUrl: string;
+    llmApiKey: string;
+    llmApiModel: string;
+    systemPrompt: string;
+    vlmApiUrl: string;
+    vlmApiKey: string;
+    vlmApiModel: string;
+    vlmCorrectionModel: string;
+  },
 ) {
   console.log(systemPrompt);
   if (universalApiKey !== "" && !universalApiKey.startsWith("sbe-")) {
@@ -86,7 +185,6 @@ ${value.requirements.join("\n")}`
   // Searches for a PDF in the messages and converts it to markdown text.
   const pdfConversionError = await replacePDFWithMarkdownInMessages(messages);
 
-
   // Prüfe, ob Bildinhalte in den Nachrichten vorkommen
   const isImageInMessages = messages.some((message) => {
     if (Array.isArray(message.content)) {
@@ -111,6 +209,7 @@ ${value.requirements.join("\n")}`
   if (isCorrectionInLastMessage) {
     api_model = "";
   }
+  console.log("universalShopApiKey", universalShopApiKey);
 
   if (universalApiKey !== "" && universalApiKey.startsWith("sbe-")) {
     api_url = llmApiUrl !== "" ? llmApiUrl : API_URL;
@@ -126,10 +225,25 @@ ${value.requirements.join("\n")}`
         ? vlmCorrectionModel
         : API_IMAGE_CORRECTION_MODEL;
     }
+  } else if (universalShopApiKey !== "") {
+    const { endpoint, apiKey, model } = await deductInputTokens(
+      messages,
+      universalShopApiKey,
+    );
+    api_url = endpoint;
+    api_key = apiKey;
+    api_model = model;
+
+    if (isImageInMessages) {
+      api_url = vlmApiUrl !== "" ? vlmApiUrl : API_IMAGE_URL;
+      api_key = vlmApiKey !== "" ? vlmApiKey : API_IMAGE_KEY;
+      api_model = vlmApiModel !== "" ? vlmApiModel : API_IMAGE_MODEL;
+    }
   } else {
     api_url = llmApiUrl !== "" ? llmApiUrl : "";
     api_key = llmApiKey !== "" ? llmApiKey : "";
     api_model = llmApiModel !== "" ? llmApiModel : "";
+
     if (isImageInMessages) {
       api_url = vlmApiUrl !== "" ? vlmApiUrl : "";
       api_key = vlmApiKey !== "" ? vlmApiKey : "";
@@ -142,9 +256,17 @@ ${value.requirements.join("\n")}`
   console.log("Using this API Model: ", api_model);
 
   if (api_url === "" || api_key === "" || api_model === "") {
-    const missingSettingsText = `The following settings are missing: ${api_url === "" ? "api_url " : ""}${api_key === "" ? "api_key " : ""}${api_model === "" ? "api_model " : ""}. The current generation mode is: ${isImageInMessages ? "VLM" : "LLM"}. The current correction mode is: ${isCorrectionInLastMessage
+    const missingSettingsText = `The following settings are missing: ${
+      api_url === "" ? "api_url " : ""
+    }${api_key === "" ? "api_key " : ""}${
+      api_model === "" ? "api_model " : ""
+    }. The current generation mode is: ${
+      isImageInMessages ? "VLM" : "LLM"
+    }. The current correction mode is: ${
+      isCorrectionInLastMessage
         ? "Running with correction"
-        : "Running without correction"}`;
+        : "Running without correction"
+    }`;
     return new Response(missingSettingsText, { status: 400 });
   }
 
@@ -173,6 +295,7 @@ ${value.requirements.join("\n")}`
   const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let entireResponse = "";
 
   return new Response(
     new ReadableStream({
@@ -195,7 +318,7 @@ ${value.requirements.join("\n")}`
             const lines = buffer.split("\n");
             buffer = lines.pop() || "";
 
-            lines.forEach(async (line: string) => {
+            for (const line of lines) {
               if (line.startsWith("data: ") && line !== "data: [DONE]") {
                 const jsonStr = line.substring(5); // Passe dies ggf. an die API-Antwort an
                 try {
@@ -209,8 +332,8 @@ ${value.requirements.join("\n")}`
                       console.log("End of model response!");
                       controller.close();
                     } else {
+                      entireResponse += data.choices[0].delta.content;
                       const content = data.choices[0].delta.content;
-
                       // Sende den regulären Chattext
                       controller.enqueue({
                         data: JSON.stringify(content),
@@ -219,14 +342,15 @@ ${value.requirements.join("\n")}`
                       });
                     }
                   }
-                } catch (error: Error | unknown) {
+                } catch (error) {
                   console.error("Error parsing JSON:", error, jsonStr);
                 }
               } else if (line === "data: [DONE]") {
                 console.log("Closing controller!");
                 controller.close();
+                deductOutputTokens(entireResponse, universalShopApiKey);
               }
-            });
+            }
           }
         } catch (_error) {
           controller.close();
@@ -273,17 +397,20 @@ export const handler: Handlers = {
     const payload = await req.json();
 
     return getModelResponseStream(
-      payload.messages,
-      payload.lang,
-      payload.universalApiKey,
-      payload.llmApiUrl,
-      payload.llmApiKey,
-      payload.llmApiModel,
-      payload.systemPrompt,
-      payload.vlmApiUrl,
-      payload.vlmApiKey,
-      payload.vlmApiModel,
-      payload.vlmCorrectionModel,
+      {
+        messages: payload.messages,
+        lang: payload.lang,
+        universalShopApiKey: payload.universalApiKey,
+        universalApiKey: payload.universalShopApiKey,
+        llmApiUrl: payload.llmApiUrl,
+        llmApiKey: payload.llmApiKey,
+        llmApiModel: payload.llmApiModel,
+        systemPrompt: payload.systemPrompt,
+        vlmApiUrl: payload.vlmApiUrl,
+        vlmApiKey: payload.vlmApiKey,
+        vlmApiModel: payload.vlmApiModel,
+        vlmCorrectionModel: payload.vlmCorrectionModel,
+      },
     );
   },
 };

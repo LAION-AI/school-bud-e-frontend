@@ -3,14 +3,12 @@ import { useComputed } from "@preact/signals";
 import {
 	SidebarCloseIcon,
 	X,
-	Trash2,
 	Download,
 	Settings as SettingsIcon,
 	GamepadIcon,
 	BookOpen,
 	User,
 	ChevronDown,
-	Graph,
 } from "lucide-preact";
 import Settings from "../components/Settings.tsx";
 import { chats, deleteChat } from "../components/chat/store.ts";
@@ -52,7 +50,6 @@ export default function Sidebar({
 		console.log(value);
 		return value;
 	});
-	
 
 	return (
 		<div
@@ -204,6 +201,16 @@ export default function Sidebar({
 							);
 						})}
 				</div>
+			</div>
+			<div class="p-4 border-t space-y-2">
+			<div class={"flex items-center rounded-md group border"}>
+				<a
+					href={"/video-novel"}
+					class="sidebar-button w-full px-3 py-2 text-left truncate"
+				>
+					Video Novel
+				</a>
+			</div>
 			</div>
 
 			<div class="p-4 border-t space-y-2">

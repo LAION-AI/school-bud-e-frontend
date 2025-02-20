@@ -1,6 +1,7 @@
-import ChatAgreementOrIsland from "../islands/ChatAgreementOrIsland.tsx";
+import Header from "../islands/Header.tsx";
+import VideoNovelIsland from "../islands/VideoNovelIsland.tsx";
 
-export default function Home(req: Request) {
+export default function VideoNovel(req: Request) {
   const url = new URL(req.url);
   const lang = url.searchParams.get("lang") as string !== undefined &&
     url.searchParams.get("lang") !== null
@@ -22,7 +23,7 @@ export default function Home(req: Request) {
               backgroundRepeat: "no-repeat",
             }}
           >
-            <ChatAgreementOrIsland lang={lang as string} />
+            <VideoNovelIsland lang={lang as string} />
           </div>
         </div>
       </div>
