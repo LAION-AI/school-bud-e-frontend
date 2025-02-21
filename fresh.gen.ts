@@ -18,17 +18,18 @@ import * as $api_wikipedia from "./routes/api/wikipedia.ts";
 import * as $chat_id_ from "./routes/chat/[id].tsx";
 import * as $demo from "./routes/demo.tsx";
 import * as $games_id_ from "./routes/games/[id].tsx";
+import * as $games_list from "./routes/games/list.tsx";
 import * as $graph_name_ from "./routes/graph/[name].tsx";
 import * as $graph_list from "./routes/graph/list.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $lernpfade from "./routes/lernpfade.tsx";
 import * as $profile from "./routes/profile.tsx";
-import * as $saved_games from "./routes/saved-games.tsx";
 import * as $video_novel from "./routes/video-novel.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $GameDetail from "./islands/GameDetail.tsx";
+import * as $GamesList from "./islands/GamesList.tsx";
 import * as $GraphList from "./islands/GraphList.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $LearningPathsGraph from "./islands/LearningPathsGraph.tsx";
@@ -38,7 +39,6 @@ import * as $RightSidebar from "./islands/RightSidebar.tsx";
 import * as $Sidebar from "./islands/Sidebar.tsx";
 import * as $UserProfile from "./islands/UserProfile.tsx";
 import * as $VideoNovelIsland from "./islands/VideoNovelIsland.tsx";
-import * as $saved_games_1 from "./islands/saved-games.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -59,12 +59,12 @@ const manifest = {
     "./routes/chat/[id].tsx": $chat_id_,
     "./routes/demo.tsx": $demo,
     "./routes/games/[id].tsx": $games_id_,
+    "./routes/games/list.tsx": $games_list,
     "./routes/graph/[name].tsx": $graph_name_,
     "./routes/graph/list.tsx": $graph_list,
     "./routes/index.tsx": $index,
     "./routes/lernpfade.tsx": $lernpfade,
     "./routes/profile.tsx": $profile,
-    "./routes/saved-games.tsx": $saved_games,
     "./routes/video-novel.tsx": $video_novel,
   },
   islands: {
@@ -72,6 +72,7 @@ const manifest = {
     "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/GameDetail.tsx": $GameDetail,
+    "./islands/GamesList.tsx": $GamesList,
     "./islands/GraphList.tsx": $GraphList,
     "./islands/Header.tsx": $Header,
     "./islands/LearningPathsGraph.tsx": $LearningPathsGraph,
@@ -81,7 +82,6 @@ const manifest = {
     "./islands/Sidebar.tsx": $Sidebar,
     "./islands/UserProfile.tsx": $UserProfile,
     "./islands/VideoNovelIsland.tsx": $VideoNovelIsland,
-    "./islands/saved-games.tsx": $saved_games_1,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

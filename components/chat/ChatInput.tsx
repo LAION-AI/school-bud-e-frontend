@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { isApiConfigured, lang, query, settings } from "../chat/store.ts";
+import { isApiConfigured, lang, query, settings, addMessage } from "../chat/store.ts";
 import { startStream } from "../chat/stream.ts";
 import { chatIslandContent } from "../../internalization/content.ts";
 import ImageUploadButton from "../ImageUploadButton.tsx";
@@ -7,8 +7,22 @@ import VoiceRecordButton from "../VoiceRecordButton.tsx";
 import { resetTranscript } from "./speech.ts";
 import { ChatSubmitButton } from "../ChatSubmitButton.tsx";
 
+function TypingIndicator() {
+    return (
+        <div className="flex items-center space-x-2 px-4 py-2">
+            <div className="flex space-x-1">
+                <div className="h-2 w-2 rounded-full bg-gray-400 animate-[bounce_1.4s_infinite_.2s]" />
+                <div className="h-2 w-2 rounded-full bg-gray-400 animate-[bounce_1.4s_infinite_.4s]" />
+                <div className="h-2 w-2 rounded-full bg-gray-400 animate-[bounce_1.4s_infinite_.6s]" />
+            </div>
+            <span className="text-sm text-gray-500">AI is thinking...</span>
+        </div>
+    );
+}
+
 function ChatInput() {
     const files = useSignal<(Image | File)[]>([]);
+    const isThinking = useSignal(false);
 
     const deleteImage = (event: MouseEvent) => {
         const target = event.target as HTMLImageElement;
@@ -20,12 +34,45 @@ function ChatInput() {
         files.value = [...files.value, ...newFiles];
     };
 
+    const handleStartStream = async (text = "", transcription?: string) => {
+        isThinking.value = true;
+        try {
+            await startStream(text, transcription, files.value);
+        } catch (error: unknown) {
+            // Format error message
+            let errorMessage = "An unknown error occurred while processing your request.";
+            
+            if (error instanceof Error) {
+                // Extract meaningful message from HTML response if present
+                const htmlMatch = error.message.match(/<title>(.*?)<\/title>/);
+                if (htmlMatch) {
+                    errorMessage = htmlMatch[1];
+                } else {
+                    // Clean up the backend error message
+                    const cleanMessage = error.message
+                        .replace(/\*\*BACKEND ERROR\*\*\n?/g, '')
+                        .replace(/Statuscode: \d+\n?/g, '')
+                        .replace(/Message: /g, '')
+                        .trim();
+                    errorMessage = cleanMessage || error.message;
+                }
+            }
+
+            // Add error message to chat
+            addMessage({
+                role: "assistant",
+                content: `❌ **Error**: ${errorMessage}`
+            });
+        } finally {
+            isThinking.value = false;
+        }
+    };
 
     return (
         <>
             <div class={"max-w-xl w-full mx-auto relative"}>
                 {files.value.length > 0 && (
-                    <div class="w-full flex justify-center">
+                    <div class="w-full flex justify-center shadow">
                         <div class="p-2 flex flex-wrap max-w-xs gap-8">
                             {files.value.filter((item) => 'image_url' in item).map((image, index) => (
                                 <img
@@ -48,9 +95,10 @@ function ChatInput() {
                         </div>
                     </div>
                 )}
-                <div className="flex cursor-text flex-col rounded-3xl border border-token-border-light px-3 py-1 shadow-[0_9px_9px_0px_rgba(0,0,0,0.01),_0_2px_5px_0px_rgba(0,0,0,0.06)] transition-colors contain-inline-size dark:border-none dark:shadow-none bg-main-surface-primary bg-white mx-4 mb-4">
+                {isThinking.value && <TypingIndicator />}
+                <div className="shadow-lg flex cursor-text flex-col rounded-3xl border border-token-border-light px-3 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-colors contain-inline-size bg-main-surface-primary bg-white mx-4 mb-4">
                     <textarea
-                        disabled={!isApiConfigured.value}
+                        disabled={!isApiConfigured.value || isThinking.value}
                         type="text"
                         value={query}
                         placeholder={chatIslandContent[lang.value]["placeholderText"]}
@@ -61,7 +109,7 @@ function ChatInput() {
                         onKeyPress={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
                                 e.preventDefault(); // Prevents adding a new line in the textarea
-                                startStream("", undefined, files.value);
+                                handleStartStream();
                             }
                         }}
                         class="block h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-token-text-primary placeholder:text-token-text-secondary focus-visible:outline-none"
@@ -79,7 +127,7 @@ function ChatInput() {
                                 sttKey={settings.value.sttKey}
                                 sttModel={settings.value.sttModel}
                                 onFinishRecording={(finalTranscript) => {
-                                    startStream(finalTranscript, undefined, files.value).then(() => files.input = []);
+                                    handleStartStream("", finalTranscript);
                                 }}
                                 onInterimTranscript={(interimTranscript) => {
                                     query.value = (query.value + " " + interimTranscript);
@@ -88,8 +136,8 @@ function ChatInput() {
                         </span>
 
                         <ChatSubmitButton
-                            onMouseDown={() => startStream("", undefined, files.value).then(() => files.input = [])}
-                            disabled={!query.value || !isApiConfigured}
+                            onMouseDown={() => handleStartStream()}
+                            disabled={!query.value || !isApiConfigured.value || isThinking.value}
                         />
                     </div>
                 </div>

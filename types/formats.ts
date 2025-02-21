@@ -1,5 +1,46 @@
 // Format configuration interfaces and types
 
+export interface Game {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VideoNovelSegment {
+  id: string;
+  type: 'text' | 'image';
+  content: string;
+  speaker?: string;
+  emotion?: string;
+  order: number;
+}
+
+export interface EditSession {
+  originalHash: string;
+  editHash: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  completedAt?: string;
+  error?: string;
+}
+
+// SavedGame interface for Deno KV storage
+export interface SavedGame {
+  id: string;
+  code: string;
+  name: string;
+  points: number;
+  timestamp: string;
+}
+
+// Collection of saved games
+export interface SavedGamesData {
+  games: SavedGame[];
+}
+
 // Base interface for all format types
 export interface BaseFormat {
   type: string;
@@ -167,4 +208,9 @@ export interface SavedGame {
   name: string;
   points: number;
   timestamp: string;
+}
+
+// Collection of saved games
+export interface SavedGamesData {
+  games: SavedGame[];
 }

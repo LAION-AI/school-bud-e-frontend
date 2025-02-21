@@ -1,6 +1,7 @@
 import type { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
 import tiktoken from "tiktoken";
+import { formatTemplates } from "../../types/formats.ts";
 
 import { chatContent } from "../../internalization/content.ts";
 import replacePDFWithMarkdownInMessages from "../../utils/pdfToMarkdown.ts";
@@ -160,7 +161,6 @@ async function getModelResponseStream(
   }
 
   // Füge Anweisungen hinzu, damit die KI, wenn möglich, die strukturierte JSON-Antwort generiert
-  const { formatTemplates } = await import("../../types/formats.ts");
   const jsonInstruction = `
 If you have additional structured data to provide (such as search results, graph data, flashcards, or game content), please include a JSON object in your response with one of the following structures:
 

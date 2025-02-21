@@ -62,7 +62,7 @@ export default function GamesSection({ isCollapsed }: { isCollapsed: boolean }) 
                   >
                     <div class="flex items-center justify-between">
                       <span class="truncate">{game.name}</span>
-                      <span class="text-xs text-gray-500 ml-2">{game.totalPoints}p</span>
+                      <span class="text-xs text-gray-500 ml-2">{game.points}p</span>
                     </div>
                   </a>
                   <button

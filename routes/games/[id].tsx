@@ -1,21 +1,44 @@
+import { Handlers, PageProps } from "$fresh/server.ts";
 import GameDetail from "../../islands/GameDetail.tsx";
+import { Game } from "../../types/formats.ts";
 
-interface SavedGame {
-  id: string;
-  name: string;
-  code: string;
-  timestamp: string;
-  totalPoints: number;
+interface Data {
+  game: Game | null;
 }
 
-export default async function GameDetailRoute(req) {
-  let id = '';
-  try {
-    const url = new URL(req.url);
-    id = url.searchParams.get("id") || "343b3e02-d9f7-43e0-80db-abd6c517e295"
-  } catch {}
+export const handler: Handlers<Data> = {
+  async GET(_req, ctx) {
+    const id = ctx.params.id;
+    try {
+      const game = await fetchGame(id);
+      return ctx.render({ game });
+    } catch (err) {
+      return ctx.render({ game: null });
+    }
+  },
+};
+
+async function fetchGame(id: string): Promise<Game> {
+  // In a real app, fetch from your database
+  return {
+    id,
+    title: "Sample Game",
+    description: "This is a sample game",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
+export default function GamePage(props: PageProps<Data>) {
+  const { game } = props.data;
+  
+  if (!game) {
+    return <div>Game not found</div>;
+  }
 
   return (
-    <GameDetail id={id} />
+    <div>
+      <GameDetail id={game.id} initialGame={game} />
+    </div>
   );
 }

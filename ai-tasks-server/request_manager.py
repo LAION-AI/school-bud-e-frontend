@@ -1,23 +1,100 @@
 from fastapi import Request
 import asyncio
 import atexit
+import uuid
+import hashlib
+import json
+import os
+from datetime import datetime
+from typing import Dict, Optional
+
+class EditSession:
+    def __init__(self, original_hash: str, edit_hash: str):
+        self.original_hash = original_hash
+        self.edit_hash = edit_hash
+        self.status = "pending"  # pending, processing, completed, failed
+        self.created_at = datetime.now().isoformat()
+        self.completed_at: Optional[str] = None
+        self.error: Optional[str] = None
+
+    def to_dict(self):
+        return {
+            "original_hash": self.original_hash,
+            "edit_hash": self.edit_hash,
+            "status": self.status,
+            "created_at": self.created_at,
+            "completed_at": self.completed_at,
+            "error": self.error
+        }
+
+class SessionManager:
+    def __init__(self):
+        self.sessions: Dict[str, EditSession] = {}
+        self._load_sessions()
+
+    def create_session(self, original_hash: str) -> EditSession:
+        """Create a new edit session"""
+        edit_hash = self.generate_hash(original_hash)
+        session = EditSession(original_hash, edit_hash)
+        self.sessions[edit_hash] = session
+        self._save_sessions()
+        return session
+
+    def get_session(self, edit_hash: str) -> Optional[EditSession]:
+        """Get session by edit hash"""
+        return self.sessions.get(edit_hash)
+
+    def update_session_status(self, edit_hash: str, status: str, error: Optional[str] = None):
+        """Update session status"""
+        if session := self.sessions.get(edit_hash):
+            session.status = status
+            if status in ["completed", "failed"]:
+                session.completed_at = datetime.now().isoformat()
+            if error:
+                session.error = error
+            self._save_sessions()
+
+    def generate_hash(self, original_hash: str) -> str:
+        """Generate a unique hash for the edit session"""
+        unique_id = f"{original_hash}_{uuid.uuid4()}"
+        hash_obj = hashlib.sha256(unique_id.encode())
+        return hash_obj.hexdigest()
+
+    def _save_sessions(self):
+        """Save sessions to disk"""
+        sessions_data = {
+            hash_: session.to_dict() 
+            for hash_, session in self.sessions.items()
+        }
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        with open(os.path.join(current_dir, "sessions.json"), "w") as f:
+            json.dump(sessions_data, f, indent=2)
+
+    def _load_sessions(self):
+        """Load sessions from disk"""
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        try:
+            with open(os.path.join(current_dir, "sessions.json"), "r") as f:
+                sessions_data = json.load(f)
+                for hash_, data in sessions_data.items():
+                    session = EditSession(data["original_hash"], hash_)
+                    session.status = data["status"]
+                    session.created_at = data["created_at"]
+                    session.completed_at = data.get("completed_at")
+                    session.error = data.get("error")
+                    self.sessions[hash_] = session
+        except FileNotFoundError:
+            pass
 
 def unique_hash():
-    return 'hash2'
-    import uuid
-    import hashlib
-    
-    # Generate a unique UUID
+    """Generate a unique hash for new story requests"""
     unique_id = str(uuid.uuid4())
-    
-    # Create SHA-256 hash of the UUID
     hash_obj = hashlib.sha256(unique_id.encode())
-    hash_str = hash_obj.hexdigest()
-    
-    return hash_str
+    return hash_obj.hexdigest()
 
 class RequestLogger:
     _active_loggers = set()
+    session_manager = SessionManager()
 
     def __init__(self, request_obj: Request):
         """
@@ -38,6 +115,7 @@ class RequestLogger:
         Args:
             type_name (str): Type of data being streamed
             data: Content to stream
+            order (Optional[int]): Order of the segment
         """
         self._stream_queue.append({
             'type': type_name,
