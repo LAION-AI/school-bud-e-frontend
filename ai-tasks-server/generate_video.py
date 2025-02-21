@@ -431,7 +431,7 @@ def generate_video_logic(prompt, hash_dir, request_logger: RequestLogger):
                         print('text+++++++++++++++++++++++++++++++')
                         tts_dict[result_order] = result_path
                         # request_logger.log('file', result_path)
-                        request_logger.log('file', f'/segments/hash2/segment_{order}.mp3')
+                        request_logger.log('file', f'/segments/hash2/segment_{order}.mp3', order=order)
                         sorted_segs.append(seg)
                 except Exception as e:
                     print(f"Error in TTS callback for segment {order}: {e}")
@@ -441,7 +441,7 @@ def generate_video_logic(prompt, hash_dir, request_logger: RequestLogger):
                     img_url = fut.result()
                     if img_url:
                         print('image---------------------')
-                        request_logger.log('file', img_url)
+                        request_logger.log('file', img_url, order=order)
                         seg['image_url'] = img_url
                         sorted_segs.append(seg)
                 except Exception as e:
@@ -549,7 +549,19 @@ def generate_video_logic(prompt, hash_dir, request_logger: RequestLogger):
                     tts_future = executor.submit(generate_tts_segment, text_seg, tts_request, out_path)
                     tts_future.add_done_callback(lambda fut, order=text_seg["order"], seg=text_seg: tts_callback(fut, order, seg))
 
-        print("\nAll segments displayed in order (manual playback).")
+        # Ensure all segments are in correct order before completion
+        sorted_segs.sort(key=lambda x: x["order"])
+        
+        # Log segments in order
+        for seg in sorted_segs:
+            if seg["type"] == "text":
+                request_logger.log('file', f'/segments/hash2/segment_{seg["order"]}.mp3', order=seg["order"])
+            elif seg["type"] == "image":
+                request_logger.log('file', seg['image_url'], order=seg["order"])
+        
+        print("\nAll segments displayed in order.")
+        # Explicitly close the stream after all segments are processed
+        request_logger.log('complete', 'Stream complete')
         return sorted_segs
 
     request_logger.log('status', 'Create simulation')
@@ -667,4 +679,3 @@ def createMovie(sorted_segments):
 
     # Write the final video to a file with 24 fps
     final_video.write_videofile("output_video.mp4", fps=24)
-

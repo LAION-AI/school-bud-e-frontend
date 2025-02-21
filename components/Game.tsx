@@ -51,7 +51,8 @@ function createRandomEntity(scene) {
 }
 interface GameProps {
   gameUrl: {
-    code: string
+    code: string,
+    name?: string
   }
 }
 
@@ -61,7 +62,6 @@ export function Game({ gameUrl: gameData }: GameProps) {
   const phaserScriptRef = useRef<HTMLScriptElement>(null);
   const phaserRexScriptRef = useRef<HTMLScriptElement>(null);
   const scriptRef = useRef<HTMLScriptElement>(null);
-  const [showRaw, setShowRaw] = useState(false);
   const [gameName, setGameName] = useState('');
   let code = ''
   try {
@@ -140,61 +140,47 @@ export function Game({ gameUrl: gameData }: GameProps) {
 
   return (
     <div>
-      <div class="z-10 flex space-x-2 pb-4">
-        <input
-          type="text"
-          value={gameName}
-          onChange={(e) => setGameName((e.target as HTMLInputElement).value)}
-          placeholder="Game name"
-          class="px-2 py-1 text-sm border rounded"
-        />
-        <button
-          onClick={async () => {
-            const codeToSave = showRaw ? editableCode : code;
-            const name = gameName || gameData.name;
-
-            if (!name) {
-              alert('Please enter a game name');
-              return;
-            }
-            try {
-              const response = await fetch('/api/game', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, code: codeToSave})
-              });
-              const data = await response.json();
-              if (data.success) {
-                alert('Game saved successfully!');
-                setGameName('');
-              } else {
-                alert('Failed to save game: ' + data.error);
+      {!gameData.name && (
+        <div class="z-10 flex space-x-2 pb-4">
+          <input
+            type="text"
+            value={gameName}
+            onChange={(e) => setGameName((e.target as HTMLInputElement).value)}
+            placeholder="Game name"
+            class="px-2 py-1 text-sm border rounded"
+          />
+          <button
+            type="button"
+            onClick={async () => {
+              if (!gameName) {
+                alert('Please enter a game name');
+                return;
               }
-            } catch (error) {
-              console.error('Error saving game:', error);
-              alert('Failed to save game');
-            }
-          }}
-          class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
-        >
-          Save Game
-        </button>
-        <button
-          onClick={() => setShowRaw(!showRaw)}
-          class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
-        >
-          {showRaw ? 'Show Preview' : 'Show Raw'}
-        </button>
-      </div>
-      {showRaw ? (
-        <textarea
-          class="w-full border rounded-lg overflow-auto bg-gray-50 p-4 font-mono text-sm"
-          value={editableCode}
-          onChange={(e) => setEditableCode((e.target as HTMLTextAreaElement).value)}
-        />
-      ) : (
-        <div ref={containerRef} class="" />
+              try {
+                const response = await fetch('/api/game', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ name: gameName, code })
+                });
+                const data = await response.json();
+                if (data.success) {
+                  alert('Game saved successfully!');
+                  setGameName('');
+                } else {
+                  alert(`Failed to save game: ${data.error}`);
+                }
+              } catch (error) {
+                console.error('Error saving game:', error);
+                alert('Failed to save game');
+              }
+            }}
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+          >
+            Save Game
+          </button>
+        </div>
       )}
+      <div ref={containerRef} class="" />
     </div>
   );
 }

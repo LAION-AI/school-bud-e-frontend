@@ -9,8 +9,14 @@ import { startStream } from "./stream.ts";
 // Determine the initial chat suffix from the URL (default "0")
 let initialSuffix = "0";
 if (typeof window !== "undefined") {
-  // deno-lint-ignore no-window
-  initialSuffix = new URL(window.location.href).searchParams.get("chat") || "0";
+  // First check for route parameter in the path
+  const pathMatch = window.location.pathname.match(/\/chat\/(\d+)/);
+  if (pathMatch) {
+    initialSuffix = pathMatch[1];
+  } else {
+    // Fall back to search params for backward compatibility
+    initialSuffix = new URL(window.location.href).searchParams.get("chat") || "0";
+  }
 }
 
 // Load all chats from localStorage
@@ -99,11 +105,18 @@ export const isApiConfigured = computed(() => {
 // Update the URL when the chat suffix changes and reset the audio.
 effect(() => {
   const suffix = chatSuffix.value;
-  if (typeof window !== "undefined") {
-      const urlParams = new URLSearchParams(location.search);
-      urlParams.set("chat", "" + suffix)
-      const newUrl = `${location.origin}${location.pathname}?${urlParams.toString()}`;
-      history.replaceState(null, "", newUrl);
+  if (typeof window !== "undefined" && location.pathname.startsWith("/chat")) {
+    const newUrl = `/chat/${suffix}`;
+    if (location.pathname !== newUrl) {
+      if (suffix === "new") {
+        // Don't update URL here, let startNewChat handle it
+        startNewChat();
+        return;
+      }
+      history.pushState(null, "", newUrl);
+      // Dispatch navigation event for Fresh's client-side routing
+      globalThis.dispatchEvent(new CustomEvent('navigation', { detail: { url: newUrl } }));
+    }
   }
   stopAndResetAudio?.();
 });
@@ -154,15 +167,30 @@ effect(() => {
 
 // Create a new chat by finding the maximum current suffix and incrementing it.
 export const startNewChat = () => {
+  // Get valid numeric suffixes only
   const currentChatNumbers = Object.keys(chats.value)
-    .map((key) => Number(key.slice("bude-chat-".length)));
-  const maxValue = currentChatNumbers.length
-    ? Math.max(...currentChatNumbers)
-    : 0;
+    .filter(key => key.startsWith("bude-chat-"))
+    .map(key => {
+      const num = parseInt(key.replace("bude-chat-", ""));
+      return isNaN(num) ? 0 : num;
+    });
+  
+  // Find max value, defaulting to 0 if no valid numbers exist
+  const maxValue = currentChatNumbers.length > 0 ? Math.max(...currentChatNumbers) : 0;
   const newChatSuffix = String(maxValue + 1);
-  const newKey = "bude-chat-" + newChatSuffix;
-  // Replace the chats object with a new object including the new chat.
+  const newKey = `bude-chat-${newChatSuffix}`;
+  
+  // Create the new chat first
   chats.value = { ...chats.value, [newKey]: [] };
+  
+  // Update URL and trigger client-side routing
+  if (typeof window !== "undefined") {
+    const newUrl = `/chat/${newChatSuffix}`;
+    history.pushState(null, "", newUrl);
+    globalThis.dispatchEvent(new CustomEvent('navigation', { detail: { url: newUrl } }));
+  }
+  
+  // Update the suffix last to prevent double-triggering the effect
   chatSuffix.value = newChatSuffix;
 };
 

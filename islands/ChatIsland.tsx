@@ -11,7 +11,7 @@ import { useEffect, useState } from "preact/hooks";
 
 // // Import necessary types from Preact
 import { getTTS, readAlways, stopList } from "../components/chat/speech.ts";
-import { chatSuffix, currentEditIndex, handleRefreshAction, messages } from "../components/chat/store.ts";
+import { chats, chatSuffix, currentEditIndex, handleRefreshAction, messages } from "../components/chat/store.ts";
 
 // ###############
 // ## / IMPORTS ##
@@ -27,15 +27,21 @@ interface AudioItem {
 // Define the AudioFileDict type if not already defined
 type AudioFileDict = Record<number, Record<number, AudioItem>>;
 
-export default function ChatIsland({ lang }: { lang: string }) {
+export default function ChatIsland({ lang, id }: { lang: string, id: string }) {
   // Necessary to load the chat messages from localStorage only once
+  useEffect(() => {
+    const chatKey = `bude-chat-${id}`;
+    if (!(chatKey in chats.value)) {
+      chats.value = { ...chats.value, [chatKey]: [] };
+    }
+    chatSuffix.value = id;
+  }, [id]);
 
   // dictionary containg audio files for each groupIndex for the current chat
   const [audioFileDict, setAudioFileDict] = useState<AudioFileDict>({});
 
   // General settings
   const [isStreamComplete, setIsStreamComplete] = useState(true);
-
 
   // Add useEffect for loading settings
 
@@ -169,7 +175,7 @@ export default function ChatIsland({ lang }: { lang: string }) {
 
   // MAIN CONTENT THAT IS RENDERED
   return (
-    <div class="grid grid-cols-[auto_1fr_auto] w-full h-screen">
+    <div class="flex w-full h-screen">
       <ChatTemplate
         messages={messages.value}
         currentEditIndex={currentEditIndex.value}

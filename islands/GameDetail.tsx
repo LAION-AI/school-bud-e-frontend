@@ -143,14 +143,6 @@ export default function GameDetail({ id }) {
                     </div>
                     <div class="flex gap-4">
                         <button
-                            onClick={() => {
-                                window.location.href = `/demo?code=${encodeURIComponent(game.code)}&name=${encodeURIComponent(game.name)}`;
-                            }}
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                        >
-                            Play Game
-                        </button>
-                        <button
                             onClick={handleDelete}
                             class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
                         >

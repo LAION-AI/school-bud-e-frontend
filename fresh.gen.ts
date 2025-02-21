@@ -19,6 +19,7 @@ import * as $chat_id_ from "./routes/chat/[id].tsx";
 import * as $demo from "./routes/demo.tsx";
 import * as $games_id_ from "./routes/games/[id].tsx";
 import * as $graph_name_ from "./routes/graph/[name].tsx";
+import * as $graph_list from "./routes/graph/list.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $lernpfade from "./routes/lernpfade.tsx";
 import * as $profile from "./routes/profile.tsx";
@@ -28,6 +29,7 @@ import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
 import * as $GameDetail from "./islands/GameDetail.tsx";
+import * as $GraphList from "./islands/GraphList.tsx";
 import * as $Header from "./islands/Header.tsx";
 import * as $LearningPathsGraph from "./islands/LearningPathsGraph.tsx";
 import * as $Menu from "./islands/Menu.tsx";
@@ -58,6 +60,7 @@ const manifest = {
     "./routes/demo.tsx": $demo,
     "./routes/games/[id].tsx": $games_id_,
     "./routes/graph/[name].tsx": $graph_name_,
+    "./routes/graph/list.tsx": $graph_list,
     "./routes/index.tsx": $index,
     "./routes/lernpfade.tsx": $lernpfade,
     "./routes/profile.tsx": $profile,
@@ -69,6 +72,7 @@ const manifest = {
     "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
     "./islands/GameDetail.tsx": $GameDetail,
+    "./islands/GraphList.tsx": $GraphList,
     "./islands/Header.tsx": $Header,
     "./islands/LearningPathsGraph.tsx": $LearningPathsGraph,
     "./islands/Menu.tsx": $Menu,

@@ -121,13 +121,15 @@ async def test_stream():
     request_log = RequestLogger(None)
     
     # Log first message
-    request_log.log("file", "/segments/hash2/segment_11.mp3")
-    
-    # Wait 2 seconds
-    await asyncio.sleep(2)
+    request_log.log("file", "https://picsum.photos/300/300.webp", order=1)
+    request_log.log("file", "/segments/hash2/segment_11.mp3", order=2)
+    request_log.log("file", "https://picsum.photos/300/300.webp", order=3)
+    request_log.log("file", "/segments/hash2/segment_11.mp3", order=4)
+    request_log.log("file", "/segments/hash2/segment_11.mp3", order=5)
+    request_log.log("file", "/segments/hash2/segment_11.mp3", order=6)
     
     # Log second message
-    request_log.log("file", "/segments/hash2/segment_12.mp3")
+    request_log.log("status", "Done")
 
     # Return a streaming response that yields JSON objects
     async def json_stream():

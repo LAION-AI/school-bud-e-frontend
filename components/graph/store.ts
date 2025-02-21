@@ -25,8 +25,9 @@ export function loadSavedGraphs() {
   const savedGraphsJson = localStorage.getItem("savedGraphs");
   if (savedGraphsJson) {
     try {
-      const savedGraphs = JSON.parse(savedGraphsJson);
-      graphs.value = new Map(Object.entries(savedGraphs));
+      const savedGraphs = JSON.parse(savedGraphsJson) as Record<string, GraphJson>;
+      const entries = Object.entries(savedGraphs);
+      graphs.value = new Map(entries);
     } catch (e) {
       console.error("Error loading saved graphs:", e);
     }
@@ -37,10 +38,14 @@ export function loadSavedGraphs() {
 export function saveGraphs() {
   if (typeof window === "undefined") return;
   
-  const graphsObj = Object.fromEntries(graphs.value);
+  // Convert Map to a plain object for JSON serialization
+  const graphsObj = Array.from(graphs.value.entries()).reduce((obj, [key, value]) => {
+    obj[key] = value;
+    return obj;
+  }, {} as Record<string, GraphJson>);
+  
   localStorage.setItem("savedGraphs", JSON.stringify(graphsObj));
 }
-
 
 export function saveGraph(name: string, items = []) {
   if (!name || typeof name !== 'string') {
@@ -53,12 +58,14 @@ export function saveGraph(name: string, items = []) {
 
   const newGraph: GraphJson = {
     type: "graph",
-    items: [...items], // Create a copy to prevent mutation
+    items: JSON.parse(JSON.stringify(items)), // Deep copy the items
     name,
   };
 
   const id = crypto.randomUUID();
-  graphs.value.set(id, newGraph);
+  const updatedGraphs = new Map(graphs.value);
+  updatedGraphs.set(id, newGraph);
+  graphs.value = updatedGraphs;
   saveGraphs();
   return id;
 }
@@ -70,16 +77,26 @@ export function createGraph(name: string) {
 
 // Delete a graph
 export function deleteGraph(id: string) {
+  // Get the graph before deleting it
+  const graphToDelete = graphs.value.get(id);
+
+  // Clear current graph if it's the one being deleted
   if (currentGraphId.value === id) {
     currentGraphId.value = null;
     graphData.value = null;
   }
-  graphs.value.delete(id);
+
+  // Delete from main graphs map
+  const updatedGraphs = new Map(graphs.value);
+  updatedGraphs.delete(id);
+  graphs.value = updatedGraphs;
+
   // Remove from recent graphs if present
-  const existingIndex = recentGraphs.value.findIndex(g => g === graphs.value.get(id));
-  if (existingIndex !== -1) {
-    recentGraphs.value.splice(existingIndex, 1);
+  if (graphToDelete) {
+    recentGraphs.value = recentGraphs.value.filter(g => g !== graphToDelete);
   }
+
+  // Save changes to localStorage
   saveGraphs();
 }
 
@@ -88,21 +105,19 @@ export function loadGraph(id: string) {
   const graph = graphs.value.get(id);
   if (graph) {
     currentGraphId.value = id;
-    graphData.value = graph;
-    
-    // Update recent graphs (move the loaded graph to the front)
-    const existingIndex = recentGraphs.value.findIndex(g => g === graph);
-    if (existingIndex !== -1) {
-      recentGraphs.value.splice(existingIndex, 1);
-    }
-    recentGraphs.value = [graph, ...recentGraphs.value.slice(0, 4)];
+    // Create a deep copy of the graph to prevent shared references
+    graphData.value = JSON.parse(JSON.stringify(graph));
   }
 }
 
 // Save current graph (update the graphs Map and persist it)
 export function saveCurrentGraph() {
   if (currentGraphId.value && graphData.value) {
-    graphs.value.set(currentGraphId.value, graphData.value);
+    const updatedGraphs = new Map(graphs.value);
+    // Create a deep copy of the graph data before saving
+    const graphToSave = JSON.parse(JSON.stringify(graphData.value));
+    updatedGraphs.set(currentGraphId.value, graphToSave);
+    graphs.value = updatedGraphs;
     saveGraphs();
   }
 }

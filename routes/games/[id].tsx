@@ -9,14 +9,13 @@ interface SavedGame {
 }
 
 export default async function GameDetailRoute(req) {
-  let id =  '';
+  let id = '';
   try {
-
-   const url  = new URL(req.url);
-  id = url.searchParams.get("id") || "343b3e02-d9f7-43e0-80db-abd6c517e295"
+    const url = new URL(req.url);
+    id = url.searchParams.get("id") || "343b3e02-d9f7-43e0-80db-abd6c517e295"
   } catch {}
 
   return (
-        <GameDetail id={id} />
+    <GameDetail id={id} />
   );
 }
