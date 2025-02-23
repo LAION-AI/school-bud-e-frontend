@@ -33,11 +33,8 @@ export default function GraphsSection({ isCollapsed }: { isCollapsed: boolean })
       onRouteMatch={(match) => setCurrentPath(match?.[0] || "")}
     >
       <div class="space-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            globalThis.location.href = "/graph/list";
-          }}
+        <a
+          href="/graph/list"
           class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-amber-500 ${
             currentPath === "/graph/list"
               ? "bg-amber-100 text-amber-900 hover:bg-amber-200" 
@@ -46,7 +43,7 @@ export default function GraphsSection({ isCollapsed }: { isCollapsed: boolean })
         >
           <List size={16} class={currentPath === "/graph/list" ? "text-amber-800" : "text-gray-600"} />
           <span>All Graphs</span>
-        </button>
+        </a>
 
         {lastThreeGraphs.value.length > 0 && (
           <div class="pt-1">

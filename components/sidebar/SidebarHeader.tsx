@@ -17,7 +17,11 @@ export default function SidebarHeader({ isCollapsed, setIsCollapsed }: SidebarHe
       <button
         type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        class={`p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-all duration-300 ${isCollapsed ? "absolute -right-12 bg-white shadow-md hover:bg-gray-50" : ""}`}
+        class={`p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-all duration-300 ${
+          isCollapsed 
+            ? "fixed left-10 bg-white shadow-md hover:bg-gray-50" 
+            : ""
+        }`}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <SidebarCloseIcon
