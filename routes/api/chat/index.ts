@@ -1,10 +1,10 @@
 import type { Handlers } from "$fresh/server.ts";
 import { ServerSentEventStream } from "https://deno.land/std@0.210.0/http/server_sent_event_stream.ts";
-import tiktoken from "tiktoken";
 import { formatTemplates } from "../../../types/formats.ts";
 
 import { chatContent } from "../../../internalization/content.ts";
 import replacePDFWithMarkdownInMessages from "../(_utils)/pdfToMarkdown.ts";
+import { deductInputTokens, deductOutputTokens } from "./(_utils)/shop.ts";
 
 const API_URL = Deno.env.get("LLM_URL") || "";
 const API_KEY = Deno.env.get("LLM_KEY") || "";
@@ -13,87 +13,6 @@ const API_IMAGE_URL = Deno.env.get("VLM_URL") || "";
 const API_IMAGE_KEY = Deno.env.get("VLM_KEY") || "";
 const API_IMAGE_MODEL = Deno.env.get("VLM_MODEL") || "";
 const API_IMAGE_CORRECTION_MODEL = Deno.env.get("VLM_CORRECTION_MODEL") || "";
-const SHOP_API_URL = "http://localhost:3000";
-
-async function deductOutputTokens(
-  response: string,
-  universalShopApiKey: string,
-) {
-  const encoder = await tiktoken.get_encoding("cl100k_base");
-  const tokens = encoder.encode(response).length;
-  console.log("tokens", tokens);
-  try {
-    const res = await fetch(
-      `${SHOP_API_URL}/token-usage/deduct-output-token-usage`,
-      {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key: universalShopApiKey,
-        tokens: tokens,
-        model: "gemini-1.5-flash",
-      }),
-    },
-    );
-  } catch (error) {
-    console.error("Error deducting output tokens:", error);
-  }
-}
-
-async function deductInputTokens(
-  messages: Message[],
-  universalShopApiKey: string,
-) {
-  const tokens = await countTokens(messages);
-  const response = await fetch(
-    `${SHOP_API_URL}/token-usage/deduct-input-token-usage`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        key: universalShopApiKey,
-        tokens: tokens,
-        model: "gemini-1.5-flash",
-      }),
-    },
-  );
-
-  const data = await response.json();
-
-  return {
-    endpoint: data.endpoint,
-    apiKey: data.apiKey,
-    model: data.model,
-  };
-}
-
-async function countTokens(messages: Message[]) {
-  const encoder = await tiktoken.get_encoding("cl100k_base");
-
-  const tokensPerMessage = 3; // Base tokens per message
-  const tokensPerName = 1; // Additional token if 'name' property exists
-  let totalTokens = 0;
-
-  for (const message of messages) {
-    totalTokens += tokensPerMessage;
-    if ("content" in message) {
-      totalTokens += encoder.encode(message.content).length;
-    }
-    if ("role" in message) {
-      totalTokens += encoder.encode(message.role).length;
-    }
-    if ("name" in message && typeof message.name === "string") {
-      totalTokens += encoder.encode(message.name).length;
-      totalTokens += tokensPerName;
-    }
-  }
-  totalTokens += 3; // Every reply is primed with <|start|>assistant<|message|>
-  return totalTokens;
-}
 
 // Definiere das Message-Interface
 interface Message {
@@ -182,7 +101,7 @@ ${value.requirements.join("\n")}`
   });
 
   // Searches for a PDF in the messages and converts it to markdown text.
-  const pdfConversionError = await replacePDFWithMarkdownInMessages(messages);
+  const _error = await replacePDFWithMarkdownInMessages(messages);
 
   // Prüfe, ob Bildinhalte in den Nachrichten vorkommen
   const isImageInMessages = messages.some((message) => {

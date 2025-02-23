@@ -3,7 +3,7 @@ import { BookOpen, X, List } from "lucide-preact";
 import CollapsibleSection from "./CollapsibleSection.tsx";
 import SidebarLink from "./SidebarLink.tsx";
 import { useComputed } from "@preact/signals";
-import { graphs, deleteGraph } from "../graph/store.ts";
+import { graphs, deleteGraph } from "../../components/graph/store.ts";
 
 export default function GraphsSection({ isCollapsed }: { isCollapsed: boolean }) {
   const [expanded, setExpanded] = useState(() => {

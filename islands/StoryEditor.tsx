@@ -21,7 +21,7 @@ export default function StoryEditor({ originalHash, segmentId, initialContent, o
     const loadContent = async () => {
       if (!initialContent) {
         try {
-          const response = await fetch(`/api/novels/${originalHash}/segments/${segmentId}`);
+          const response = await fetch(`http://localhost:8083/segments/${originalHash}/segment-${segmentId}`);
           if (!response.ok) throw new Error('Failed to load segment content');
           const data = await response.json();
           setContent(data.content);

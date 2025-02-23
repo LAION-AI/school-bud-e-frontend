@@ -1,10 +1,10 @@
-import { MessageCircle, Send } from "lucide-preact";
+import { MessageCircle } from "lucide-preact";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { useRef } from "preact/hooks";
 import { ChatSubmitButton } from "../ChatSubmitButton.tsx";
 import ChatHistory from "./ChatHistory.tsx";
 import { messages as storeMessages, addMessage } from "./store.ts";
-import { sendChatMessage } from "./chatActions.ts";
+import { startStream } from "./stream.ts";
 
 export default function FloatingChat() {
   const isOpen = useSignal(false);
@@ -41,7 +41,7 @@ export default function FloatingChat() {
 
     try {
       // Use the shared sendChatMessage function
-      await sendChatMessage(userMessage);
+      await startStream(userMessage, undefined, []);
       // Optionally, if needed, you can dispatch a chatResponse event after sending the message.
       window.dispatchEvent(
         new CustomEvent("chatResponse", {

@@ -1,6 +1,6 @@
 import type { AppProps } from "$fresh/server.ts";
 import { Partial } from "$fresh/runtime.ts";
-import Sidebar from "../islands/Sidebar.tsx";
+import Sidebar from "../islands/sidebar/index.tsx";
 
 export default function App({ Component, url }: AppProps) {
 	const isArticle = url.pathname.startsWith("/articles");

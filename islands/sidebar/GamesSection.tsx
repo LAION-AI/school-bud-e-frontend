@@ -2,7 +2,7 @@ import { useState } from "preact/hooks";
 import { GamepadIcon, List, X } from "lucide-preact";
 import CollapsibleSection from "./CollapsibleSection.tsx";
 import { useComputed } from "@preact/signals";
-import { savedGames, deleteGame } from "../games/store.ts";
+import { savedGames, deleteGame } from "../../components/games/store.ts";
 
 export default function GamesSection({ isCollapsed }: { isCollapsed: boolean }) {
   const [expanded, setExpanded] = useState(() => {

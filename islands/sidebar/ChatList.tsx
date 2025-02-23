@@ -1,6 +1,6 @@
 import { MessageSquare, Download, X } from "lucide-preact";
 import { useState } from "preact/hooks";
-import { chats } from "../chat/store.ts";
+import { chats } from "../../components/chat/store.ts";
 import CollapsibleSection from "./CollapsibleSection.tsx";
 import SidebarLink from "./SidebarLink.tsx";
 

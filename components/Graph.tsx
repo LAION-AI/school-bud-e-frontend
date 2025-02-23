@@ -19,7 +19,6 @@ export function Graph({ graphData, onNodeSelect, selectedNodeId, isRoot = false,
   const convertGraphData = (items: GraphNode[]): cytoscape.ElementDefinition[] => {
     const elements: cytoscape.ElementDefinition[] = [];
     const nodeSet = new Set<string>();
-    console.log(items)
 
     items.forEach((node) => {
       if (!nodeSet.has(node.item)) {

@@ -1,9 +1,8 @@
 import { useState } from "preact/hooks";
-import { User } from "lucide-preact";
-import { settings } from "../chat/store.ts";
+import { settings } from "../../components/chat/store.ts";
 import { settingsContent } from "../../internalization/content.ts";
-import BasicSettings from "../settings/BasicSettings.tsx";
-import ConfigurationSelector from "../settings/ConfigurationSelector.tsx";
+import BasicSettings from "../../components/settings/BasicSettings.tsx";
+import ConfigurationSelector from "../../components/settings/ConfigurationSelector.tsx";
 
 interface UserData {
 	name?: string;

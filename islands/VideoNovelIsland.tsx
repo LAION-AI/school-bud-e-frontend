@@ -1,3 +1,4 @@
+import FloatingChat from "../components/chat/FloatingChat.tsx";
 import VideoNovelComponent from "../components/video-novel/index.tsx";
 
 interface VideoNovelIslandProps {
@@ -10,6 +11,7 @@ export default function VideoNovelIsland(
   return (
     <>
       <VideoNovelComponent lang={lang} />
+      <FloatingChat />
     </>
   );
 }
