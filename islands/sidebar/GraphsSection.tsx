@@ -31,17 +31,18 @@ export default function GraphsSection({ isCollapsed }: { isCollapsed: boolean })
       baseRoute="/graph"
       routePattern={/^\/graph(\/.*)?$/}
       onRouteMatch={(match) => setCurrentPath(match?.[0] || "")}
+      variant="lime"
     >
       <div class="space-y-2">
         <a
           href="/graph/list"
-          class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-amber-500 ${
+          class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-lime-500 ${
             currentPath === "/graph/list"
-              ? "bg-amber-100 text-amber-900 hover:bg-amber-200" 
+              ? "bg-lime-100 text-lime-900 hover:bg-lime-200" 
               : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           }`}
         >
-          <List size={16} class={currentPath === "/graph/list" ? "text-amber-800" : "text-gray-600"} />
+          <List size={16} class={currentPath === "/graph/list" ? "text-lime-800" : "text-gray-600"} />
           <span>All Graphs</span>
         </a>
 

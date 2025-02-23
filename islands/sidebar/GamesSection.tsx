@@ -27,6 +27,7 @@ export default function GamesSection({ isCollapsed }: { isCollapsed: boolean }) 
       baseRoute="/games"
       routePattern={/^\/games(\/.*)?$/}
       onRouteMatch={(match) => setCurrentPath(match?.[0] || "")}
+      variant="purple"
     >
       <div class="space-y-2">
         <a
