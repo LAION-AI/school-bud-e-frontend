@@ -1,3 +1,5 @@
+/// <reference lib="dom" />
+
 const DB_NAME = 'video-novels';
 const DB_VERSION = 4;
 

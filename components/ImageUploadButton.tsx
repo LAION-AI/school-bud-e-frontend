@@ -89,7 +89,7 @@ export function ImageUploadButton({
       <button
         onClick={onButtonClick}
         disabled={!IS_BROWSER}
-        class="disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 bg-gray-100 text-blue-600/50"
+        class="disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 mr-1 bg-gray-100 text-blue-600/50"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

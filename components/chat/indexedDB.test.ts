@@ -4,48 +4,49 @@ import {
   deleteVideoNovel,
   initDB
 } from "./indexedDB.ts";
-import { describe, it, expect, beforeEach } from "vitest";
+import { assertEquals } from "https://deno.land/std@0.220.1/assert/mod.ts";
 
-describe("IndexedDB operations", () => {
-  beforeEach(async () => {
-    // Reset database before each test
-    await initDB();
-  });
+// Skip IndexedDB tests when not in a browser environment
+Deno.test({
+  name: "IndexedDB operations",
+  ignore: typeof window === "undefined" || !("indexedDB" in window),
+  async fn(t) {
+    await t.step("should initialize database with videoNovels store", async () => {
+      const db = await initDB();
+      assertEquals(typeof db.objectStoreNames.contains, "function");
+      assertEquals(db.objectStoreNames.contains("videoNovels"), true);
+    });
 
-  it("should initialize database with videoNovels store", async () => {
-    const db = await initDB();
-    expect(db.objectStoreNames.contains("videoNovels")).toBe(true);
-  });
+    await t.step("should save and retrieve a video novel", async () => {
+      const novel = {
+        id: "test-id",
+        name: "Test Novel",
+        images: [],
+        audioSrc: "test.mp3",
+        segments: []
+      };
 
-  it("should save and retrieve a video novel", async () => {
-    const novel = {
-      id: "test-id",
-      name: "Test Novel",
-      images: [],
-      audioSrc: "test.mp3",
-      segments: []
-    };
+      await saveVideoNovel(novel);
+      const novels = await getAllVideoNovels();
+      
+      assertEquals(novels.length, 1);
+      assertEquals(novels[0], novel);
+    });
 
-    await saveVideoNovel(novel);
-    const novels = await getAllVideoNovels();
-    
-    expect(novels).toHaveLength(1);
-    expect(novels[0]).toMatchObject(novel);
-  });
+    await t.step("should delete a video novel", async () => {
+      const novel = {
+        id: "test-id",
+        name: "Test Novel",
+        images: [],
+        audioSrc: "test.mp3",
+        segments: []
+      };
 
-  it("should delete a video novel", async () => {
-    const novel = {
-      id: "test-id",
-      name: "Test Novel",
-      images: [],
-      audioSrc: "test.mp3",
-      segments: []
-    };
-
-    await saveVideoNovel(novel);
-    await deleteVideoNovel(novel.id);
-    const novels = await getAllVideoNovels();
-    
-    expect(novels).toHaveLength(0);
-  });
+      await saveVideoNovel(novel);
+      await deleteVideoNovel(novel.id);
+      const novels = await getAllVideoNovels();
+      
+      assertEquals(novels.length, 0);
+    });
+  }
 });

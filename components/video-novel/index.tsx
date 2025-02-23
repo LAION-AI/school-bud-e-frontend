@@ -7,6 +7,7 @@ import {
   saveVideoNovel,
   deleteVideoNovel
 } from "../chat/indexedDB.ts";
+import StoryEditor from "../../islands/StoryEditor.tsx";
 
 type ImageSegment = {
   order: number;
@@ -28,7 +29,9 @@ function VideoNovelComponent(_props: { lang: string }) {
   const [currentAudioOrder, setCurrentAudioOrder] = useState<number | null>(null);
   const [savedNovels, setSavedNovels] = useState<VideoNovel[]>([]);
   const [selectedNovelId, setSelectedNovelId] = useState<string | null>(null);
+  const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
   const audioRef = useRef<CustomAudioElement>(null);
+  console.log("Rendering: Editing segment ID:", editingSegmentId);
 
   // Load saved novels on mount
   useEffect(() => {
@@ -165,14 +168,15 @@ function VideoNovelComponent(_props: { lang: string }) {
                       url: imageUrl,
                       timestamp: 0,
                       duration: 0,
-                      associatedSegmentId: img.associatedSegmentId
+                      associatedSegmentId: img.associatedSegmentId || order?.toString()
                     } : img
                   )
                   : [...prev, { 
                       order, 
                       url: imageUrl,
                       timestamp: 0,
-                      duration: 0
+                      duration: 0,
+                      associatedSegmentId: order?.toString()
                     }];
                 console.log("Updated images array:", newImages);
                 return newImages;
@@ -192,6 +196,12 @@ function VideoNovelComponent(_props: { lang: string }) {
       console.error("Error in generateVideoNovel:", error);
       setStatus(`Error: ${(error as Error).message}`);
     }
+  };
+
+  const handleEditComplete = async (editHash: string) => {
+    setStatus(`Edit completed with hash: ${editHash}`);
+    setEditingSegmentId(null);
+    // Optionally refresh the novel data here
   };
 
   return (
@@ -214,34 +224,55 @@ function VideoNovelComponent(_props: { lang: string }) {
                 aria-live="polite"
                 aria-label={currentImage ? "Current story scene" : "Loading story scene"}
               />
-              {status && (
-                <div 
-                  class="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center"
-                  aria-live="polite"
-                  aria-label={status}
+              {images.length > 0 && currentImage && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const currentSegmentId = images[currentAudioOrder || 0]?.associatedSegmentId;
+                    console.log("Current segment ID:", currentSegmentId);
+                    if (currentSegmentId) {
+                      setEditingSegmentId(currentSegmentId);
+                    }
+                  }}
+                  class="absolute bottom-4 right-4 bg-white/90 p-3 rounded-full shadow-lg hover:bg-amber-50 transition-colors"
+                  aria-label="Edit current segment"
                 >
-                  <div class="text-white text-center px-4">
-                    <svg 
-                      class="animate-spin h-12 w-12 text-white mb-4 mx-auto" 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      fill="none" 
-                      viewBox="0 0 24 24"
-                      role="img"
-                      aria-label="Loading indicator"
-                    >
-                      <title>Loading indicator</title>
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                      <path 
-                        class="opacity-75" 
-                        fill="currentColor" 
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                      />
-                    </svg>
-                    <p class="text-lg font-medium">{status}</p>
-                  </div>
-                </div>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <title>Edit icon</title>
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                  </svg>
+                </button>
               )}
             </div>
+
+            {/* Edit Dialog */}
+            {editingSegmentId && selectedNovelId && (
+              <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                  <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Edit Segment</h2>
+                    <button
+                      type="button"
+                      onClick={() => setEditingSegmentId(null)}
+                      class="p-2 hover:bg-gray-100 rounded-full"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <title>Close dialog</title>
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <StoryEditor
+                    originalHash={selectedNovelId}
+                    segmentId={editingSegmentId}
+                    initialContent=""
+                    onEditComplete={handleEditComplete}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Controls */}
             <div class="flex flex-col gap-4 bg-white p-6 rounded-xl shadow-sm">

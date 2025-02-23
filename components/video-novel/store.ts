@@ -13,6 +13,7 @@ import {
   getVideoNovelSegments,
   saveVideoNovelSegment
 } from "../chat/indexedDB.ts";
+import { IS_BROWSER } from "$fresh/runtime.ts";
 
 const AI_TASKS_SERVER_URL = "http://localhost:8083";
 
@@ -21,10 +22,14 @@ class VideoNovelStore {
   private currentNovel: VideoNovel | null = null;
   
   constructor() {
-    this.loadNovels();
+    if (IS_BROWSER) {
+      this.loadNovels();
+    }
   }
 
   async loadNovels(): Promise<void> {
+    if (!IS_BROWSER) return;
+    
     try {
       this.novels = await getAllVideoNovels();
     } catch (err) {
@@ -33,6 +38,8 @@ class VideoNovelStore {
   }
 
   async saveNovel(novel: VideoNovel): Promise<void> {
+    if (!IS_BROWSER) return;
+    
     try {
       await saveVideoNovel(novel);
       await this.loadNovels(); // Refresh list
@@ -43,6 +50,8 @@ class VideoNovelStore {
   }
 
   async getNovel(id: string): Promise<VideoNovel> {
+    if (!IS_BROWSER) throw new Error("Cannot get novel on server");
+    
     try {
       const novel = await getVideoNovel(id);
       this.currentNovel = novel;
@@ -54,6 +63,8 @@ class VideoNovelStore {
   }
 
   async updateNovel(id: string, updates: Partial<VideoNovel>): Promise<void> {
+    if (!IS_BROWSER) return;
+    
     try {
       await updateVideoNovel(id, updates);
       await this.loadNovels(); // Refresh list
@@ -64,6 +75,8 @@ class VideoNovelStore {
   }
 
   async deleteNovel(id: string): Promise<void> {
+    if (!IS_BROWSER) return;
+    
     try {
       await deleteVideoNovel(id);
       await this.loadNovels(); // Refresh list
@@ -74,19 +87,12 @@ class VideoNovelStore {
   }
 
   async getSegments(novelId: string): Promise<DBSegment[]> {
+    if (!IS_BROWSER) return [];
+    
     try {
       return await getVideoNovelSegments(novelId);
     } catch (err) {
       console.error("Failed to get segments:", err);
-      throw err;
-    }
-  }
-
-  async saveSegment(segment: DBSegment): Promise<void> {
-    try {
-      await saveVideoNovelSegment(segment);
-    } catch (err) {
-      console.error("Failed to save segment:", err);
       throw err;
     }
   }
@@ -126,175 +132,88 @@ type CompleteSegment = {
 
 type StreamSegment = AudioSegment | StatusSegment | CompleteSegment;
 
-export async function getVideoNovelStream(
-  prompt: string,
-): Promise<ReadableStream<StreamSegment>> {
-  const fetchOptions: RequestInit = {
-    method: "POST",
-    body: JSON.stringify({
-      stream: true,
-      prompt,
-      llmKey: settings.peek().apiKey,
-    }),
-  };
+export function fullMediaUrl(path: string): string {
+  return path.startsWith("http") ? path : `${AI_TASKS_SERVER_URL}${path}`;
+}
 
-  const response = await fetch(
-    `${AI_TASKS_SERVER_URL}/generate_video/`,
-    fetchOptions,
-  );
-  if (response.status !== 200) {
-    throw new Error(response.statusText);
+export async function getVideoNovelStream(prompt: string): Promise<ReadableStream<StreamSegment>> {
+  const response = await fetch(`${AI_TASKS_SERVER_URL}/generate_video/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to generate video novel");
   }
 
   const reader = response.body?.getReader();
-  if (!reader) throw new Error("No response body");
-
-  const decoder = new TextDecoder();
-  let buffer = "";
+  if (!reader) throw new Error("No response stream");
 
   return new ReadableStream({
     async start(controller) {
       try {
         while (true) {
-          const { value, done } = await reader.read();
-          if (done) {
-            // Send completion signal
-            console.log("Stream complete - sending completion signal");
-            await controller.enqueue({ type: "complete", data: "Generation complete" });
-            await controller.close();
-            console.log("Stream controller closed");
-            break;
-          }
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() || "";
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const lines = new TextDecoder().decode(value).split("\n");
           for (const line of lines) {
+            if (!line.trim()) continue;
             const data = JSON.parse(line);
             controller.enqueue(data);
           }
         }
-      } catch (err) {
-        controller.error(err);
-      }
-    },
-    cancel(err) {
-      console.log("Stream cancelled", err);
-    },
-  });
-}
-
-export function fullMediaUrl(path: string) {
-  if (path.startsWith("http")) {
-    return path;
-  }
-  return AI_TASKS_SERVER_URL + path;
-}
-
-export function initAudioPlayer(audio: HTMLMediaElement) {
-  console.log("Initializing audio player");
-  const mediaSource = new MediaSource();
-  audio.src = URL.createObjectURL(mediaSource);
-  let sourceBuffer: SourceBuffer;
-  const queue: { url: string; order: number; data?: ArrayBuffer }[] = [];
-  let isSourceOpen = false;
-  const audioSegments: { buffer: ArrayBuffer; order: number }[] = [];
-  let currentSegmentIndex = 0;
-
-  mediaSource.addEventListener("sourceopen", () => {
-    console.log("MediaSource opened");
-    sourceBuffer = mediaSource.addSourceBuffer("audio/mpeg");
-    sourceBuffer.mode = "sequence";
-    isSourceOpen = true;
-
-    // Process queued segments in order
-    if (queue.length > 0) {
-      console.log("Processing queued segments:", queue.length);
-      // Sort queue by order before processing
-      queue.sort((a, b) => a.order - b.order);
-      processQueue();
-    }
-  });
-
-  async function processQueue() {
-    while (queue.length > 0) {
-      const segment = queue[0];
-      console.log("Processing audio segment:", { order: segment.order, url: segment.url });
-      try {
-        let arrayBuffer: ArrayBuffer;
-        if (segment.data) {
-          arrayBuffer = segment.data;
-        } else {
-          const response = await fetch(segment.url);
-          arrayBuffer = await response.arrayBuffer();
-          segment.data = arrayBuffer;
-        }
-        sourceBuffer.appendBuffer(arrayBuffer);
-        audioSegments.push({ buffer: arrayBuffer, order: segment.order });
-        console.log(`Audio segment ${segment.order} processed and added to buffer`);
-        queue.shift(); // Remove processed segment
+        controller.close();
       } catch (error) {
-        console.error("Error processing audio segment:", error);
-        break;
+        controller.error(error);
       }
-    }
-  }
-
-  sourceBuffer?.addEventListener("updateend", () => {
-    console.log("SourceBuffer update ended, processing next segment");
-    processQueue();
+    },
   });
+}
 
-  // Add timeupdate listener to track current segment
-  audio.addEventListener("timeupdate", () => {
-    const currentTime = audio.currentTime;
-    const segmentDuration = 5; // Assuming each segment is 5 seconds
-    const estimatedSegment = Math.floor(currentTime / segmentDuration);
-    
-    if (estimatedSegment !== currentSegmentIndex) {
-      currentSegmentIndex = estimatedSegment;
-      console.log(`Now playing segment with index: ${currentSegmentIndex}, time: ${currentTime.toFixed(2)}s`);
-      
-      // Find the actual segment by order
-      const currentSegment = audioSegments[currentSegmentIndex];
-      if (currentSegment) {
-        console.log(`Current audio segment order: ${currentSegment.order}`);
-      }
-    }
-  });
+export function initAudioPlayer(audio: HTMLAudioElement) {
+  console.log("Initializing audio player");
 
   const player = {
-    async appendSegment(url: string, order: number) {
-      console.log("Received audio segment:", { url, order });
-      if (!isSourceOpen) {
-        console.log("MediaSource not open, queueing segment");
-        queue.push({ url, order });
-        return;
-      }
+    segments: [] as { url: string; order: number }[],
+    currentSegment: 0,
+    audioBlob: new Blob([], { type: "audio/mpeg" }),
 
-      if (sourceBuffer?.updating) {
-        console.log("SourceBuffer updating, queueing segment");
-        queue.push({ url, order });
-        return;
-      }
+    async appendSegment(url: string, order: number) {
+      console.log("Appending segment:", { url, order });
+      this.segments.push({ url, order });
+      this.segments.sort((a, b) => a.order - b.order);
 
       try {
-        console.log("Fetching audio segment:", url);
         const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        sourceBuffer?.appendBuffer(arrayBuffer);
-        audioSegments.push({ buffer: arrayBuffer, order });
-        console.log(`Audio segment ${order} appended to buffer`);
+        const blob = await response.blob();
+        this.audioBlob = new Blob([this.audioBlob, blob], {
+          type: "audio/mpeg",
+        });
+
+        // Update audio source
+        const blobUrl = URL.createObjectURL(this.audioBlob);
+        audio.src = blobUrl;
+
+        // If this is the first segment, start playing
+        if (this.segments.length === 1) {
+          try {
+            await audio.play();
+          } catch (error) {
+            console.error("Error playing audio:", error);
+          }
+        }
       } catch (error) {
-        console.error("Error fetching/appending segment:", error);
+        console.error("Error appending segment:", error);
       }
     },
+
     getAudioBlob() {
-      console.log("Creating audio blob from segments:", audioSegments.length);
-      // Sort segments by order before creating blob
-      const sortedSegments = [...audioSegments].sort((a, b) => a.order - b.order);
-      console.log("Segment orders:", sortedSegments.map(s => s.order));
-      return new Blob(sortedSegments.map(s => s.buffer), { type: "audio/mpeg" });
-    }
+      return this.audioBlob;
+    },
   };
 
   return player;

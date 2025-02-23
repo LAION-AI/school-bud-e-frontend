@@ -1,6 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
-import GameDetail from "../../islands/GameDetail.tsx";
-import { Game } from "../../types/formats.ts";
+import type { Game, SavedGame } from "../../types/formats.ts";
+import GamePageIsland from "../../islands/GamePage.tsx";
+import KvStorage from "../../utils/kv_storage.ts";
 
 interface Data {
   game: Game | null;
@@ -19,26 +20,27 @@ export const handler: Handlers<Data> = {
 };
 
 async function fetchGame(id: string): Promise<Game> {
-  // In a real app, fetch from your database
+  const kvStorage = new KvStorage();
+  const savedGames = await kvStorage.read();
+  const game = savedGames?.games.find((g: SavedGame) => g.id === id);
+  if (!game) {
+    throw new Error("Game not found");
+  }
   return {
-    id,
-    title: "Sample Game",
-    description: "This is a sample game",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    id: game.id,
+    title: game.name,
+    description: game.code,
+    createdAt: game.timestamp,
+    updatedAt: game.timestamp,
   };
 }
 
-export default function GamePage(props: PageProps<Data>) {
+export default function GameRoute(props: PageProps<Data>) {
   const { game } = props.data;
   
   if (!game) {
     return <div>Game not found</div>;
   }
 
-  return (
-    <div>
-      <GameDetail id={game.id} initialGame={game} />
-    </div>
-  );
+  return <GamePageIsland game={game} />;
 }

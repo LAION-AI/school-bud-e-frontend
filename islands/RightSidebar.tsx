@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import { Game } from "../components/Game.tsx";
+import { Game } from "../islands/Game.tsx";
 import { Graph } from "../components/Graph.tsx";
 import { createGraph, saveCurrentGraph, saveGraph } from "../components/graph/store.ts";
 

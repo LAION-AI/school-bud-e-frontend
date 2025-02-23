@@ -2,13 +2,13 @@
   "compilerOptions": {
     "target": "es5",
     "lib": ["es5", "dom"],
-    "types": ["cypress"],
-    "allowJs": true,
-    "noEmit": true,
-    "esModuleInterop": true,
+    "types": ["cypress", "node"],
     "strict": true,
+    "noEmit": true,
+    "isolatedModules": false,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "isolatedModules": true
+    "forceConsistentCasingInFileNames": true
   },
   "include": ["**/*.ts"]
-}
+} 

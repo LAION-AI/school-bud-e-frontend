@@ -7,7 +7,7 @@ interface SidebarHeaderProps {
 
 export default function SidebarHeader({ isCollapsed, setIsCollapsed }: SidebarHeaderProps) {
   return (
-    <div class="flex justify-between py-4">
+    <div class="flex justify-between py-4 relative">
       <img
         src="/logo.png"
         width="48"
@@ -17,14 +17,14 @@ export default function SidebarHeader({ isCollapsed, setIsCollapsed }: SidebarHe
       <button
         type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        class={`p-4 rounded-full hover:bg-blue-100 text-gray-500 transition-colors ${isCollapsed ? "absolute left-4 z-10 " : ""}`}
+        class={`p-3 rounded-full hover:bg-gray-100 text-gray-500 transition-all duration-300 ${isCollapsed ? "absolute -right-12 bg-white shadow-md hover:bg-gray-50" : ""}`}
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
       >
         <SidebarCloseIcon
-          class={`h-6 w-6 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
+          class={`h-5 w-5 transition-transform duration-300 ${isCollapsed ? "rotate-180" : ""}`}
           aria-hidden="true"
         />
       </button>
     </div>
   );
-} 
+}

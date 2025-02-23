@@ -24,11 +24,14 @@ import * as $graph_list from "./routes/graph/list.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $lernpfade from "./routes/lernpfade.tsx";
 import * as $profile from "./routes/profile.tsx";
+import * as $tests_check from "./routes/tests/check.tsx";
+import * as $tests_generate from "./routes/tests/generate.tsx";
 import * as $video_novel from "./routes/video-novel.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
-import * as $GameDetail from "./islands/GameDetail.tsx";
+import * as $Game from "./islands/Game.tsx";
+import * as $GamePage from "./islands/GamePage.tsx";
 import * as $GamesList from "./islands/GamesList.tsx";
 import * as $GraphList from "./islands/GraphList.tsx";
 import * as $Header from "./islands/Header.tsx";
@@ -37,8 +40,10 @@ import * as $Menu from "./islands/Menu.tsx";
 import * as $RelatedArticles from "./islands/RelatedArticles.tsx";
 import * as $RightSidebar from "./islands/RightSidebar.tsx";
 import * as $Sidebar from "./islands/Sidebar.tsx";
+import * as $StoryEditor from "./islands/StoryEditor.tsx";
 import * as $UserProfile from "./islands/UserProfile.tsx";
 import * as $VideoNovelIsland from "./islands/VideoNovelIsland.tsx";
+import * as $WindowManager from "./islands/WindowManager.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -65,13 +70,16 @@ const manifest = {
     "./routes/index.tsx": $index,
     "./routes/lernpfade.tsx": $lernpfade,
     "./routes/profile.tsx": $profile,
+    "./routes/tests/check.tsx": $tests_check,
+    "./routes/tests/generate.tsx": $tests_generate,
     "./routes/video-novel.tsx": $video_novel,
   },
   islands: {
     "./islands/ChatAgreement.tsx": $ChatAgreement,
     "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
-    "./islands/GameDetail.tsx": $GameDetail,
+    "./islands/Game.tsx": $Game,
+    "./islands/GamePage.tsx": $GamePage,
     "./islands/GamesList.tsx": $GamesList,
     "./islands/GraphList.tsx": $GraphList,
     "./islands/Header.tsx": $Header,
@@ -80,8 +88,10 @@ const manifest = {
     "./islands/RelatedArticles.tsx": $RelatedArticles,
     "./islands/RightSidebar.tsx": $RightSidebar,
     "./islands/Sidebar.tsx": $Sidebar,
+    "./islands/StoryEditor.tsx": $StoryEditor,
     "./islands/UserProfile.tsx": $UserProfile,
     "./islands/VideoNovelIsland.tsx": $VideoNovelIsland,
+    "./islands/WindowManager.tsx": $WindowManager,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;
