@@ -102,8 +102,8 @@ async def generate_video(request: Request):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         hash_dir = os.path.join(current_dir, "segments", hash)
         os.makedirs(hash_dir, exist_ok=True)
-        
         request_log = RequestLogger(request)
+        request_log.log("videoId", hash)
         
         asyncio.create_task(asyncio.to_thread(generate_video_logic, prompt, hash_dir, request_log))
         
