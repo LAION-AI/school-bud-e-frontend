@@ -275,7 +275,6 @@ export const startStream = async (
                         /\n\n/.test(combinedText.slice(5)) &&
                         combinedText.length > 15
                     ) {
-                        console.log(JSON.stringify(combinedText));
                         const paragraphSplit = combinedText.split(/\n\n/);
                         // console.warn("paragraphSplit", paragraphSplit)
                         const textToSpeak = paragraphSplit.slice(0, -1).join(

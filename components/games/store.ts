@@ -38,7 +38,6 @@ export async function fetchGames() {
     console.log("[Store] Response headers:", Object.fromEntries(response.headers.entries()));
     
     const responseText = await response.text();
-    console.log("[Store] Raw response text:", responseText);
     
     if (!responseText) {
       console.log("[Store] Empty response received");
@@ -50,7 +49,6 @@ export async function fetchGames() {
       const data = JSON.parse(responseText);
       console.log("[Store] Parsed data:", data);
       if (Array.isArray(data)) {
-        console.log("[Store] Setting savedGames with array of length:", data.length);
         savedGames.value = data;
       } else {
         console.log("[Store] Unexpected data format:", data);

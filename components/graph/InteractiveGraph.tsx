@@ -2,7 +2,6 @@ import { useEffect, useRef } from "preact/hooks";
 import cytoscape from "cytoscape";
 import { GraphNode } from "../../islands/RightSidebar.tsx";
 import * as graphStore from "./store.ts";
-import automove from "cytoscape-automove";
 
 interface InteractiveGraphProps {
   height?: string;
@@ -25,9 +24,9 @@ export function InteractiveGraph({
     nodeMap.current.clear();
 
     // Build a map for quick lookup
-    items.forEach((node) => {
+    for (const node of items) {
       nodeMap.current.set(node.item, node);
-    });
+    }
 
     const addNode = (id: string) => {
       // If the node is already added, skip it.
@@ -44,25 +43,25 @@ export function InteractiveGraph({
       elements.push(nodeDef);
     };
 
-    items.forEach((node) => {
+    for (const node of items) {
       // Add the main node
       addNode(node.item);
 
       // Process child items
-      node.childItems?.forEach((child) => {
+      for (const child of node.childItems || []) {
         addNode(child);
         elements.push({ data: { source: node.item, target: child } });
-      });
+      }
 
       // Process other connections
-      node.connections?.forEach((connection) => {
+      for (const connection of node.connections || []) {
         addNode(connection.from);
         addNode(connection.to);
         elements.push({
           data: { source: connection.from, target: connection.to },
         });
-      });
-    });
+      }
+    };
     return elements;
   };
 
@@ -70,6 +69,7 @@ export function InteractiveGraph({
   useEffect(() => {
     if (containerRef.current && graphStore.graphData.value?.items) {
       const elements = createGraphElements(graphStore.graphData.value.items);
+
       const cy = cytoscape({
         container: containerRef.current,
         maxZoom: 3,
@@ -177,7 +177,6 @@ export function InteractiveGraph({
               childItems: [],
               position,
             };
-            console.log(newNode);
             graphStore.graphData.value.items.push(newNode);
           }
           // Save the updated current graph

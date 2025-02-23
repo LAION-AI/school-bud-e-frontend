@@ -28,7 +28,6 @@ export default function VideoNovel(req: Request) {
           </div>
         </div>
       </div>
-      <FloatingChat />
     </>
   );
 }

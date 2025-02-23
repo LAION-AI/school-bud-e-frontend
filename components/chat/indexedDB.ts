@@ -1,6 +1,6 @@
 /// <reference lib="dom" />
 
-const DB_NAME = 'video-novels';
+const DB_NAME = "video-novels";
 const DB_VERSION = 4;
 
 let db: IDBDatabase | null = null;
@@ -13,19 +13,23 @@ export async function initDB(): Promise<IDBDatabase> {
     }
 
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
+
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
+
       if (!db.objectStoreNames.contains("videoNovels")) {
-        const novelStore = db.createObjectStore("videoNovels", { keyPath: "id" });
+        const novelStore = db.createObjectStore("videoNovels", {
+          keyPath: "id",
+        });
         novelStore.createIndex("name", "name", { unique: false });
         novelStore.createIndex("createdAt", "createdAt", { unique: false });
         novelStore.createIndex("lastPlayed", "lastPlayed", { unique: false });
       }
-      
+
       if (!db.objectStoreNames.contains("segments")) {
-        const segmentsStore = db.createObjectStore("segments", { keyPath: "id" });
+        const segmentsStore = db.createObjectStore("segments", {
+          keyPath: "id",
+        });
         segmentsStore.createIndex("novelId", "novelId", { unique: false });
         segmentsStore.createIndex("order", "order", { unique: false });
       }
@@ -55,31 +59,40 @@ function getDB(): Promise<IDBDatabase> {
     }
 
     const request = indexedDB.open(DB_NAME, DB_VERSION);
-    
+
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      
+
       // Create or upgrade images store
       if (!db.objectStoreNames.contains("images")) {
-        const imageStore = db.createObjectStore("images", { keyPath: "id", autoIncrement: true });
+        const imageStore = db.createObjectStore("images", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
         imageStore.createIndex("name", "name", { unique: false });
       }
 
       // Create or upgrade videoNovels store
       if (!db.objectStoreNames.contains("videoNovels")) {
-        const novelStore = db.createObjectStore("videoNovels", { keyPath: "id", autoIncrement: true });
+        const novelStore = db.createObjectStore("videoNovels", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
         novelStore.createIndex("title", "title", { unique: false });
         novelStore.createIndex("createdAt", "createdAt", { unique: false });
         novelStore.createIndex("lastPlayed", "lastPlayed", { unique: false });
       }
-      
+
       // Add segments store for audio ordering
       if (!db.objectStoreNames.contains("segments")) {
-        const segmentsStore = db.createObjectStore("segments", { keyPath: "id", autoIncrement: true });
+        const segmentsStore = db.createObjectStore("segments", {
+          keyPath: "id",
+          autoIncrement: true,
+        });
         segmentsStore.createIndex("novelId", "novelId", { unique: false });
         segmentsStore.createIndex("order", "order", { unique: false });
       }
-    }
+    };
 
     request.onsuccess = (event) => {
       db = (event.target as IDBOpenDBRequest).result;
@@ -87,76 +100,84 @@ function getDB(): Promise<IDBDatabase> {
     };
 
     request.onerror = (event) => {
-      console.error("IndexedDB error:", (event.target as IDBOpenDBRequest).error);
+      console.error(
+        "IndexedDB error:",
+        (event.target as IDBOpenDBRequest).error,
+      );
       reject((event.target as IDBOpenDBRequest).error);
     };
   });
 }
 
 export function saveImageToDB(imageFile: File, imageName: string) {
-    getDB().then((db) => {
-      const transaction = db.transaction("images", "readwrite");
-      const store = transaction.objectStore("images");
-  
-      // Create an entry with metadata
-      const imageEntry = {
-        name: imageName,
-        blob: imageFile, // the image file is stored as a Blob
-        timestamp: Date.now()
-      };
-  
-      const addRequest = store.add(imageEntry);
-      addRequest.onsuccess = () => {
-        console.log("Image saved successfully!");
-      };
-      addRequest.onerror = () => {
-        console.error("Error saving image:", addRequest.error);
-      };
-    }).catch((error) => {
-      console.error("Error accessing database:", error);
-    });
-  }
+  getDB().then((db) => {
+    const transaction = db.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
 
-  function loadImagesFromDB() {
-    getDB().then((db) => {
-      const transaction = db.transaction("images", "readonly");
-      const store = transaction.objectStore("images");
-  
-      const images: { id: number; name: string; blob: Blob; timestamp: number }[] = [];
-      const cursorRequest = store.openCursor();
-  
-      cursorRequest.onsuccess = (event) => {
-        const cursor = (event.target as IDBRequest).result;
-        if (cursor) {
-          images.push(cursor.value);
-          cursor.continue();
-        } else {
-          // All images retrieved – now create preview URLs
-          for (const img of images) {
-            const previewURL = URL.createObjectURL(img.blob);
-            // You can now update your state to include this preview URL along with other data
-            console.log(`Image ${img.name} loaded with preview URL:`, previewURL);
-          }
+    // Create an entry with metadata
+    const imageEntry = {
+      name: imageName,
+      blob: imageFile, // the image file is stored as a Blob
+      timestamp: Date.now(),
+    };
+
+    const addRequest = store.add(imageEntry);
+    addRequest.onsuccess = () => {
+      console.log("Image saved successfully!");
+    };
+    addRequest.onerror = () => {
+      console.error("Error saving image:", addRequest.error);
+    };
+  }).catch((error) => {
+    console.error("Error accessing database:", error);
+  });
+}
+
+function loadImagesFromDB() {
+  getDB().then((db) => {
+    const transaction = db.transaction("images", "readonly");
+    const store = transaction.objectStore("images");
+
+    const images: {
+      id: number;
+      name: string;
+      blob: Blob;
+      timestamp: number;
+    }[] = [];
+    const cursorRequest = store.openCursor();
+
+    cursorRequest.onsuccess = (event) => {
+      const cursor = (event.target as IDBRequest).result;
+      if (cursor) {
+        images.push(cursor.value);
+        cursor.continue();
+      } else {
+        // All images retrieved – now create preview URLs
+        for (const img of images) {
+          const previewURL = URL.createObjectURL(img.blob);
+          // You can now update your state to include this preview URL along with other data
+          console.log(`Image ${img.name} loaded with preview URL:`, previewURL);
         }
-      };
-    })
-  }
+      }
+    };
+  });
+}
 
 export function deleteImageFromDB(id: number) {
-    const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
-    dbRequest.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction("images", "readwrite");
-      const store = transaction.objectStore("images");
-  
-      const deleteRequest = store.delete(id);
-      deleteRequest.onsuccess = () => {
-        console.log("Image deleted successfully!");
-      };
-      deleteRequest.onerror = () => {
-        console.error("Error deleting image:", deleteRequest.error);
-      };
+  const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
+  dbRequest.onsuccess = (event) => {
+    const db = (event.target as IDBOpenDBRequest).result;
+    const transaction = db.transaction("images", "readwrite");
+    const store = transaction.objectStore("images");
+
+    const deleteRequest = store.delete(id);
+    deleteRequest.onsuccess = () => {
+      console.log("Image deleted successfully!");
     };
+    deleteRequest.onerror = () => {
+      console.error("Error deleting image:", deleteRequest.error);
+    };
+  };
 }
 
 // Video Novel Types and CRUD Operations
@@ -192,24 +213,27 @@ export function saveVideoNovel(novel: VideoNovel): Promise<string> {
     const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
     dbRequest.onsuccess = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
-      const transaction = db.transaction(["videoNovels", "segments"], "readwrite");
+      const transaction = db.transaction(
+        ["videoNovels", "segments"],
+        "readwrite",
+      );
       const novelStore = transaction.objectStore("videoNovels");
       const segmentsStore = transaction.objectStore("segments");
 
       const novelEntry = {
         ...novel,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       };
 
       const addRequest = novelStore.add(novelEntry);
-      
+
       addRequest.onsuccess = () => {
         // Save segments
-        const segmentPromises = novel.segments.map(segment => {
+        const segmentPromises = novel.segments.map((segment) => {
           return new Promise<void>((resolve, reject) => {
             const segmentEntry = {
               ...segment,
-              novelId: novel.id
+              novelId: novel.id,
             };
             const segmentRequest = segmentsStore.add(segmentEntry);
             segmentRequest.onsuccess = () => resolve();
@@ -221,7 +245,7 @@ export function saveVideoNovel(novel: VideoNovel): Promise<string> {
           .then(() => resolve(novel.id))
           .catch(reject);
       };
-      
+
       addRequest.onerror = () => {
         reject(addRequest.error);
       };
@@ -336,7 +360,10 @@ export function getAllVideoNovels(): Promise<VideoNovel[]> {
   });
 }
 
-export function updateVideoNovel(id: string, updates: Partial<VideoNovel>): Promise<void> {
+export function updateVideoNovel(
+  id: string,
+  updates: Partial<VideoNovel>,
+): Promise<void> {
   return new Promise((resolve, reject) => {
     const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
     dbRequest.onsuccess = (event) => {
@@ -354,7 +381,7 @@ export function updateVideoNovel(id: string, updates: Partial<VideoNovel>): Prom
         const updatedNovel = {
           ...getRequest.result,
           ...updates,
-          lastPlayed: Date.now()
+          lastPlayed: Date.now(),
         };
 
         const putRequest = store.put(updatedNovel);
