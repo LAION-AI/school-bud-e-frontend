@@ -4,15 +4,8 @@ import { formatTemplates } from "../../../types/formats.ts";
 
 import { chatContent } from "../../../internalization/content.ts";
 import replacePDFWithMarkdownInMessages from "../(_utils)/pdfToMarkdown.ts";
-import { deductInputTokens, deductOutputTokens } from "./(_utils)/shop.ts";
-
-const API_URL = Deno.env.get("LLM_URL") || "";
-const API_KEY = Deno.env.get("LLM_KEY") || "";
-const API_MODEL = Deno.env.get("LLM_MODEL") || "";
-const API_IMAGE_URL = Deno.env.get("VLM_URL") || "";
-const API_IMAGE_KEY = Deno.env.get("VLM_KEY") || "";
-const API_IMAGE_MODEL = Deno.env.get("VLM_MODEL") || "";
-const API_IMAGE_CORRECTION_MODEL = Deno.env.get("VLM_CORRECTION_MODEL") || "";
+import { deductOutputTokens } from "./(_utils)/shop.ts";
+import { getApiKeys } from "./(_utils)/apiKeys.ts";
 
 // Definiere das Message-Interface
 interface Message {
@@ -116,58 +109,20 @@ ${value.requirements.join("\n")}`
     return false;
   });
 
-  let api_url = "";
-  let api_key = "";
-  let api_model = "";
-  if (isImageInMessages) {
-    api_url = "";
-    api_key = "";
-    api_model = "";
-  }
-  if (isCorrectionInLastMessage) {
-    api_model = "";
-  }
-  console.log("universalShopApiKey", universalShopApiKey);
-
-  if (universalApiKey !== "" && universalApiKey.startsWith("sbe-")) {
-    api_url = llmApiUrl !== "" ? llmApiUrl : API_URL;
-    api_key = llmApiKey !== "" ? llmApiKey : API_KEY;
-    api_model = llmApiModel !== "" ? llmApiModel : API_MODEL;
-    if (isImageInMessages) {
-      api_url = vlmApiUrl !== "" ? vlmApiUrl : API_IMAGE_URL;
-      api_key = vlmApiKey !== "" ? vlmApiKey : API_IMAGE_KEY;
-      api_model = vlmApiModel !== "" ? vlmApiModel : API_IMAGE_MODEL;
-    }
-    if (isCorrectionInLastMessage) {
-      api_model = vlmCorrectionModel !== ""
-        ? vlmCorrectionModel
-        : API_IMAGE_CORRECTION_MODEL;
-    }
-  } else if (universalShopApiKey !== "") {
-    const { endpoint, apiKey, model } = await deductInputTokens(
-      messages,
-      universalShopApiKey,
-    );
-    api_url = endpoint;
-    api_key = apiKey;
-    api_model = model;
-
-    if (isImageInMessages) {
-      api_url = vlmApiUrl !== "" ? vlmApiUrl : API_IMAGE_URL;
-      api_key = vlmApiKey !== "" ? vlmApiKey : API_IMAGE_KEY;
-      api_model = vlmApiModel !== "" ? vlmApiModel : API_IMAGE_MODEL;
-    }
-  } else {
-    api_url = llmApiUrl !== "" ? llmApiUrl : "";
-    api_key = llmApiKey !== "" ? llmApiKey : "";
-    api_model = llmApiModel !== "" ? llmApiModel : "";
-
-    if (isImageInMessages) {
-      api_url = vlmApiUrl !== "" ? vlmApiUrl : "";
-      api_key = vlmApiKey !== "" ? vlmApiKey : "";
-      api_model = vlmApiModel !== "" ? vlmApiModel : "";
-    }
-  }
+  const { api_url, api_key, api_model } = await getApiKeys({
+    messages,
+    isImageInMessages,
+    isCorrectionInLastMessage,
+    universalApiKey,
+    universalShopApiKey,
+    llmApiUrl,
+    llmApiKey,
+    llmApiModel,
+    vlmApiUrl,
+    vlmApiKey,
+    vlmApiModel,
+    vlmCorrectionModel,
+  });
 
   console.log("Using this API URL: ", api_url);
   console.log("Using this API Key: ", api_key);
@@ -266,7 +221,9 @@ ${value.requirements.join("\n")}`
               } else if (line === "data: [DONE]") {
                 console.log("Closing controller!");
                 controller.close();
-                deductOutputTokens(entireResponse, universalShopApiKey);
+                if (universalShopApiKey !== "") {
+                  deductOutputTokens(entireResponse, universalShopApiKey);
+                }
               }
             }
           }
@@ -314,21 +271,29 @@ export const handler: Handlers = {
   async POST(req: Request) {
     const payload = await req.json();
 
-    return getModelResponseStream(
-      {
-        messages: payload.messages,
-        lang: payload.lang,
-        universalShopApiKey: payload.universalApiKey,
-        universalApiKey: payload.universalShopApiKey,
-        llmApiUrl: payload.llmApiUrl,
-        llmApiKey: payload.llmApiKey,
-        llmApiModel: payload.llmApiModel,
-        systemPrompt: payload.systemPrompt,
-        vlmApiUrl: payload.vlmApiUrl,
-        vlmApiKey: payload.vlmApiKey,
-        vlmApiModel: payload.vlmApiModel,
-        vlmCorrectionModel: payload.vlmCorrectionModel,
-      },
-    );
+    try {
+      return await getModelResponseStream(
+        {
+          messages: payload.messages,
+          lang: payload.lang,
+          universalShopApiKey: payload.universalApiKey,
+          universalApiKey: payload.universalShopApiKey,
+          llmApiUrl: payload.llmApiUrl,
+          llmApiKey: payload.llmApiKey,
+          llmApiModel: payload.llmApiModel,
+          systemPrompt: payload.systemPrompt,
+          vlmApiUrl: payload.vlmApiUrl,
+          vlmApiKey: payload.vlmApiKey,
+          vlmApiModel: payload.vlmApiModel,
+          vlmCorrectionModel: payload.vlmCorrectionModel,
+        },
+      );
+    } catch (error: unknown) {
+      console.error("Error in getModelResponseStream:", error);
+      if (error instanceof Error) {
+        return new Response(error.message, { status: 500 });
+      }
+      return new Response("An unknown error occurred", { status: 500 });
+    }
   },
 };

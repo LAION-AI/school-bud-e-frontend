@@ -29,20 +29,17 @@ export default function GamesSection({ isCollapsed }: { isCollapsed: boolean }) 
       onRouteMatch={(match) => setCurrentPath(match?.[0] || "")}
     >
       <div class="space-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            globalThis.location.href = "/games/list";
-          }}
-          class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-amber-500 ${
+        <a
+          href="/games/list"
+          class={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-purple-500 ${
             currentPath === "/games/list"
-              ? "bg-amber-100 text-amber-900 hover:bg-amber-200" 
+              ? "bg-purple-100 text-purple-900 hover:bg-purple-200" 
               : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
           }`}
         >
-          <List size={16} class={currentPath === "/games/list" ? "text-amber-800" : "text-gray-600"} />
+          <List size={16} class={currentPath === "/games/list" ? "text-purple-800" : "text-gray-600"} />
           <span>All Games</span>
-        </button>
+        </a>
 
         {recentGames.value.length > 0 && (
           <div class="pt-1">
@@ -54,9 +51,9 @@ export default function GamesSection({ isCollapsed }: { isCollapsed: boolean }) 
                 <div key={game.id} class="group flex items-center">
                   <a
                     href={`/games/${game.id}`}
-                    class={`flex-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-amber-500 ${
+                    class={`flex-1 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2 focus-visible:ring-purple-500 ${
                       currentPath === `/games/${game.id}`
-                        ? "bg-amber-100 text-amber-900 hover:bg-amber-200" 
+                        ? "bg-purple-100 text-purple-900 hover:bg-purple-200" 
                         : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                   >

@@ -70,7 +70,8 @@ export async function getApiKeys(params: ApiKeysParams): Promise<{ api_url: stri
       api_model = vlmCorrectionModel !== "" ? vlmCorrectionModel : API_IMAGE_CORRECTION_MODEL;
     }
   } else if (universalShopApiKey !== "") {
-    const castMessages = messages as unknown as Array<{ role: string; content: string | (string | { image_url: string; preview: string })[]> }>;
+    type CastMessage = { role: string; content: string | (string | { type: "image_url"; image_url: { url: string; detail: string }; preview: string })[] };
+    const castMessages = messages as unknown as CastMessage[];
     const { endpoint, apiKey, model } = await deductInputTokens(castMessages, universalShopApiKey);
     api_url = endpoint;
     api_key = apiKey;
