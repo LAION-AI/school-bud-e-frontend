@@ -39,8 +39,6 @@ export function ImageUploadButton({
 
           let fileObject;
 
-          console.log(type);
-          console.log(data_url);
           if (type.startsWith("image/")) {
 
           fileObject = {

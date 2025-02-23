@@ -1,7 +1,7 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import type { Game, SavedGame } from "../../types/formats.ts";
 import GamePageIsland from "../../islands/GamePage.tsx";
-import KvStorage from "../../utils/kv_storage.ts";
+import KvStorage from "../api/(_utils)/kv_storage.ts";
 
 interface Data {
   game: Game | null;

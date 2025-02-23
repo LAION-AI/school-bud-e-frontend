@@ -1,5 +1,5 @@
 import type { Handlers } from "$fresh/server.ts";
-import KvStorage from "../../utils/kv_storage.ts";
+import KvStorage from "./(_utils)/kv_storage.ts";
 import type { SavedGame, SavedGamesData } from "../../types/formats.ts";
 
 interface GameData {
@@ -121,7 +121,6 @@ export const handler: Handlers = {
     try {
       console.log("[API] Reading from KV storage...");
       const savedGames = await kvStorage.read();
-      console.log("[API] Raw KV read result:", JSON.stringify(savedGames));
 
       if (!savedGames || !savedGames.games) {
         console.log("[API] No games found or invalid format, returning empty array");
@@ -132,17 +131,11 @@ export const handler: Handlers = {
       }
 
       console.log("[API] Games array found. Length:", savedGames.games.length);
-      console.log("[API] Games array content:", JSON.stringify(savedGames.games));
       
       const response = new Response(JSON.stringify(savedGames.games), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
-
-      // Log the response body before sending
-      const responseClone = response.clone();
-      const responseBody = await responseClone.text();
-      console.log("[API] Final response body:", responseBody);
       
       return response;
     } catch (error) {

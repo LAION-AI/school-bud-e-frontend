@@ -1,4 +1,4 @@
-import { renderTextWithLinksAndBold } from "../utils/textUtils.tsx";
+import { renderTextWithLinksAndBold } from "../routes/api/(_utils)/textUtils.tsx";
 import { GraphLoadingState } from "./GraphLoadingState.tsx";
 
 // Define supported content types

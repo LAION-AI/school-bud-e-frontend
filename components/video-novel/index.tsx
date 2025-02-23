@@ -30,8 +30,8 @@ function VideoNovelComponent(_props: { lang: string }) {
   const [savedNovels, setSavedNovels] = useState<VideoNovel[]>([]);
   const [selectedNovelId, setSelectedNovelId] = useState<string | null>(null);
   const [editingSegmentId, setEditingSegmentId] = useState<string | null>(null);
+  const [videoId, setVideoId] = useState<string | null>(null);
   const audioRef = useRef<CustomAudioElement>(null);
-  console.log("Rendering: Editing segment ID:", editingSegmentId);
 
   // Load saved novels on mount
   useEffect(() => {
@@ -128,6 +128,8 @@ function VideoNovelComponent(_props: { lang: string }) {
       const reader = stream.getReader();
       let isComplete = false;
 
+
+
       while (!isComplete) {
         try {
           const { done, value } = await reader.read();
@@ -138,9 +140,13 @@ function VideoNovelComponent(_props: { lang: string }) {
           }
           if (!value) continue;
 
+
           if (value.type === "status") {
             console.log("Status update:", value.data);
             setStatus(value.data);
+          } else if (value.type === "videoId") {
+            console.log("Video ID received:", value.data);
+            setVideoId(value.data);
           } else if (value.type === "complete") {
             console.log("Generation complete");
             setStatus("");
@@ -384,8 +390,13 @@ function VideoNovelComponent(_props: { lang: string }) {
                         const audioBlob = audioPlayer.getAudioBlob();
                         console.log("Audio blob created, size:", audioBlob.size);
                         
+                        if (!videoId) {
+                          console.error("Video ID not available");
+                          setStatus("Error: Video ID not generated yet");
+                          return;
+                        }
                         const novelData = {
-                          id: crypto.randomUUID(),
+                          id: videoId,
                           name,
                           images: images.sort((a, b) => a.order - b.order),
                           audioBlob,
