@@ -1,6 +1,20 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
 
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  lang: string;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onend: (() => void) | null;
+  addEventListener: (
+    type: string,
+    callback: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ) => void;
+}
+
 /**
  * VoiceRecordButton component.
  *
@@ -99,14 +113,17 @@ function VoiceRecordButton({
     const formData = new FormData();
     formData.append("audio", audioBlob, "recording.wav");
 
+    let serverUrl = sttUrl;
+    let modelName = sttModel;
+
     if (sttKey.startsWith("gsk_")) {
-      sttUrl = sttUrl == "" ? "https://api.groq.com/openai/v1/audio/transcriptions" : sttUrl;
-      sttModel = sttModel == "" ? "whisper-large-v3-turbo" : sttModel;
+      serverUrl = serverUrl === "" ? "https://api.groq.com/openai/v1/audio/transcriptions" : serverUrl;
+      modelName = modelName === "" ? "whisper-large-v3-turbo" : modelName;
     }
 
-    formData.append("sttUrl", sttUrl);
+    formData.append("sttUrl", serverUrl);
     formData.append("sttKey", sttKey);
-    formData.append("sttModel", sttModel);
+    formData.append("sttModel", modelName);
 
     try {
       const response = await fetch("/api/stt", {
@@ -134,6 +151,7 @@ function VoiceRecordButton({
   }
 
   const prependToTranscript = "";
+  
   // deno-lint-ignore no-explicit-any
   function onSpeak(event: any) {
     // console.log(resetTranscript);
@@ -159,6 +177,8 @@ function VoiceRecordButton({
       disabled={!IS_BROWSER}
       class={`disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 bg-gray-100
         ${isRecording ? "animate-pulse bg-red-600" : ""}`}
+      type="button"
+      aria-label={isRecording ? "Stop recording" : "Start recording"}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -173,7 +193,10 @@ function VoiceRecordButton({
         class={`icon icon-tabler icons-tabler-outline icon-tabler-microphone ${
           isRecording ? "text-white" : "text-blue-600"
         }`}
+        aria-hidden="true"
+        role="img"
       >
+        <title>Microphone</title>
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M9 2m0 3a3 3 0 0 1 3 -3h0a3 3 0 0 1 3 3v5a3 3 0 0 1 -3 3h0a3 3 0 0 1 -3 -3z" />
         <path d="M5 10a7 7 0 0 0 14 0" />
@@ -184,4 +207,4 @@ function VoiceRecordButton({
   );
 }
 
-export default VoiceRecordButton;
+export default VoiceRecordButton; 

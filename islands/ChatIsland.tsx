@@ -15,7 +15,12 @@ import { chats, chatSuffix, currentEditIndex, handleRefreshAction, messages, isA
 import { initTourGuide, tours, startTour } from "../utils/tourGuide.ts";
 import Modal from "../components/Modal.tsx";
 import Settings from "../components/Settings.tsx";
-import TourProgress from "../components/TourProgress.tsx";
+import TourProgress from "./core/TourProgress.tsx";
+
+// Import the restructured button components
+import ImageUploadButton from "./core/buttons/ImageUploadButton.tsx";
+import VoiceRecordButton from "./core/buttons/VoiceRecordButton.tsx";
+import ChatSubmitButton from "./core/buttons/ChatSubmitButton.tsx";
 
 // ###############
 // ## / IMPORTS ##

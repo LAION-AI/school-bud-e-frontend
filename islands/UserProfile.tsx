@@ -1,6 +1,6 @@
 import type { JSX } from "preact";
 import { useEffect, useState } from "preact/hooks";
-import ImageUploadButton from "../components/ImageUploadButton.tsx";
+import ImageUploadButton from "./core/buttons/ImageUploadButton.tsx";
 import BasicSettings from "../components/settings/BasicSettings.tsx";
 import ConfigurationSelector from "../components/settings/ConfigurationSelector.tsx";
 import { settings } from "../components/chat/store.ts";

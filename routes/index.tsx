@@ -1,4 +1,6 @@
 import ChatAgreementOrIsland from "../islands/ChatAgreementOrIsland.tsx";
+import FloatingToolGuide from "../islands/FloatingToolGuide.tsx";
+import TourProgress from "../islands/core/TourProgress.tsx";
 
 export default function Home(req: Request) {
   const url = new URL(req.url);
@@ -26,6 +28,9 @@ export default function Home(req: Request) {
           </div>
         </div>
       </div>
+      
+      <FloatingToolGuide />
+      <TourProgress />
     </>
   );
 }

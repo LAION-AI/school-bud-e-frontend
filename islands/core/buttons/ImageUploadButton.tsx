@@ -1,6 +1,18 @@
 import { useRef, useState } from "preact/hooks";
 import { IS_BROWSER } from "$fresh/runtime.ts";
 
+export interface Image {
+  type: string;
+  image_url?: {
+    url: string;
+    detail: string;
+  };
+  pdf_url?: {
+    url: string;
+    detail: string;
+  };
+}
+
 export function ImageUploadButton({
   onImagesUploaded,
 }: {
@@ -8,7 +20,7 @@ export function ImageUploadButton({
 }) {
   // deno-lint-ignore no-explicit-any
   const [previewImages, setPreviewImages] = useState<any[]>([]);
-  const [imageFiles, _setImageFiles] = useState([]);
+  const [imageFiles, _setImageFiles] = useState<Image[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const onButtonClick = () => {
@@ -28,26 +40,25 @@ export function ImageUploadButton({
     setPreviewImages([...previousImages, ...newImages]);
 
     // deno-lint-ignore no-explicit-any
-    const newPreviewImages: any[] = [];
+    const newPreviewImages: Image[] = [];
     const promises = files.map((file) => {
       return new Promise<void>((resolve) => {
         const fileReader = new FileReader();
 
         fileReader.addEventListener("load", (e) => {
-          const data_url = e.target!.result;
+          const data_url = e.target!.result as string;
           const type = data_url?.split(";")[0].split(":")[1];
 
-          let fileObject;
+          let fileObject: Image;
 
           if (type.startsWith("image/")) {
-
-          fileObject = {
-            type: "image_url",
-            image_url: {
-              url: data_url,
-              detail: "high",
-            },
-          };
+            fileObject = {
+              type: "image_url",
+              image_url: {
+                url: data_url,
+                detail: "high",
+              },
+            };
           } else {
             fileObject = {
               type: "pdf_url",
@@ -55,7 +66,7 @@ export function ImageUploadButton({
                 url: data_url,
                 detail: "high",
               },
-            }
+            };
           }
 
           newPreviewImages.push(fileObject);
@@ -88,6 +99,8 @@ export function ImageUploadButton({
         onClick={onButtonClick}
         disabled={!IS_BROWSER}
         class="disabled:opacity-50 disabled:cursor-not-allowed rounded-full border p-2 mr-1 bg-gray-100 text-blue-600/50"
+        type="button"
+        aria-label="Upload image or PDF"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -100,7 +113,10 @@ export function ImageUploadButton({
           stroke-linecap="round"
           stroke-linejoin="round"
           class="icon icon-tabler icons-tabler-outline icon-tabler-photo-up"
+          aria-hidden="true"
+          role="img"
         >
+          <title>Upload Image</title>
           <path stroke="none" d="M0 0h24v24H0z" fill="none" />
           <path d="M15 8h.01" />
           <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
@@ -114,4 +130,4 @@ export function ImageUploadButton({
   );
 }
 
-export default ImageUploadButton;
+export default ImageUploadButton; 

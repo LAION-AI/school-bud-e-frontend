@@ -33,6 +33,7 @@ import * as $video_novel from "./routes/video-novel.tsx";
 import * as $ChatAgreement from "./islands/ChatAgreement.tsx";
 import * as $ChatAgreementOrIsland from "./islands/ChatAgreementOrIsland.tsx";
 import * as $ChatIsland from "./islands/ChatIsland.tsx";
+import * as $FloatingToolGuide from "./islands/FloatingToolGuide.tsx";
 import * as $Game from "./islands/Game.tsx";
 import * as $GamePage from "./islands/GamePage.tsx";
 import * as $GamesList from "./islands/GamesList.tsx";
@@ -48,6 +49,10 @@ import * as $UserProfile from "./islands/UserProfile.tsx";
 import * as $VideoNovelIsland from "./islands/VideoNovelIsland.tsx";
 import * as $WindowManager from "./islands/WindowManager.tsx";
 import * as $core_Tooltip from "./islands/core/Tooltip.tsx";
+import * as $core_TourProgress from "./islands/core/TourProgress.tsx";
+import * as $core_buttons_ChatSubmitButton from "./islands/core/buttons/ChatSubmitButton.tsx";
+import * as $core_buttons_ImageUploadButton from "./islands/core/buttons/ImageUploadButton.tsx";
+import * as $core_buttons_VoiceRecordButton from "./islands/core/buttons/VoiceRecordButton.tsx";
 import * as $sidebar_ChatList from "./islands/sidebar/ChatList.tsx";
 import * as $sidebar_CollapsibleSection from "./islands/sidebar/CollapsibleSection.tsx";
 import * as $sidebar_GamesSection from "./islands/sidebar/GamesSection.tsx";
@@ -97,6 +102,7 @@ const manifest = {
     "./islands/ChatAgreement.tsx": $ChatAgreement,
     "./islands/ChatAgreementOrIsland.tsx": $ChatAgreementOrIsland,
     "./islands/ChatIsland.tsx": $ChatIsland,
+    "./islands/FloatingToolGuide.tsx": $FloatingToolGuide,
     "./islands/Game.tsx": $Game,
     "./islands/GamePage.tsx": $GamePage,
     "./islands/GamesList.tsx": $GamesList,
@@ -112,6 +118,13 @@ const manifest = {
     "./islands/VideoNovelIsland.tsx": $VideoNovelIsland,
     "./islands/WindowManager.tsx": $WindowManager,
     "./islands/core/Tooltip.tsx": $core_Tooltip,
+    "./islands/core/TourProgress.tsx": $core_TourProgress,
+    "./islands/core/buttons/ChatSubmitButton.tsx":
+      $core_buttons_ChatSubmitButton,
+    "./islands/core/buttons/ImageUploadButton.tsx":
+      $core_buttons_ImageUploadButton,
+    "./islands/core/buttons/VoiceRecordButton.tsx":
+      $core_buttons_VoiceRecordButton,
     "./islands/sidebar/ChatList.tsx": $sidebar_ChatList,
     "./islands/sidebar/CollapsibleSection.tsx": $sidebar_CollapsibleSection,
     "./islands/sidebar/GamesSection.tsx": $sidebar_GamesSection,

@@ -2,10 +2,10 @@ import { useSignal } from "@preact/signals";
 import { isApiConfigured, lang, query, settings, addMessage } from "../chat/store.ts";
 import { startStream } from "../chat/stream.ts";
 import { chatIslandContent } from "../../internalization/content.ts";
-import ImageUploadButton from "../ImageUploadButton.tsx";
-import VoiceRecordButton from "../VoiceRecordButton.tsx";
+import ImageUploadButton from "../../islands/core/buttons/ImageUploadButton.tsx";
+import VoiceRecordButton from "../../islands/core/buttons/VoiceRecordButton.tsx";
 import { resetTranscript } from "./speech.ts";
-import { ChatSubmitButton } from "../ChatSubmitButton.tsx";
+import { ChatSubmitButton } from "../../islands/core/buttons/ChatSubmitButton.tsx";
 
 function TypingIndicator() {
     return (

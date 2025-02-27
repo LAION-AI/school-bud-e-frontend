@@ -1,10 +1,10 @@
 import { MessageCircle } from "lucide-preact";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { useRef } from "preact/hooks";
-import { ChatSubmitButton } from "../ChatSubmitButton.tsx";
 import ChatHistory from "./ChatHistory.tsx";
 import { messages as storeMessages, addMessage } from "./store.ts";
 import { startStream } from "./stream.ts";
+import { ChatSubmitButton } from "../../islands/core/buttons/ChatSubmitButton.tsx";
 
 export default function FloatingChat() {
   const isOpen = useSignal(false);
