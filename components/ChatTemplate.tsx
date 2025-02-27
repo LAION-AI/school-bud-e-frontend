@@ -5,6 +5,9 @@ import RightSidebar from "../islands/RightSidebar.tsx";
 import { Message } from "./Message.tsx";
 import { autoScroll, lang, messages, settings } from "./chat/store.ts";
 import ChatInput from "./chat/ChatInput.tsx";
+import WelcomeBanner from "./WelcomeBanner.tsx";
+import { startTour } from "../utils/tourGuide.ts";
+import { isApiConfigured } from "./chat/store.ts";
 
 interface AudioItem {
 	audio: HTMLAudioElement;
@@ -20,6 +23,7 @@ interface ChatTemplateProps {
 	onRefreshAction: (groupIndex: number) => void;
 	onEditAction: (groupIndex: number) => void;
 	children: JSX.Element | JSX.Element[];
+	onOpenSettings: () => void;
 }
 
 function downloadAudioFiles(items: {
@@ -72,6 +76,7 @@ function ChatTemplate({
 	onRefreshAction,
 	onEditAction,
 	children,
+	onOpenSettings,
 }: ChatTemplateProps) {
 	const [sidebarData, setSidebarData] = useState<
 		{
@@ -80,10 +85,6 @@ function ChatTemplate({
 		}[]
 	>([]);
 	const chatRef = useRef<HTMLDivElement>(null);
-
-	const isApiConfigured =
-		settings.value.universalApiKey ||
-		(settings.value.apiKey && settings.value.apiModel && settings.value.apiUrl);
 
 	useEffect(() => {
 		// Try to parse JSON data from the last message if it's from the assistant
@@ -145,6 +146,10 @@ function ChatTemplate({
 		}
 	}, []); // Also run when autoScroll changes
 
+	const handleStartTour = () => {
+		startTour('basics');
+	};
+
 	return (
 		<div class="flex w-full">
 			<div class="flex-grow flex flex-col min-h-full">
@@ -175,12 +180,11 @@ function ChatTemplate({
 					</div>
 				</div>
 
-				{!isApiConfigured && (
-					<div className="relative bg-gray-700 rounded-md">
-						<div className="text-center text-md p-4 text-white">
-							{chatIslandContent[lang.value]["noSettings"]}
-						</div>
-					</div>
+				{!isApiConfigured.value && (
+					<WelcomeBanner
+						onOpenSettings={onOpenSettings}
+						onStartTour={handleStartTour}
+					/>
 				)}
 
 				<ChatInput />

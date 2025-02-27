@@ -1,8 +1,5 @@
 import { useState } from "preact/hooks";
-import { settings } from "../../components/chat/store.ts";
-import { settingsContent } from "../../internalization/content.ts";
-import BasicSettings from "../../components/settings/BasicSettings.tsx";
-import ConfigurationSelector from "../../components/settings/ConfigurationSelector.tsx";
+import { IS_BROWSER } from "$fresh/runtime.ts";
 
 interface UserData {
 	name?: string;
@@ -22,27 +19,15 @@ export default function UserProfileSection({
 	lang?: string;
 }) {
 	const [userData, setUserData] = useState<UserData>(() => {
+		if (!IS_BROWSER) return {};
+		
 		const storedData = localStorage.getItem("userData");
 		return storedData ? JSON.parse(storedData) : {};
 	});
-	const [newSettings, setNewSettings] = useState({
-		...settings.value,
-	});
-	const [showSettings, setShowSettings] = useState(false);
-	const [showAdvanced, setShowAdvanced] = useState(false);
 
-	const updateUserData = (newData: Partial<UserData>) => {
-		const updatedData = { ...userData, ...newData };
-		setUserData(updatedData);
-		localStorage.setItem("userData", JSON.stringify(updatedData));
-	};
-
-	const updateSettings = (key: string, value: string) => {
-		setNewSettings((newSettings) => {
-			const updatedSettings = { ...newSettings };
-			updatedSettings[key as keyof typeof settings.value] = value;
-			return updatedSettings;
-		});
+	const navigateToSettings = () => {
+		// Navigate to the dedicated settings page
+		window.location.href = "/settings";
 	};
 
 	return (
@@ -79,9 +64,10 @@ export default function UserProfileSection({
 				</div>
 				<button
 					type="button"
-					onClick={() => setShowSettings(!showSettings)}
+					onClick={navigateToSettings}
 					class="p-2 rounded hover:bg-blue-100 transition-colors"
-					aria-label={showSettings ? "Close settings" : "Open settings"}
+					aria-label="Open settings page"
+					title={lang === "de" ? "Einstellungen öffnen" : "Open settings"}
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -96,139 +82,11 @@ export default function UserProfileSection({
 						role="img"
 						aria-label="Settings"
 					>
-						<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
-						<circle cx="12" cy="7" r="4" />
+						<circle cx="12" cy="12" r="3"></circle>
+						<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
 					</svg>
 				</button>
 			</div>
-
-			{showSettings && (
-				<div class="px-2 py-4 space-y-4 border-t">
-					{/* Profile Section */}
-					<div class="space-y-4">
-						<div>
-							<label htmlFor="sidebar-name" class="block text-sm font-medium text-gray-700">
-								{lang === "de" ? "Name" : "Name"}
-							</label>
-							<input
-								id="sidebar-name"
-								type="text"
-								value={userData.name || ""}
-								onChange={(e) =>
-									updateUserData({
-										name: (e.target as HTMLInputElement).value,
-									})
-								}
-								class="mt-1 block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-							/>
-						</div>
-						<div>
-							<label htmlFor="sidebar-email" class="block text-sm font-medium text-gray-700">
-								{lang === "de" ? "E-Mail" : "Email"}
-							</label>
-							<input
-								id="sidebar-email"
-								type="email"
-								value={userData.email || ""}
-								onChange={(e) =>
-									updateUserData({
-										email: (e.target as HTMLInputElement).value,
-									})
-								}
-								class="mt-1 block w-full text-sm rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-							/>
-						</div>
-					</div>
-
-					{/* Settings Section */}
-					<div class="space-y-4">
-						<h4 class="font-medium">⚙️ {settingsContent[lang].title}</h4>
-						
-						<BasicSettings
-							settings={newSettings}
-							onUpdateSettings={updateSettings}
-							lang={lang}
-						/>
-
-						{/* Advanced Settings Toggle Button */}
-						<button
-							type="button"
-							onClick={() => setShowAdvanced(!showAdvanced)}
-							class="text-sm text-blue-500 hover:text-blue-600"
-						>
-							{showAdvanced
-								? settingsContent[lang].lessSettings
-								: settingsContent[lang].advancedSettings}
-						</button>
-
-						{/* Advanced Settings */}
-						{showAdvanced && (
-							<div class="space-y-4">
-								<ConfigurationSelector
-									serviceType="api"
-									currentConfig={{
-										url: newSettings.apiUrl,
-										model: newSettings.apiModel,
-										key: newSettings.apiKey,
-									}}
-									onUpdateSettings={updateSettings}
-									lang={lang}
-									icon="💬"
-									title={settingsContent[lang].chatApiTitle}
-								/>
-								<ConfigurationSelector
-									serviceType="tts"
-									currentConfig={{
-										url: newSettings.ttsUrl,
-										model: newSettings.ttsModel,
-										key: newSettings.ttsKey,
-									}}
-									onUpdateSettings={updateSettings}
-									lang={lang}
-									icon="🗣️"
-									title={settingsContent[lang].ttsTitle}
-								/>
-								<ConfigurationSelector
-									serviceType="stt"
-									currentConfig={{
-										url: newSettings.sttUrl,
-										model: newSettings.sttModel,
-										key: newSettings.sttKey,
-									}}
-									onUpdateSettings={updateSettings}
-									lang={lang}
-									icon="👂"
-									title={settingsContent[lang].sttTitle}
-								/>
-								<ConfigurationSelector
-									serviceType="vlm"
-									currentConfig={{
-										url: newSettings.vlmUrl,
-										model: newSettings.vlmModel,
-										key: newSettings.vlmKey,
-									}}
-									onUpdateSettings={updateSettings}
-									lang={lang}
-									icon="👀"
-									title={settingsContent[lang].vlmTitle}
-								/>
-							</div>
-						)}
-
-						{/* Save Settings Button */}
-						<button
-							type="button"
-							onClick={() => {
-								settings.value = { ...newSettings };
-								setShowSettings(false);
-							}}
-							class="w-full px-4 py-2 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-						>
-							{settingsContent[lang].save}
-						</button>
-					</div>
-				</div>
-			)}
 		</div>
 	);
 } 

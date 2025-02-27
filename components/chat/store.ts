@@ -100,6 +100,9 @@ export const isApiConfigured = computed(() => {
     (settings.value.apiKey && settings.value.apiModel && settings.value.apiUrl);
 });
 
+// Remove this if it exists or set it to always return null
+export const apiWarningMessage = computed(() => null);
+
 // ---------- Signal Effects ----------
 
 // Update the URL when the chat suffix changes and reset the audio.

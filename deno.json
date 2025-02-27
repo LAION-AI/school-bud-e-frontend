@@ -12,7 +12,8 @@
     "tailwindcss": "npm:tailwindcss@3.4.1",
     "tailwindcss/": "npm:/tailwindcss@3.4.1/",
     "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
-    "tiktoken": "npm:tiktoken@^1.0.20"
+    "tiktoken": "npm:tiktoken@^1.0.20",
+    "shepherd.js": "npm:shepherd.js@14.5.0"
   },
   "tasks": {
     "test": "deno test -A",
@@ -28,6 +29,7 @@
     "jsx": "react-jsx",
     "jsxImportSource": "preact"
   },
+  "react": ["./node_modules/@types/preact"],
   "lint": { "rules": { "tags": ["fresh", "recommended"] } },
   "exclude": ["**/_fresh/*"],
   "nodeModulesDir": "auto"

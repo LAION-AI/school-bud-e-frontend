@@ -69,37 +69,34 @@ export default function CollapsibleSection({
     return "text-gray-500 group-hover:text-gray-700";
   };
 
+  const updateActiveAndExpanded = () => {
+    const path = globalThis.location?.pathname;
+    
+    let isCurrentlyActive = false;
+    let match: RegExpMatchArray | null = null;
+
+    if (routePattern) {
+      match = path?.match(routePattern) || null;
+      isCurrentlyActive = Boolean(match);
+    } else {
+      isCurrentlyActive = Boolean(path?.startsWith(baseRoute));
+    }
+
+    setIsActive(isCurrentlyActive);
+
+    if (!hasInitialized && isCurrentlyActive && !shouldBeExpanded) {
+      setShouldBeExpanded(true);
+      onToggle();
+    }
+    setHasInitialized(true);
+
+    if (onRouteMatch) {
+      onRouteMatch(match);
+    }
+  };
+
   useEffect(() => {
-    const updateActiveAndExpanded = () => {
-      const path = globalThis.location?.pathname;
-      
-      let isCurrentlyActive = false;
-      let match: RegExpMatchArray | null = null;
-
-      if (routePattern) {
-        match = path?.match(routePattern) || null;
-        isCurrentlyActive = Boolean(match);
-      } else {
-        isCurrentlyActive = Boolean(path?.startsWith(baseRoute));
-      }
-
-      setIsActive(isCurrentlyActive);
-
-      if (!hasInitialized && isCurrentlyActive && !shouldBeExpanded) {
-        setShouldBeExpanded(true);
-        onToggle();
-      }
-      setHasInitialized(true);
-
-      if (onRouteMatch) {
-        onRouteMatch(match);
-      }
-    };
-
     updateActiveAndExpanded();
-
-    globalThis.addEventListener('popstate', updateActiveAndExpanded);
-    return () => globalThis.removeEventListener('popstate', updateActiveAndExpanded);
   }, [baseRoute, routePattern, onRouteMatch, shouldBeExpanded, onToggle, hasInitialized]);
 
   useEffect(() => {
@@ -114,7 +111,7 @@ export default function CollapsibleSection({
   const buttonBaseClasses = "w-full px-4 py-3 rounded-xl flex items-center justify-between transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2";
 
   return (
-    <div class="relative group">
+    <div class="relative group" onMouseUp={updateActiveAndExpanded}>
       <button
         type="button"
         onClick={handleToggle}

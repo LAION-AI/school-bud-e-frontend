@@ -276,8 +276,8 @@ export const handler: Handlers = {
         {
           messages: payload.messages,
           lang: payload.lang,
-          universalShopApiKey: payload.universalApiKey,
-          universalApiKey: payload.universalShopApiKey,
+          universalShopApiKey: payload.universalShopApiKey,
+          universalApiKey: payload.universalApiKey,
           llmApiUrl: payload.llmApiUrl,
           llmApiKey: payload.llmApiKey,
           llmApiModel: payload.llmApiModel,

@@ -1,5 +1,11 @@
 import { useState } from "preact/hooks";
 import CollapsibleSection from "./CollapsibleSection.tsx";
+import { ListTodo } from "lucide-preact";
+import type { LucideProps } from "lucide-preact";
+import type { VNode } from "preact";
+
+// @ts-ignore: Suppressing linter error for ListTodo not being a valid JSX component
+const SafeListTodoIcon = (props: LucideProps): VNode => <ListTodo {...props} />;
 
 interface TestsSectionProps {
   isCollapsed: boolean;
@@ -7,33 +13,46 @@ interface TestsSectionProps {
 
 export default function TestsSection({ isCollapsed }: TestsSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentPath, setCurrentPath] = useState("");
 
-  const TestIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-label="Tests icon">
-      <title>Tests and Assessments Section</title>
-      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-      <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
-    </svg>
-  );
+  // Define the variant for this section
+  const sectionVariant = "amber" as const;
+
+  // Helper function to generate link classes based on active state and variant
+  const getLinkClasses = (linkPath: string) => {
+    const baseClasses = "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all duration-200 outline-none ring-offset-2 ring-offset-white focus-visible:ring-2";
+    let ringClass = "";
+    let activeClasses = "";
+    if (sectionVariant === "amber") {
+      ringClass = "focus-visible:ring-amber-500";
+      activeClasses = "bg-amber-100 text-amber-900 hover:bg-amber-200";
+    }
+    // You can add more variants here if needed
+    const inactiveClasses = "text-gray-700 hover:bg-gray-50 hover:text-gray-900";
+    const active = currentPath === linkPath;
+    return `${baseClasses} ${ringClass} ${active ? activeClasses : inactiveClasses}`;
+  };
 
   return (
     <CollapsibleSection
-      icon={<TestIcon />}
+      icon={<SafeListTodoIcon />}
       title="Tests"
       isCollapsed={isCollapsed}
       isExpanded={isExpanded}
       onToggle={() => setIsExpanded(!isExpanded)}
       baseRoute="/tests"
+      onRouteMatch={(match) => setCurrentPath(match?.[0] || "")}
+      variant={sectionVariant}
     >
       <a
         href="/tests/generate"
-        class="block px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        class={getLinkClasses("/tests/generate")}
       >
         Generate Tests
       </a>
       <a
         href="/tests/check"
-        class="block px-2 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+        class={getLinkClasses("/tests/check")}
       >
         Check Tests
       </a>

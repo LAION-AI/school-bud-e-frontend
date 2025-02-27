@@ -96,7 +96,7 @@ function ChatInput() {
                     </div>
                 )}
                 {isThinking.value && <TypingIndicator />}
-                <div className="shadow-lg flex cursor-text flex-col rounded-3xl border border-token-border-light px-3 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-colors contain-inline-size bg-main-surface-primary bg-white mx-4 mb-4">
+                <div className="shadow-lg flex cursor-text flex-col rounded-3xl border border-token-border-light px-3 py-1 shadow-[0_4px_12px_rgba(0,0,0,0.1)] transition-colors contain-inline-size bg-main-surface-primary bg-white mx-4 mb-4" data-tour="chat-input">
                     <textarea
                         disabled={!isApiConfigured.value || isThinking.value}
                         type="text"
@@ -104,21 +104,24 @@ function ChatInput() {
                         placeholder={chatIslandContent[lang.value]["placeholderText"]}
                         onInput={(e) => {
                             const textarea = e.currentTarget;
-                            query.value = textarea.value; // Update query and possibly the messages array
+                            query.value = textarea.value;
                         }}
                         onKeyPress={(e) => {
                             if (e.key === "Enter" && !e.shiftKey) {
-                                e.preventDefault(); // Prevents adding a new line in the textarea
+                                e.preventDefault();
                                 handleStartStream();
                             }
                         }}
-                        class="block h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-token-text-primary placeholder:text-token-text-secondary focus-visible:outline-none"
+                        class="block h-10 w-full resize-none border-0 bg-transparent px-0 py-2 text-token-text-primary placeholder:text-token-text-secondary focus-visible:outline-none message-input"
+                        data-tour="chat-textarea"
                     />
 
                     <div class={"flex justify-between w-full"}>
                         <span>
                             <ImageUploadButton
                                 onImagesUploaded={handleImagesUploaded}
+                                class="image-upload-button"
+                                data-tour="image-upload"
                             />
 
                             <VoiceRecordButton
@@ -132,12 +135,15 @@ function ChatInput() {
                                 onInterimTranscript={(interimTranscript) => {
                                     query.value = (query.value + " " + interimTranscript);
                                 }}
+                                class="voice-record-button"
+                                data-tour="voice-record"
                             />
                         </span>
 
                         <ChatSubmitButton
                             onMouseDown={() => handleStartStream()}
                             disabled={!query.value || !isApiConfigured.value || isThinking.value}
+                            data-tour="chat-submit"
                         />
                     </div>
                 </div>

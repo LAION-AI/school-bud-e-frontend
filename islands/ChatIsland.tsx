@@ -7,11 +7,15 @@ import ChatTemplate from "../components/ChatTemplate.tsx";
 import ChatWarning from "../components/Warning.tsx";
 
 // Necessary for streaming service
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState, useRef } from "preact/hooks";
 
 // // Import necessary types from Preact
 import { getTTS, readAlways, stopList } from "../components/chat/speech.ts";
-import { chats, chatSuffix, currentEditIndex, handleRefreshAction, messages } from "../components/chat/store.ts";
+import { chats, chatSuffix, currentEditIndex, handleRefreshAction, messages, isApiConfigured } from "../components/chat/store.ts";
+import { initTourGuide, tours, startTour } from "../utils/tourGuide.ts";
+import Modal from "../components/Modal.tsx";
+import Settings from "../components/Settings.tsx";
+import TourProgress from "../components/TourProgress.tsx";
 
 // ###############
 // ## / IMPORTS ##
@@ -42,6 +46,8 @@ export default function ChatIsland({ lang, id }: { lang: string, id: string }) {
 
   // General settings
   const [isStreamComplete, setIsStreamComplete] = useState(true);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const tourInitialized = useRef(false);
 
   // Add useEffect for loading settings
 
@@ -130,6 +136,14 @@ export default function ChatIsland({ lang, id }: { lang: string, id: string }) {
     };
   }, [audioFileDict, readAlways, stopList.value]);
 
+  // Initialize tour guide on client-side only once
+  useEffect(() => {
+    if (typeof window !== "undefined" && !tourInitialized.current) {
+      initTourGuide();
+      tourInitialized.current = true;
+    }
+  }, []);
+
   // Helper functions for audio playback
   const findNextUnplayedAudio = (
     groupAudios: Record<number, AudioItem>,
@@ -173,6 +187,18 @@ export default function ChatIsland({ lang, id }: { lang: string, id: string }) {
     setAudioFileDict({ ...audioFileDict });
   };
 
+  const handleOpenSettings = () => {
+    setIsSettingsOpen(true);
+  };
+  
+  const handleCloseSettings = () => {
+    setIsSettingsOpen(false);
+  };
+  
+  const handleStartTour = () => {
+    startTour("basics");
+  };
+
   // MAIN CONTENT THAT IS RENDERED
   return (
     <div class="flex w-full h-screen">
@@ -182,9 +208,24 @@ export default function ChatIsland({ lang, id }: { lang: string, id: string }) {
         audioFileDict={audioFileDict}
         onRefreshAction={handleRefreshAction}
         onEditAction={() => { }}
+        onOpenSettings={handleOpenSettings}
+        onStartTour={handleStartTour}
       >
         <ChatWarning lang={lang} />
       </ChatTemplate>
+      
+      {/* Settings Modal */}
+      <Modal
+        isOpen={isSettingsOpen}
+        onClose={handleCloseSettings}
+        title="Settings"
+        size="md"
+      >
+        <Settings onClose={handleCloseSettings} lang={lang.value} />
+      </Modal>
+      
+      {/* Tour Progress Component - only show when API is configured */}
+      {isApiConfigured.value && <TourProgress />}
     </div>
   );
 }
