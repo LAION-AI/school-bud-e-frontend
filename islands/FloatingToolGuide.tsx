@@ -159,7 +159,7 @@ export default function FloatingToolGuide({ lang = "en" }: { lang?: string }) {
       </button>
       
       {isExpanded.value ? (
-        <div className="p-4">
+        <div className="p-4 max-h-[80vh] overflow-y-auto">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-semibold text-indigo-900">
               {lang === "de" ? "Bud-E Assistent" : "Bud-E Assistant"}

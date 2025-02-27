@@ -7,11 +7,11 @@ type ShepherdTour = any; // Using any temporarily to bypass type issues
 
 // Define types for tours
 export interface TourInfo {
-  steps: any;
   id: string;
   title: string;
   description: string;
   completed: boolean;
+  steps?: any[]; // Make steps optional to avoid errors
 }
 
 // Create a signal to track tours
@@ -20,21 +20,27 @@ export const tours = signal<TourInfo[]>([
     id: 'basics', 
     title: 'Basic Tour', 
     description: 'Learn the basic features of the application', 
-    completed: false 
+    completed: false,
+    steps: [] 
   },
   { 
     id: 'chat', 
     title: 'Chat Features', 
     description: 'Explore advanced chat capabilities', 
-    completed: false 
+    completed: false,
+    steps: [] 
   },
   { 
     id: 'api-setup', 
     title: 'API Setup', 
     description: 'Learn how to set up API keys for full functionality', 
-    completed: false 
+    completed: false,
+    steps: [] 
   }
 ]);
+
+// Track if any tour is active
+export const isTourActive = signal(false);
 
 // Store the tour instances
 const tourInstances: Record<string, ShepherdTour> = {};
@@ -62,6 +68,23 @@ function setupBasicsTour() {
         enabled: true
       }
     }
+  });
+
+  // Add event listeners to manage the shepherd-active class
+  tour.on('show', () => {
+    document.body.classList.add('shepherd-active');
+    isTourActive.value = true;
+  });
+
+  tour.on('complete', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
+    markTourComplete('basics');
+  });
+
+  tour.on('cancel', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
   });
 
   tour.addStep({
@@ -140,11 +163,6 @@ function setupBasicsTour() {
     ]
   });
 
-  // On complete, mark this tour as completed
-  tour.on('complete', () => {
-    markTourComplete('basics');
-  });
-
   // Store the tour
   tourInstances.basics = tour;
 }
@@ -157,6 +175,23 @@ function setupChatTour() {
       classes: 'shadow-md bg-white rounded-lg',
       scrollTo: true
     }
+  });
+
+  // Add event listeners to manage the shepherd-active class
+  tour.on('show', () => {
+    document.body.classList.add('shepherd-active');
+    isTourActive.value = true;
+  });
+
+  tour.on('complete', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
+    markTourComplete('chat');
+  });
+
+  tour.on('cancel', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
   });
 
   // Add steps specific to chat features
@@ -178,11 +213,6 @@ function setupChatTour() {
 
   // Add more steps as needed
 
-  // On complete, mark this tour as completed
-  tour.on('complete', () => {
-    markTourComplete('chat');
-  });
-
   // Store the tour
   tourInstances.chat = tour;
 }
@@ -195,6 +225,23 @@ function setupApiSetupTour() {
       classes: 'shadow-md bg-white rounded-lg',
       scrollTo: true
     }
+  });
+
+  // Add event listeners to manage the shepherd-active class
+  tour.on('show', () => {
+    document.body.classList.add('shepherd-active');
+    isTourActive.value = true;
+  });
+
+  tour.on('complete', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
+    markTourComplete('api-setup');
+  });
+
+  tour.on('cancel', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
   });
 
   // Add steps specific to API setup
@@ -216,11 +263,6 @@ function setupApiSetupTour() {
 
   // Add more steps as needed
 
-  // On complete, mark this tour as completed
-  tour.on('complete', () => {
-    markTourComplete('api-setup');
-  });
-
   // Store the tour
   tourInstances['api-setup'] = tour;
 }
@@ -232,7 +274,8 @@ export function addTour(id: string, title: string, description: string) {
     id,
     title,
     description,
-    completed: false
+    completed: false,
+    steps: []
   }];
   
   // Create a new tour instance
@@ -242,6 +285,23 @@ export function addTour(id: string, title: string, description: string) {
       classes: 'shadow-md bg-white rounded-lg',
       scrollTo: true
     }
+  });
+
+  // Add event listeners to manage the shepherd-active class
+  tour.on('show', () => {
+    document.body.classList.add('shepherd-active');
+    isTourActive.value = true;
+  });
+
+  tour.on('complete', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
+    markTourComplete(id);
+  });
+
+  tour.on('cancel', () => {
+    document.body.classList.remove('shepherd-active');
+    isTourActive.value = false;
   });
   
   // Add a placeholder step
@@ -259,11 +319,6 @@ export function addTour(id: string, title: string, description: string) {
         action: tour.complete
       }
     ]
-  });
-  
-  // On complete, mark as completed
-  tour.on('complete', () => {
-    markTourComplete(id);
   });
   
   // Store the tour

@@ -428,37 +428,6 @@ export default function Settings({
               </p>
             </div>
             
-            {/* Additional optional settings sections */}
-            <div className="border-t border-gray-200 pt-4">
-              <details className="mb-4">
-                <summary className="font-medium text-indigo-600 cursor-pointer">
-                  Advanced Settings (Optional)
-                </summary>
-                <div className="mt-3 space-y-4 pl-4">
-                  {/* LLM settings */}
-                  <div>
-                    <h4 className="font-medium text-gray-700">LLM Settings</h4>
-                    {/* fields go here */}
-                  </div>
-                  {/* VLM settings */}
-                  <div>
-                    <h4 className="font-medium text-gray-700">Vision Settings</h4>
-                    {/* fields go here */}
-                  </div>
-                  {/* TTS settings */}
-                  <div>
-                    <h4 className="font-medium text-gray-700">Text-to-Speech Settings</h4>
-                    {/* fields go here */}
-                  </div>
-                  {/* STT settings */}
-                  <div>
-                    <h4 className="font-medium text-gray-700">Speech-to-Text Settings</h4>
-                    {/* fields go here */}
-                  </div>
-                </div>
-              </details>
-            </div>
-            
             {/* Submit and Cancel buttons */}
             <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
               <button
@@ -491,7 +460,8 @@ export default function Settings({
 
           {/* Advanced Settings */}
           {showAdvanced.value && (
-            <div className="space-y-4">
+            <div className="space-y-4 mt-4">
+              <h3 className="text-lg font-medium text-gray-800 mb-3">Advanced Settings</h3>
               <ConfigurationSelector
                 serviceType="api"
                 currentConfig={{

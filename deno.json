@@ -2,8 +2,7 @@
   "imports": {
     "$std/": "https://deno.land/std@0.216.0/",
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
-    "cytoscape": "npm:cytoscape@^3.31.0",
-    "cytoscape-automove": "npm:cytoscape-automove@^1.10.3",
+    "reactflow": "npm:reactflow@11.11.4",
     "lucide-preact": "npm:lucide-preact@^0.475.0",
     "preact": "https://esm.sh/preact@10.22.0",
     "preact/": "https://esm.sh/preact@10.22.0/",

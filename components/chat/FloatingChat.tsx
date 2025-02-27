@@ -1,16 +1,38 @@
 import { MessageCircle } from "lucide-preact";
 import { useSignal, useSignalEffect } from "@preact/signals";
-import { useRef } from "preact/hooks";
+import { useRef, useEffect } from "preact/hooks";
 import ChatHistory from "./ChatHistory.tsx";
 import { messages as storeMessages, addMessage } from "./store.ts";
 import { startStream } from "./stream.ts";
-import { ChatSubmitButton } from "../../islands/core/buttons/ChatSubmitButton.tsx";
+import { IS_BROWSER } from "$fresh/runtime.ts";
 
 export default function FloatingChat() {
   const isOpen = useSignal(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
   const isProcessing = useSignal(false);
+  
+  // Check if we're on a chat page (done once during component initialization)
+  const isOnChatPage = IS_BROWSER ? window.location.pathname.startsWith('/chat') : false;
+
+  // Add event listener for the Escape key to close the chat
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen.value) {
+        isOpen.value = false;
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, []);
+
+  // Don't render anything if we're on a chat page
+  if (isOnChatPage) {
+    return null;
+  }
 
   const handleOpenChat = () => {
     isOpen.value = true;
@@ -56,6 +78,10 @@ export default function FloatingChat() {
       });
     } finally {
       isProcessing.value = false;
+      // Focus the input field again after sending the message
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -64,64 +90,65 @@ export default function FloatingChat() {
       {isOpen.value ? (
         <div
           ref={chatRef}
-          class="bg-white rounded-lg shadow-xl w-96 h-[500px] flex flex-col overflow-hidden"
+          class="bg-white rounded-lg shadow-xl w-96 h-[500px] flex flex-col overflow-hidden border border-gray-300"
         >
           {/* Header with improved design */}
-          <div class="bg-gradient-to-r from-orange-500 to-red-600 p-4 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-              {/* @ts-ignore */}
-              <MessageCircle class="w-6 h-6 text-white" />
-              <h3 class="text-white font-semibold">Dein Chat Assistant</h3>
-            </div>
+          <div class="p-3 bg-white border-b border-gray-200 flex justify-between items-center">
+            <h3 class="font-medium text-gray-800 flex items-center gap-2">
+              <MessageCircle size={18} className="text-blue-500" />
+              Chat Assistant
+            </h3>
             <button
               type="button"
               onClick={handleCloseChat}
-              class="text-white hover:text-gray-200 transition-colors"
+              class="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
               aria-label="Close chat"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <title>Close chat window</title>
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <title>Close chat</title>
+                <path d="M18 6L6 18" />
+                <path d="M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* Chat History Component */}
-          <ChatHistory
-            messages={storeMessages.value as { role: "user" | "assistant", content: string }[]}
-            isProcessing={isProcessing.value}
-          />
+          {/* Chat history area */}
+          <div class="flex-1 overflow-y-auto p-4 bg-gray-50">
+            <ChatHistory messages={storeMessages.value} />
+          </div>
 
-          {/* Input Area */}
-          <div class="border-t p-4">
-            <div class="flex space-x-2">
+          {/* Input area with improved design */}
+          <div class="p-3 bg-white border-t border-gray-200">
+            <div class="flex rounded-lg border border-gray-300 overflow-hidden shadow-sm focus-within:ring-1 focus-within:ring-blue-500 focus-within:border-blue-500">
               <textarea
                 ref={inputRef}
-                class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                rows={2}
                 placeholder="Type your message..."
-                onKeyDown={(e) => {
+                class="flex-1 p-2 resize-none min-h-[40px] max-h-24 focus:outline-none"
+                onKeyPress={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSubmit();
                   }
                 }}
-              />
-              <ChatSubmitButton
-                onClick={handleSubmit}
                 disabled={isProcessing.value}
               />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={isProcessing.value}
+                class={`px-3 flex items-center justify-center ${
+                  isProcessing.value
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-blue-500 text-white hover:bg-blue-600"
+                }`}
+                aria-label="Send message"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <title>Send message</title>
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
@@ -129,24 +156,10 @@ export default function FloatingChat() {
         <button
           type="button"
           onClick={handleOpenChat}
-          class="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-lg transition-colors"
+          class="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center justify-center transform transition-transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"
           aria-label="Open chat"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <title>Open chat window</title>
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-            />
-          </svg>
+          <MessageCircle size={24} />
         </button>
       )}
     </div>

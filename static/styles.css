@@ -40,3 +40,76 @@ html, body {
 .highlight-score {
   animation: highlight 0.5s ease-in-out;
 }
+
+/* Shepherd Tour Styling */
+.shepherd-element {
+  max-width: 400px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+  z-index: 10000;
+  overflow: visible !important;
+  border-radius: 8px !important;
+}
+
+.shepherd-content {
+  border-radius: 8px !important;
+  padding: 0 !important;
+}
+
+.shepherd-header {
+  background-color: #4f46e5 !important;
+  padding: 12px 16px !important;
+  border-top-left-radius: 8px !important; 
+  border-top-right-radius: 8px !important;
+}
+
+.shepherd-title {
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+}
+
+.shepherd-text {
+  padding: 16px !important;
+  color: #374151 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.shepherd-footer {
+  padding: 8px 16px 16px !important;
+  justify-content: flex-end !important;
+}
+
+.shepherd-button {
+  background-color: #4f46e5 !important;
+  color: white !important;
+  border-radius: 4px !important;
+  padding: 6px 12px !important;
+  font-size: 14px !important;
+  transition: background-color 0.2s !important;
+  margin-left: 8px !important;
+}
+
+.shepherd-button-secondary {
+  background-color: transparent !important;
+  color: #4f46e5 !important;
+  border: 1px solid #4f46e5 !important;
+}
+
+.shepherd-button:hover {
+  background-color: #4338ca !important;
+}
+
+.shepherd-button-secondary:hover {
+  background-color: rgba(79, 70, 229, 0.1) !important;
+}
+
+.shepherd-modal-overlay-container {
+  z-index: 9999 !important;
+  opacity: 0.7 !important;
+}
+
+/* Fix for overflow when starting the tour */
+body.shepherd-active {
+  overflow: hidden !important;
+}
